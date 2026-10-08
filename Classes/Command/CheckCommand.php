@@ -23,10 +23,18 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Backend\Utility\BackendUtility;
+use TYPO3\CMS\Linkvalidator2\Extraction\LinkExtractor;
 
 #[AsCommand('linkvalidator2:check', 'Check links in records and store broken ones.')]
 final class CheckCommand extends Command
 {
+    public function __construct(
+        private readonly LinkExtractor $linkExtractor,
+    ) {
+        parent::__construct();
+    }
+
     protected function configure(): void
     {
         $this->addOption('record', 'r', InputOption::VALUE_REQUIRED, 'Check a single record, format "table:uid"');
@@ -42,7 +50,14 @@ final class CheckCommand extends Command
                 $io->error('Option --record expects "table:uid", e.g. "tt_content:12".');
                 return Command::INVALID;
             }
-            $io->writeln(sprintf('Record %s:%d', $table, $uid));
+            $row = BackendUtility::getRecord($table, $uid);
+            if ($row === null) {
+                $io->error(sprintf('Record %s:%d not found.', $table, $uid));
+                return Command::FAILURE;
+            }
+            foreach ($this->linkExtractor->extract($table, $row, (int)$row['pid'], 0) as $candidate) {
+                $io->writeln(sprintf('%s  %s  "%s"', $candidate->field, $candidate->link, $candidate->linkText));
+            }
             return Command::SUCCESS;
         }
         $io->note('Queue processing follows in a later task.');
