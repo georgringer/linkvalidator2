@@ -24,6 +24,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
+use TYPO3\CMS\Linkvalidator2\Check\CheckerRegistry;
 use TYPO3\CMS\Linkvalidator2\Extraction\LinkExtractor;
 use TYPO3\CMS\Linkvalidator2\Target\LinkTargetFactory;
 
@@ -33,6 +34,7 @@ final class CheckCommand extends Command
     public function __construct(
         private readonly LinkExtractor $linkExtractor,
         private readonly LinkTargetFactory $linkTargetFactory,
+        private readonly CheckerRegistry $checkerRegistry,
     ) {
         parent::__construct();
     }
@@ -59,7 +61,13 @@ final class CheckCommand extends Command
             }
             foreach ($this->linkExtractor->extract($table, $row, (int)$row['pid'], 0) as $candidate) {
                 $target = $this->linkTargetFactory->create($candidate);
-                $io->writeln(sprintf('%s  %s  →  %s', $candidate->field, $candidate->link, $target?->identifier ?? '(skipped)'));
+                $checker = $target !== null ? $this->checkerRegistry->getChecker($target->type) : null;
+                if ($target === null || $checker === null) {
+                    $io->writeln(sprintf('%s  %s  (skipped)', $candidate->field, $candidate->link));
+                    continue;
+                }
+                $result = $checker->check($target, $candidate);
+                $io->writeln(sprintf('%s  %s  %s %s', $candidate->field, $target->identifier, $result->status->value, $result->errorType));
             }
             return Command::SUCCESS;
         }
