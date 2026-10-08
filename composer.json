@@ -1,0 +1,25 @@
+{
+	"name": "typo3/cms-linkvalidator2",
+	"type": "typo3-cms-framework",
+	"description": "TYPO3 CMS LinkValidator (rewrite) - Checks links in records and reports broken ones.",
+	"license": [
+		"GPL-2.0-or-later"
+	],
+	"require": {
+		"typo3/cms-core": "15.0.*@dev"
+	},
+	"autoload": {
+		"psr-4": {
+			"TYPO3\\CMS\\Linkvalidator2\\": "Classes/"
+		}
+	},
+	"extra": {
+		"typo3/cms": {
+			"extension-key": "linkvalidator2",
+			"version": "15.0.0",
+			"Package": {
+				"providesPackages": {}
+			}
+		}
+	}
+}

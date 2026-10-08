@@ -1,0 +1,2 @@
+# cat=basic; type=string; label=Excluded fields: Comma-separated list of "table.field" or "table.*" that are never checked
+excludedFields =
