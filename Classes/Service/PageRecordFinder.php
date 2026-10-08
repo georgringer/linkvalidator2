@@ -19,6 +19,7 @@ namespace TYPO3\CMS\Linkvalidator2\Service;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
+use TYPO3\CMS\Core\Domain\Repository\PageRepository;
 use TYPO3\CMS\Core\Schema\Capability\TcaSchemaCapability;
 use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -34,7 +35,22 @@ final readonly class PageRecordFinder
         private ConnectionPool $connectionPool,
         private TcaSchemaFactory $tcaSchemaFactory,
         private CheckableFieldResolver $checkableFieldResolver,
+        private PageRepository $pageRepository,
     ) {}
+
+    /**
+     * The page itself plus its subpages down to $depth levels, including hidden pages
+     * and folders, which may hold records with links as well.
+     *
+     * @return list<int>
+     */
+    public function findPageIds(int $pageUid, int $depth): array
+    {
+        if ($depth <= 0) {
+            return [$pageUid];
+        }
+        return [$pageUid, ...$this->pageRepository->getDescendantPageIdsRecursive($pageUid, $depth, 0, [], true)];
+    }
 
     /**
      * @return list<array{table: string, uid: int}>

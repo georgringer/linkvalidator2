@@ -9,10 +9,20 @@
     <f:if condition="{pageTitle}">
         <f:then>
             <h1><f:translate key="linkvalidator2.messages:report.headlineWithPageTitle" arguments="{0: pageTitle}" /></h1>
-            <form action="{moduleUrl}" method="post">
-                <button type="submit" name="checkPage" value="1" class="btn btn-default">
-                    <f:translate key="linkvalidator2.messages:report.checkPage" />
-                </button>
+            <form action="{moduleUrl}" method="post" class="row row-cols-auto g-2 align-items-end">
+                <div class="col">
+                    <label for="linkvalidator2-depth" class="form-label"><f:translate key="linkvalidator2.messages:report.depth" /></label>
+                    <select id="linkvalidator2-depth" name="depth" class="form-select" onchange="this.form.submit()">
+                        <f:for each="{depthOptions}" key="value" as="label">
+                            <option value="{value}" {f:if(condition: '{value} == {depth}', then: 'selected')}>{label}</option>
+                        </f:for>
+                    </select>
+                </div>
+                <div class="col">
+                    <button type="submit" name="checkPage" value="1" class="btn btn-default">
+                        <f:translate key="linkvalidator2.messages:report.checkPage" />
+                    </button>
+                </div>
             </form>
             <f:if condition="{brokenLinks}">
                 <f:then>
@@ -20,6 +30,7 @@
                         <table class="table table-striped table-hover">
                             <thead>
                                 <tr>
+                                    <th><f:translate key="linkvalidator2.messages:report.column.page" /></th>
                                     <th><f:translate key="linkvalidator2.messages:report.column.record" /></th>
                                     <th><f:translate key="linkvalidator2.messages:report.column.field" /></th>
                                     <th><f:translate key="linkvalidator2.messages:report.column.linkText" /></th>
@@ -31,6 +42,7 @@
                             <tbody>
                                 <f:for each="{brokenLinks}" as="brokenLink">
                                     <tr>
+                                        <td>{brokenLink.pageTitle}<br><small>{brokenLink.pid}</small></td>
                                         <td>
                                             <a href="{brokenLink.editUrl}">{brokenLink.recordTitle}</a>
                                             <br><small>{brokenLink.table_name}:{brokenLink.record_uid}</small>

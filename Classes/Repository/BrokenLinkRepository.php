@@ -16,6 +16,7 @@ declare(strict_types=1);
  */
 namespace TYPO3\CMS\Linkvalidator2\Repository;
 
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Linkvalidator2\Check\CheckResult;
 use TYPO3\CMS\Linkvalidator2\Extraction\LinkCandidate;
@@ -61,12 +62,27 @@ final readonly class BrokenLinkRepository
     }
 
     /**
+     * @param list<int> $pids
      * @return list<array<string, mixed>>
      */
-    public function findByPid(int $pid): array
+    public function findByPids(array $pids): array
     {
-        return $this->connectionPool->getConnectionForTable(self::TABLE)
-            ->select(['*'], self::TABLE, ['pid' => $pid, 'workspace' => 0], [], ['table_name' => 'ASC', 'record_uid' => 'ASC', 'field' => 'ASC'])
+        if ($pids === []) {
+            return [];
+        }
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+        return $queryBuilder
+            ->select('*')
+            ->from(self::TABLE)
+            ->where(
+                $queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter($pids, Connection::PARAM_INT_ARRAY)),
+                $queryBuilder->expr()->eq('workspace', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT))
+            )
+            ->orderBy('pid')
+            ->addOrderBy('table_name')
+            ->addOrderBy('record_uid')
+            ->addOrderBy('field')
+            ->executeQuery()
             ->fetchAllAssociative();
     }
 

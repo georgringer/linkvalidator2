@@ -20,5 +20,8 @@ return [
                 'target' => ReportController::class,
             ],
         ],
+        'moduleData' => [
+            'depth' => 0,
+        ],
     ],
 ];

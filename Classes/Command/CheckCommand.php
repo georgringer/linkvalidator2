@@ -40,7 +40,8 @@ final class CheckCommand extends Command
     {
         $this
             ->addOption('record', 'r', InputOption::VALUE_REQUIRED, 'Check a single record, format "table:uid"')
-            ->addOption('page', 'p', InputOption::VALUE_REQUIRED, 'Check all records of one page (not recursive)');
+            ->addOption('page', 'p', InputOption::VALUE_REQUIRED, 'Check all records of a page')
+            ->addOption('depth', 'd', InputOption::VALUE_REQUIRED, 'Levels of subpages to include with --page', '0');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -66,17 +67,21 @@ final class CheckCommand extends Command
         }
         $pageUid = (int)$input->getOption('page');
         if ($pageUid > 0) {
-            $records = $this->pageRecordFinder->findOnPage($pageUid);
+            $pageIds = $this->pageRecordFinder->findPageIds($pageUid, (int)$input->getOption('depth'));
+            $recordCount = 0;
             $broken = 0;
-            foreach ($records as ['table' => $table, 'uid' => $uid]) {
-                foreach ($this->recordCheckService->checkRecord($table, $uid) as $checkedLink) {
-                    $broken += $checkedLink->result->isOk() ? 0 : 1;
-                }
-                if ($output->isVerbose()) {
-                    $io->writeln(sprintf('%s:%d', $table, $uid));
+            foreach ($pageIds as $pageId) {
+                foreach ($this->pageRecordFinder->findOnPage($pageId) as ['table' => $table, 'uid' => $uid]) {
+                    foreach ($this->recordCheckService->checkRecord($table, $uid) as $checkedLink) {
+                        $broken += $checkedLink->result->isOk() ? 0 : 1;
+                    }
+                    $recordCount++;
+                    if ($output->isVerbose()) {
+                        $io->writeln(sprintf('%s:%d', $table, $uid));
+                    }
                 }
             }
-            $io->success(sprintf('Checked %d records on page %d, found %d broken links.', count($records), $pageUid, $broken));
+            $io->success(sprintf('Checked %d records on %d pages, found %d broken links.', $recordCount, count($pageIds), $broken));
             return Command::SUCCESS;
         }
         $io->note('Queue processing follows in a later task.');

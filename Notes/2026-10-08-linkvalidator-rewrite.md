@@ -186,6 +186,15 @@
       keine Mail ohne Änderung, pro Site (Site Settings), periodisch entkoppelt vom
       Prüflauf, `last_report_sent` pro Site, Fluid-Mail.
 
+## Zwischenstand Modul: Level-Dropdown (bewusst, muss überdacht werden)
+- Modul hat ein Dropdown „Levels“ (diese Seite, 1–4, unendlich), gespeichert in
+  moduleData `depth`; „Check“ prüft synchron alle Datensätze der Seiten bis zu dieser
+  Tiefe, die Liste zeigt dieselben Seiten (Spalte „Page“). CLI: `--page=… --depth=…`.
+- **Nachdenken:** widerspricht Entscheidung „rekursiv, kein Tiefen-Selektor“ (UI/UX)
+  und „interaktiv = Browser-Batches“ (Ausführung). Synchron + „unendlich“ unter einer
+  großen Seite = Timeout, mit externen Links (Schritt 2) erst recht. Beim Modul-Schritt
+  entscheiden: Level behalten? Nur für die Anzeige? Durch Batches ersetzen?
+
 ## Testdaten (lokal, DDEV, Seed: `Notes/seed-testdata.php`)
 - Unter pages:1287. Seiten: sichtbar 1299, versteckt 1298, gelöscht 1297,
   abgelaufen 1296, Zukunft 1295, Sysfolder 1294, Spacer 1293, Testinhalte 1292

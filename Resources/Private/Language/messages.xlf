@@ -10,16 +10,16 @@
         <source>Broken links on "%s"</source>
       </trans-unit>
       <trans-unit id="report.empty">
-        <source>No broken links found on this page.</source>
+        <source>No broken links found.</source>
       </trans-unit>
       <trans-unit id="report.selectPage">
         <source>Select a page in the page tree.</source>
       </trans-unit>
       <trans-unit id="report.checkPage">
-        <source>Check this page</source>
+        <source>Check</source>
       </trans-unit>
       <trans-unit id="report.checked">
-        <source>%d records checked.</source>
+        <source>%1$d records on %2$d pages checked.</source>
       </trans-unit>
       <trans-unit id="report.column.record">
         <source>Record</source>
@@ -74,6 +74,30 @@
       </trans-unit>
       <trans-unit id="error.storage.offline">
         <source>File storage is offline</source>
+      </trans-unit>
+      <trans-unit id="report.depth">
+        <source>Levels</source>
+      </trans-unit>
+      <trans-unit id="report.depth.0">
+        <source>This page</source>
+      </trans-unit>
+      <trans-unit id="report.depth.1">
+        <source>1 level</source>
+      </trans-unit>
+      <trans-unit id="report.depth.2">
+        <source>2 levels</source>
+      </trans-unit>
+      <trans-unit id="report.depth.3">
+        <source>3 levels</source>
+      </trans-unit>
+      <trans-unit id="report.depth.4">
+        <source>4 levels</source>
+      </trans-unit>
+      <trans-unit id="report.depth.999">
+        <source>Infinite</source>
+      </trans-unit>
+      <trans-unit id="report.column.page">
+        <source>Page</source>
       </trans-unit>
     </body>
   </file>

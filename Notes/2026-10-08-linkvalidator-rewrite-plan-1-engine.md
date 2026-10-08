@@ -1903,6 +1903,14 @@ Record hidden, Datei fehlt, `t3://record?uid=1` → markiert; sichtbare Seite �
 
 ---
 
+### Task 8c: Level-Dropdown im Modul (erledigt, auf Wunsch, vorläufig)
+
+`PageRecordFinder::findPageIds()` (PageRepository::getDescendantPageIdsRecursive mit
+bypassEnableFieldsCheck), `BrokenLinkRepository::findByPids()`, moduleData `depth`,
+CLI `--depth`. **Muss überdacht werden** – siehe Spec „Zwischenstand Modul: Level-Dropdown“.
+
+---
+
 ### Task 9: Test-Infrastruktur und Tests (aufgeschoben, laut Absprache)
 
 Erst jetzt. Plan aus der Spec: PSR-4 für `TYPO3\CMS\Linkvalidator2\` und `…\Tests\` als

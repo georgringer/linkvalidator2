@@ -36,6 +36,8 @@ use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
 #[AsController]
 final readonly class ReportController
 {
+    private const DEPTH_OPTIONS = [0, 1, 2, 3, 4, 999];
+
     public function __construct(
         private ModuleTemplateFactory $moduleTemplateFactory,
         private UriBuilder $uriBuilder,
@@ -56,13 +58,22 @@ final readonly class ReportController
         }
         $view->setTitle($this->getLanguageService()->sL('linkvalidator2.module:title'));
 
-        if ($pageRecord !== [] && ($request->getParsedBody()['checkPage'] ?? false)) {
-            $records = $this->pageRecordFinder->findOnPage($pageUid);
-            foreach ($records as ['table' => $table, 'uid' => $uid]) {
-                $this->recordCheckService->checkRecord($table, $uid);
+        $depth = (int)$request->getAttribute('moduleData')->get('depth', 0);
+        if (!in_array($depth, self::DEPTH_OPTIONS, true)) {
+            $depth = 0;
+        }
+        $pageIds = $pageRecord !== [] ? $this->pageRecordFinder->findPageIds($pageUid, $depth) : [];
+
+        if ($pageIds !== [] && ($request->getParsedBody()['checkPage'] ?? false)) {
+            $recordCount = 0;
+            foreach ($pageIds as $pageId) {
+                foreach ($this->pageRecordFinder->findOnPage($pageId) as ['table' => $table, 'uid' => $uid]) {
+                    $this->recordCheckService->checkRecord($table, $uid);
+                    $recordCount++;
+                }
             }
             $view->addFlashMessage(
-                sprintf($this->getLanguageService()->sL('linkvalidator2.messages:report.checked'), count($records)),
+                sprintf($this->getLanguageService()->sL('linkvalidator2.messages:report.checked'), $recordCount, count($pageIds)),
                 '',
                 ContextualFeedbackSeverity::OK
             );
@@ -72,21 +83,40 @@ final readonly class ReportController
             'pageUid' => $pageUid,
             'pageTitle' => (string)($pageRecord['title'] ?? ''),
             'moduleUrl' => $moduleUrl,
-            'brokenLinks' => $pageRecord !== [] ? $this->getBrokenLinks($pageUid, $moduleUrl) : [],
+            'depth' => $depth,
+            'depthOptions' => $this->getDepthOptions(),
+            'brokenLinks' => $this->getBrokenLinks($pageIds, $moduleUrl),
         ]);
         return $view->renderResponse('Backend/Report');
     }
 
     /**
+     * @return array<int, string>
+     */
+    private function getDepthOptions(): array
+    {
+        $options = [];
+        foreach (self::DEPTH_OPTIONS as $depth) {
+            $options[$depth] = $this->getLanguageService()->sL('linkvalidator2.messages:report.depth.' . $depth);
+        }
+        return $options;
+    }
+
+    /**
+     * @param list<int> $pageIds
      * @return list<array<string, mixed>>
      */
-    private function getBrokenLinks(int $pageUid, string $returnUrl): array
+    private function getBrokenLinks(array $pageIds, string $returnUrl): array
     {
         $result = [];
-        foreach ($this->brokenLinkRepository->findByPid($pageUid) as $row) {
+        $pageTitles = [];
+        foreach ($this->brokenLinkRepository->findByPids($pageIds) as $row) {
             $table = (string)$row['table_name'];
             $uid = (int)$row['record_uid'];
+            $pid = (int)$row['pid'];
             $record = BackendUtility::getRecord($table, $uid) ?? [];
+            $pageTitles[$pid] ??= BackendUtility::getRecordTitle('pages', BackendUtility::getRecord('pages', $pid) ?? ['uid' => $pid]);
+            $row['pageTitle'] = $pageTitles[$pid];
             $row['recordTitle'] = $record !== [] ? BackendUtility::getRecordTitle($table, $record) : $table . ':' . $uid;
             $row['editUrl'] = (string)$this->uriBuilder->buildUriFromRoute('record_edit', [
                 'edit' => [$table => [$uid => 'edit']],
