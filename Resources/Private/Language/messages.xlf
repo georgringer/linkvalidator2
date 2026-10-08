@@ -10,7 +10,70 @@
         <source>Broken links on "%s"</source>
       </trans-unit>
       <trans-unit id="report.empty">
-        <source>No results yet.</source>
+        <source>No broken links found on this page.</source>
+      </trans-unit>
+      <trans-unit id="report.selectPage">
+        <source>Select a page in the page tree.</source>
+      </trans-unit>
+      <trans-unit id="report.checkPage">
+        <source>Check this page</source>
+      </trans-unit>
+      <trans-unit id="report.checked">
+        <source>%d records checked.</source>
+      </trans-unit>
+      <trans-unit id="report.column.record">
+        <source>Record</source>
+      </trans-unit>
+      <trans-unit id="report.column.field">
+        <source>Field</source>
+      </trans-unit>
+      <trans-unit id="report.column.linkText">
+        <source>Link text</source>
+      </trans-unit>
+      <trans-unit id="report.column.target">
+        <source>Link target</source>
+      </trans-unit>
+      <trans-unit id="report.column.problem">
+        <source>Problem</source>
+      </trans-unit>
+      <trans-unit id="report.column.since">
+        <source>Broken since</source>
+      </trans-unit>
+      <trans-unit id="error.link.invalid">
+        <source>The link cannot be resolved</source>
+      </trans-unit>
+      <trans-unit id="error.page.missing">
+        <source>Page does not exist</source>
+      </trans-unit>
+      <trans-unit id="error.page.hidden">
+        <source>Page is hidden</source>
+      </trans-unit>
+      <trans-unit id="error.page.expired">
+        <source>Page has expired</source>
+      </trans-unit>
+      <trans-unit id="error.page.noFrontend">
+        <source>Page type has no frontend output</source>
+      </trans-unit>
+      <trans-unit id="error.record.missing">
+        <source>Record does not exist</source>
+      </trans-unit>
+      <trans-unit id="error.record.hidden">
+        <source>Record is hidden</source>
+      </trans-unit>
+      <trans-unit id="error.record.expired">
+        <source>Record has expired</source>
+      </trans-unit>
+      <trans-unit id="error.record.unknownTable">
+        <source>Record table does not exist</source>
+      </trans-unit>
+      <trans-unit id="error.file.missing">
+        <source>File does not exist</source>
+      </trans-unit>
+      <trans-unit id="error.folder.missing">
+        <source>Folder does not exist</source>
+      </trans-unit>
+      <trans-unit id="error.storage.offline">
+        <source>File storage is offline</source>
       </trans-unit>
     </body>
   </file>

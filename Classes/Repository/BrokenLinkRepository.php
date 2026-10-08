@@ -60,6 +60,16 @@ final readonly class BrokenLinkRepository
         }
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function findByPid(int $pid): array
+    {
+        return $this->connectionPool->getConnectionForTable(self::TABLE)
+            ->select(['*'], self::TABLE, ['pid' => $pid, 'workspace' => 0], [], ['table_name' => 'ASC', 'record_uid' => 'ASC', 'field' => 'ASC'])
+            ->fetchAllAssociative();
+    }
+
     public function removeForRecord(string $table, int $recordUid): void
     {
         $this->connectionPool->getConnectionForTable(self::TABLE)

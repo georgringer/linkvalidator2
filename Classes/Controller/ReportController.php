@@ -14,17 +14,21 @@ declare(strict_types=1);
  *
  * The TYPO3 project - inspiring people to share!
  */
-
 namespace TYPO3\CMS\Linkvalidator2\Controller;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Backend\Attribute\AsController;
+use TYPO3\CMS\Backend\Routing\UriBuilder;
 use TYPO3\CMS\Backend\Template\ModuleTemplateFactory;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\Localization\LanguageService;
 use TYPO3\CMS\Core\Type\Bitmask\Permission;
+use TYPO3\CMS\Core\Type\ContextualFeedbackSeverity;
+use TYPO3\CMS\Linkvalidator2\Repository\BrokenLinkRepository;
+use TYPO3\CMS\Linkvalidator2\Service\PageRecordFinder;
+use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
 
 /**
  * @internal This class is a specific Backend controller implementation and is not part of the TYPO3's Core API.
@@ -34,23 +38,63 @@ final readonly class ReportController
 {
     public function __construct(
         private ModuleTemplateFactory $moduleTemplateFactory,
+        private UriBuilder $uriBuilder,
+        private PageRecordFinder $pageRecordFinder,
+        private RecordCheckService $recordCheckService,
+        private BrokenLinkRepository $brokenLinkRepository,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
     {
         $pageUid = (int)($request->getQueryParams()['id'] ?? 0);
         $pageRecord = BackendUtility::readPageAccess($pageUid, $this->getBackendUser()->getPagePermsClause(Permission::PAGE_SHOW)) ?: [];
+        $moduleUrl = (string)$this->uriBuilder->buildUriFromRoute('linkvalidator2_report', ['id' => $pageUid]);
 
         $view = $this->moduleTemplateFactory->create($request);
         if ($pageRecord !== []) {
             $view->getDocHeaderComponent()->setPageBreadcrumb($pageRecord);
         }
         $view->setTitle($this->getLanguageService()->sL('linkvalidator2.module:title'));
+
+        if ($pageRecord !== [] && ($request->getParsedBody()['checkPage'] ?? false)) {
+            $records = $this->pageRecordFinder->findOnPage($pageUid);
+            foreach ($records as ['table' => $table, 'uid' => $uid]) {
+                $this->recordCheckService->checkRecord($table, $uid);
+            }
+            $view->addFlashMessage(
+                sprintf($this->getLanguageService()->sL('linkvalidator2.messages:report.checked'), count($records)),
+                '',
+                ContextualFeedbackSeverity::OK
+            );
+        }
+
         $view->assignMultiple([
             'pageUid' => $pageUid,
             'pageTitle' => (string)($pageRecord['title'] ?? ''),
+            'moduleUrl' => $moduleUrl,
+            'brokenLinks' => $pageRecord !== [] ? $this->getBrokenLinks($pageUid, $moduleUrl) : [],
         ]);
         return $view->renderResponse('Backend/Report');
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function getBrokenLinks(int $pageUid, string $returnUrl): array
+    {
+        $result = [];
+        foreach ($this->brokenLinkRepository->findByPid($pageUid) as $row) {
+            $table = (string)$row['table_name'];
+            $uid = (int)$row['record_uid'];
+            $record = BackendUtility::getRecord($table, $uid) ?? [];
+            $row['recordTitle'] = $record !== [] ? BackendUtility::getRecordTitle($table, $record) : $table . ':' . $uid;
+            $row['editUrl'] = (string)$this->uriBuilder->buildUriFromRoute('record_edit', [
+                'edit' => [$table => [$uid => 'edit']],
+                'returnUrl' => $returnUrl,
+            ]);
+            $result[] = $row;
+        }
+        return $result;
     }
 
     private function getBackendUser(): BackendUserAuthentication

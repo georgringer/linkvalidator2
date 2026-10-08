@@ -23,6 +23,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Linkvalidator2\Service\PageRecordFinder;
 use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
 
 #[AsCommand('linkvalidator2:check', 'Check links in records and store broken ones.')]
@@ -30,13 +31,16 @@ final class CheckCommand extends Command
 {
     public function __construct(
         private readonly RecordCheckService $recordCheckService,
+        private readonly PageRecordFinder $pageRecordFinder,
     ) {
         parent::__construct();
     }
 
     protected function configure(): void
     {
-        $this->addOption('record', 'r', InputOption::VALUE_REQUIRED, 'Check a single record, format "table:uid"');
+        $this
+            ->addOption('record', 'r', InputOption::VALUE_REQUIRED, 'Check a single record, format "table:uid"')
+            ->addOption('page', 'p', InputOption::VALUE_REQUIRED, 'Check all records of one page (not recursive)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -58,6 +62,21 @@ final class CheckCommand extends Command
                     $checkedLink->result->errorType
                 ));
             }
+            return Command::SUCCESS;
+        }
+        $pageUid = (int)$input->getOption('page');
+        if ($pageUid > 0) {
+            $records = $this->pageRecordFinder->findOnPage($pageUid);
+            $broken = 0;
+            foreach ($records as ['table' => $table, 'uid' => $uid]) {
+                foreach ($this->recordCheckService->checkRecord($table, $uid) as $checkedLink) {
+                    $broken += $checkedLink->result->isOk() ? 0 : 1;
+                }
+                if ($output->isVerbose()) {
+                    $io->writeln(sprintf('%s:%d', $table, $uid));
+                }
+            }
+            $io->success(sprintf('Checked %d records on page %d, found %d broken links.', count($records), $pageUid, $broken));
             return Command::SUCCESS;
         }
         $io->note('Queue processing follows in a later task.');
