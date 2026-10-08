@@ -149,7 +149,7 @@
       keine Mail ohne Änderung, pro Site (Site Settings), periodisch entkoppelt vom
       Prüflauf, `last_report_sent` pro Site, Fluid-Mail.
 
-## Testdaten (lokal, DDEV, Seed: `typo3temp/linkvalidator2-seed.php`)
+## Testdaten (lokal, DDEV, Seed: `Notes/seed-testdata.php`)
 - Unter pages:1287. Seiten: sichtbar 1299, versteckt 1298, gelöscht 1297,
   abgelaufen 1296, Zukunft 1295, Sysfolder 1294, Spacer 1293, Testinhalte 1292
   (DE-Übersetzung 1300), Link-Seite extern 1291, Link-Seite → versteckt 1290,
@@ -157,7 +157,8 @@
 - tt_content: „Alle Fälle“ 471 (DE 472, Sprache 5), „Nur gültige Links“ 470,
   versteckt mit kaputtem Link 468, abgelaufen mit kaputtem Link 469,
   Anker-/Record-Ziel 466, verstecktes Record-Ziel 467.
-- Datei-/Ordner-Links in 471/472 per SQL gesetzt (RTE-Transformation leert sie).
+- Datei-/Ordner-Links in 471/472 am DataHandler vorbei gesetzt (RTE-Transformation leert
+  sie), Übersetzungen eingeblendet – beides macht das Seed-Skript selbst.
 
 ## Offen
 - `Notes/` (diese Notizen, Plan) und `.superpowers/` gehören nicht in den Core: beim

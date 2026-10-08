@@ -608,7 +608,7 @@ git add -A && git commit -m "Add value objects, checker contract and command ske
   - `CheckableFieldResolver::getCheckableTables(): list<string>`
   - `LinkExtractor::extract(string $table, array $row, int $pid, int $language): list<LinkCandidate>`
 
-- [x] **Step 1: Testinhalt** – erledigt per `typo3temp/linkvalidator2-seed.php`, uids siehe
+- [x] **Step 1: Testinhalt** – erledigt per `Notes/seed-testdata.php`, uids siehe
   Spec-Abschnitt „Testdaten“. Haupt-CE: `tt_content:471` (DE: 472), Shortcut-Seiten 1288/1289,
   Link-Seiten 1290/1291. Hinweis: `#top` und `t3://page` stehen nach RTE-Transformation als
   `t3://page?uid=current…` in der DB → werden übersprungen (Review-Focus #3 betrifft dann
