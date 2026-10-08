@@ -25,12 +25,14 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Linkvalidator2\Extraction\LinkExtractor;
+use TYPO3\CMS\Linkvalidator2\Target\LinkTargetFactory;
 
 #[AsCommand('linkvalidator2:check', 'Check links in records and store broken ones.')]
 final class CheckCommand extends Command
 {
     public function __construct(
         private readonly LinkExtractor $linkExtractor,
+        private readonly LinkTargetFactory $linkTargetFactory,
     ) {
         parent::__construct();
     }
@@ -56,7 +58,8 @@ final class CheckCommand extends Command
                 return Command::FAILURE;
             }
             foreach ($this->linkExtractor->extract($table, $row, (int)$row['pid'], 0) as $candidate) {
-                $io->writeln(sprintf('%s  %s  "%s"', $candidate->field, $candidate->link, $candidate->linkText));
+                $target = $this->linkTargetFactory->create($candidate);
+                $io->writeln(sprintf('%s  %s  →  %s', $candidate->field, $candidate->link, $target?->identifier ?? '(skipped)'));
             }
             return Command::SUCCESS;
         }
