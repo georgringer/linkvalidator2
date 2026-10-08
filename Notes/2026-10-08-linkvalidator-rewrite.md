@@ -103,6 +103,28 @@
   Beachtung von fallbackType/Fallback-Kette der Site erreichbar? strict/free ohne
   Übersetzung → broken; versteckte Übersetzung → broken.
 
+### Sprachregel: auch die Quelle (Notiz, Schritt 7)
+- Beobachtet auf Seite 1210: Seite ohne Übersetzung, aber übersetzte Inhaltselemente
+  (366 DE, 367 FR, l18n_parent 363). Werden heute geprüft (pid = 1210).
+- Diese sind unsichtbar: im Seitenmodul (PageContextFactory schneidet die Sprachen mit
+  den existierenden Seitenübersetzungen, `array_intersect(..., getAllExistingLanguageIds())`)
+  und im Frontend bei `strict` (keine `/de/`-Seite).
+- Vorschlag: Datensätze, deren Sprache auf der Seite nicht existiert (und kein Fallback
+  greift), wie versteckte behandeln → nicht melden, aber zählen und im Modul als
+  „übersprungen: Seite nicht übersetzt“ zeigen (Waisen auffindbar).
+- **Offene Frage: eine Core-API nutzen statt selbst rechnen?** Kandidaten:
+  - `LanguageAspectFactory::createFromSiteLanguage()` + `PageRepository::getPageOverlay()`
+    / `getLanguageOverlay()` mit eigenem `Context` – dieselbe Logik wie das Frontend
+    (fallbackType strict/fallback/free, Fallback-Kette). Öffentliche API. Deckt Quelle
+    (ist der Datensatz in Sprache X sichtbar?) und Ziel (ist die verlinkte Seite in
+    Sprache X erreichbar?) mit einer Logik ab. Zu prüfen: Kosten pro Datensatz,
+    Verhalten außerhalb eines Frontend-Requests, Visibility-/Workspace-Aspekt.
+  - `PageLanguageInformationService::getLanguageInformationForPage()` (Backend, das
+    nutzt das Seitenmodul) – aber `@internal` und abhängig vom Backend-User → für die
+    Engine ungeeignet, höchstens als Referenz für „im Seitenmodul sichtbar“.
+  - Tendenz: Frontend-API (PageRepository + LanguageAspect), weil „für Besucher kaputt“
+    der Maßstab ist. Vor Umsetzung per Spike klären.
+
 ## UI/UX (v1)
 - Modul-Platzierung wie heute: unter „Link Management“ (`parent: link_management`,
   heute `linkvalidator_checklinks` nach `short_urls`).
