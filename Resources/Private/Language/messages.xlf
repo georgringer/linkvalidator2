@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file source-language="en" datatype="plaintext" original="EXT:linkvalidator2/Resources/Private/Language/messages.xlf" date="2026-10-08T12:00:00Z" product-name="linkvalidator2">
+    <header/>
+    <body>
+      <trans-unit id="report.headline">
+        <source>Broken links</source>
+      </trans-unit>
+      <trans-unit id="report.headlineWithPageTitle">
+        <source>Broken links on "%s"</source>
+      </trans-unit>
+      <trans-unit id="report.empty">
+        <source>No results yet.</source>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

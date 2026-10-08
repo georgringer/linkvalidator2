@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file source-language="en" datatype="plaintext" original="EXT:linkvalidator2/Resources/Private/Language/module.xlf" date="2026-10-08T12:00:00Z" product-name="linkvalidator2">
+    <header/>
+    <body>
+      <trans-unit id="title">
+        <source>Check Links (new)</source>
+      </trans-unit>
+      <trans-unit id="short_description">
+        <source>Find broken links to pages, records, files and external URLs</source>
+      </trans-unit>
+      <trans-unit id="description">
+        <source>Lists broken links in records of the selected page and its subpages.</source>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>
