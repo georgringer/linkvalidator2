@@ -23,18 +23,13 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use TYPO3\CMS\Backend\Utility\BackendUtility;
-use TYPO3\CMS\Linkvalidator2\Check\CheckerRegistry;
-use TYPO3\CMS\Linkvalidator2\Extraction\LinkExtractor;
-use TYPO3\CMS\Linkvalidator2\Target\LinkTargetFactory;
+use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
 
 #[AsCommand('linkvalidator2:check', 'Check links in records and store broken ones.')]
 final class CheckCommand extends Command
 {
     public function __construct(
-        private readonly LinkExtractor $linkExtractor,
-        private readonly LinkTargetFactory $linkTargetFactory,
-        private readonly CheckerRegistry $checkerRegistry,
+        private readonly RecordCheckService $recordCheckService,
     ) {
         parent::__construct();
     }
@@ -54,20 +49,14 @@ final class CheckCommand extends Command
                 $io->error('Option --record expects "table:uid", e.g. "tt_content:12".');
                 return Command::INVALID;
             }
-            $row = BackendUtility::getRecord($table, $uid);
-            if ($row === null) {
-                $io->error(sprintf('Record %s:%d not found.', $table, $uid));
-                return Command::FAILURE;
-            }
-            foreach ($this->linkExtractor->extract($table, $row, (int)$row['pid'], 0) as $candidate) {
-                $target = $this->linkTargetFactory->create($candidate);
-                $checker = $target !== null ? $this->checkerRegistry->getChecker($target->type) : null;
-                if ($target === null || $checker === null) {
-                    $io->writeln(sprintf('%s  %s  (skipped)', $candidate->field, $candidate->link));
-                    continue;
-                }
-                $result = $checker->check($target, $candidate);
-                $io->writeln(sprintf('%s  %s  %s %s', $candidate->field, $target->identifier, $result->status->value, $result->errorType));
+            foreach ($this->recordCheckService->checkRecord($table, $uid) as $checkedLink) {
+                $io->writeln(sprintf(
+                    '%s  %s  %s %s',
+                    $checkedLink->candidate->field,
+                    $checkedLink->target->identifier,
+                    $checkedLink->result->status->value,
+                    $checkedLink->result->errorType
+                ));
             }
             return Command::SUCCESS;
         }
