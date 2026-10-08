@@ -42,6 +42,14 @@ final readonly class LinkTargetFactory
         } catch (UnknownLinkHandlerException|UnknownUrnException|\InvalidArgumentException $e) {
             return LinkTarget::invalid($candidate->link, $e->getMessage());
         }
+        return $this->createFromResolved($resolved, $candidate);
+    }
+
+    /**
+     * @param array $resolved Link data as returned by LinkService::resolve()
+     */
+    public function createFromResolved(array $resolved, LinkCandidate $candidate): ?LinkTarget
+    {
         $type = (string)($resolved['type'] ?? LinkService::TYPE_UNKNOWN);
         return match ($type) {
             LinkService::TYPE_PAGE => $this->createPageTarget($candidate, $resolved),
@@ -60,9 +68,7 @@ final readonly class LinkTargetFactory
             LinkService::TYPE_EMAIL, LinkService::TYPE_TELEPHONE, LinkService::TYPE_INPAGE => null,
             // An internal link LinkService cannot resolve, e.g. a record link without identifier,
             // ends up in the legacy notation converter with an arbitrary type
-            default => str_starts_with(strtolower($candidate->link), 't3://')
-                ? LinkTarget::invalid($candidate->link, 'Link cannot be resolved')
-                : null,
+            default => $this->createUnresolvableTarget($candidate->link !== '' ? $candidate->link : (string)($resolved['url'] ?? '')),
         };
     }
 
@@ -91,5 +97,10 @@ final readonly class LinkTargetFactory
         $table = (string)($pageTsConfig['TCEMAIN.']['linkHandler.'][$identifier . '.']['configuration.']['table'] ?? $identifier);
         $resolved['table'] = $table;
         return new LinkTarget(LinkService::TYPE_RECORD, 'record:' . $table . ':' . $uid, $resolved);
+    }
+
+    private function createUnresolvableTarget(string $link): ?LinkTarget
+    {
+        return str_starts_with(strtolower($link), 't3://') ? LinkTarget::invalid($link, 'Link cannot be resolved') : null;
     }
 }

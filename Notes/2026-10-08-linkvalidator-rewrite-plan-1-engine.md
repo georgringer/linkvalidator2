@@ -1894,6 +1894,15 @@ git add -A && git commit -m "Process records from the status queue within a budg
 
 ---
 
+### Task 8b: RTE-Markierung (erledigt außerhalb der Reihenfolge)
+
+`Classes/EventListener/MarkBrokenRteLinkListener.php` auf `BrokenLinkAnalysisEvent`,
+`before` den alten linkvalidator-Listenern; `LinkTargetFactory::createFromResolved()`,
+`TargetRepository::findResult()`. Tests in Task 9 ergänzen: Seite hidden/expired/Sysfolder,
+Record hidden, Datei fehlt, `t3://record?uid=1` → markiert; sichtbare Seite → nicht markiert.
+
+---
+
 ### Task 9: Test-Infrastruktur und Tests (aufgeschoben, laut Absprache)
 
 Erst jetzt. Plan aus der Spec: PSR-4 für `TYPO3\CMS\Linkvalidator2\` und `…\Tests\` als

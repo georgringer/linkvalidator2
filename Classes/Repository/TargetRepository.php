@@ -18,6 +18,7 @@ namespace TYPO3\CMS\Linkvalidator2\Repository;
 
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Linkvalidator2\Check\CheckResult;
+use TYPO3\CMS\Linkvalidator2\Check\CheckStatus;
 use TYPO3\CMS\Linkvalidator2\Target\LinkTarget;
 
 final readonly class TargetRepository
@@ -27,6 +28,21 @@ final readonly class TargetRepository
     public function __construct(
         private ConnectionPool $connectionPool,
     ) {}
+
+    public function findResult(LinkTarget $target): ?CheckResult
+    {
+        $row = $this->connectionPool->getConnectionForTable(self::TABLE)
+            ->select(['status', 'error_type', 'error_details'], self::TABLE, ['identifier_hash' => $target->getHash()])
+            ->fetchAssociative();
+        if ($row === false || CheckStatus::tryFrom((string)$row['status']) === null) {
+            return null;
+        }
+        return new CheckResult(
+            CheckStatus::from((string)$row['status']),
+            (string)$row['error_type'],
+            (array)json_decode((string)$row['error_details'], true)
+        );
+    }
 
     public function store(LinkTarget $target, CheckResult $result, int $now): int
     {

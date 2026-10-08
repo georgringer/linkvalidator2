@@ -113,6 +113,20 @@
 - Aktionen: Bearbeiten (mit returnUrl), Ziel ausnehmen, Neu prüfen.
 - „Diesen Bereich prüfen“ mit Fortschrittsbalken; Info „zuletzt geprüft / nie geprüft“.
 
+## RTE-Markierung (v1-Pflicht)
+- Core `RteHtmlParser::markBrokenLinks()` dispatcht beim Öffnen im RTE pro Link ein
+  `BrokenLinkAnalysisEvent`; `data-rte-error` zeigt CKEditor (`typo3-link`) an.
+  Einziger Listener bisher: alter `CheckBrokenRteLinkEventListener` (nur Seite fehlt/
+  versteckt, Datei, externe aus `tx_linkvalidator_link`). Ersetzen ohne eigenen Listener
+  = Regression.
+- `MarkBrokenRteLinkListener`: nutzt dieselben Checker wie der Report, extern aus dem
+  Target-Cache (kein HTTP beim Öffnen). Läuft `before` den alten Listenern, weil
+  `markAsCheckedLink()` die Propagation stoppt.
+- Event kennt die Quelle nicht → Sprachregel (Schritt 7) und Record-TSconfig-Tabelle
+  (pid) greifen im RTE nicht; Fallback Identifier = Tabelle.
+- Beim Speichern normalisiert `TS_links_db()` Links über `LinkService::asString()`
+  (fehlende Datei → `href=""`, `t3://page` → `uid=current`).
+
 ## Datenmodell-Ergänzung
 - `tx_linkvalidator_broken_link.first_detected` schon in v1 (UI „kaputt seit“, später Mail-Delta).
 
@@ -141,7 +155,8 @@
 - [ ] Warnung „Ziel noch nicht sichtbar“ (starttime in Zukunft).
 - [ ] Seitenmodul-Callout „N kaputte Links auf dieser Seite“.
 - [ ] Hinweis im Bearbeitungsformular (FormEngine).
-- [ ] Dashboard-Widget, Badges im Seitenbaum, Markierung im RTE.
+- [ ] Modul: nach „Seite prüfen“ zeigen, welche Datensätze geprüft wurden (nicht nur Anzahl).
+- [ ] Dashboard-Widget, Badges im Seitenbaum.
 - [ ] FlexForms (Auto-Discovery über FlexFormFieldType, Pfad z. B.
       `pi_flexform:sDEF/settings.detailPid`).
 - [ ] Berechtigungen umsetzen (siehe oben), danach Modul für Redakteure öffnen.
