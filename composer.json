@@ -1,6 +1,6 @@
 {
 	"name": "typo3/cms-linkvalidator2",
-	"type": "typo3-cms-framework",
+	"type": "typo3-cms-extension",
 	"description": "TYPO3 CMS LinkValidator (rewrite) - Checks links in records and reports broken ones.",
 	"license": [
 		"GPL-2.0-or-later"
