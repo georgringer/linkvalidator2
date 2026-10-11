@@ -84,10 +84,11 @@ final readonly class RecordCheckService
         $skippedUnchecked = false;
         $seen = [];
         $exclusions = $this->exclusionRepository->findForPid($pid);
+        $excludedCount = 0;
         foreach ($this->linkExtractor->extract($table, $row, $pid, $language) as $candidate) {
             $target = $this->linkTargetFactory->create($candidate);
             $checker = $target !== null ? $this->checkerRegistry->getChecker($target->type) : null;
-            if ($target === null || $checker === null || $this->exclusionMatcher->isExcluded($exclusions, $target)) {
+            if ($target === null || $checker === null) {
                 continue;
             }
             // @todo Deduplicated per field only: the same target in two fields of a record yields
@@ -97,6 +98,10 @@ final readonly class RecordCheckService
                 continue;
             }
             $seen[$key] = true;
+            if ($this->exclusionMatcher->isExcluded($exclusions, $target)) {
+                $excludedCount++;
+                continue;
+            }
             $stored = $checker instanceof CacheableLinkCheckerInterface ? $this->targetRepository->findStored($target) : null;
             if ($stored !== null && (
                 $cachedOnly
@@ -121,7 +126,7 @@ final readonly class RecordCheckService
         // Notices are stored for the report, but the record is not broken because of them
         $brokenCount = count(array_filter($brokenLinks, static fn(array $brokenLink): bool => $brokenLink['result']->status !== CheckStatus::Info));
         // A link without stored result makes the record due: it is the first to be checked completely
-        $this->recordStatusRepository->markChecked($table, $uid, $pid, $language, $brokenCount, $skippedUnchecked ? 0 : $now);
+        $this->recordStatusRepository->markChecked($table, $uid, $pid, $language, $brokenCount, $skippedUnchecked ? 0 : $now, $excludedCount);
         return $checkedLinks;
     }
 

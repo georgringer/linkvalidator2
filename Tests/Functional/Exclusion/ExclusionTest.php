@@ -27,6 +27,7 @@ use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
 use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
 use TYPO3\CMS\Linkvalidator2\Exclusion\ExclusionMatcher;
 use TYPO3\CMS\Linkvalidator2\Exclusion\ExclusionRepository;
+use TYPO3\CMS\Linkvalidator2\Repository\RecordStatusRepository;
 use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
 use TYPO3\CMS\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
@@ -60,6 +61,28 @@ final class ExclusionTest extends FunctionalTestCase
         $this->get(RecordCheckService::class)->checkRecord('tt_content', 10);
 
         self::assertSame(['page:4', 'page:5', 'page:6', 'page:999', 'invalid:link.invalid:t3://gibtsnicht?uid=1'], $this->getReportedTargets(10));
+    }
+
+    #[Test]
+    public function excludedLinksAreCountedPerRecord(): void
+    {
+        $this->addExclusion(1, ['type' => 'page', 'target_page' => 3]);
+
+        $this->get(RecordCheckService::class)->checkRecord('tt_content', 10);
+
+        // Page 3 in bodytext and in header_link
+        self::assertSame(2, $this->get(RecordStatusRepository::class)->countExcluded([1]));
+    }
+
+    #[Test]
+    public function excludingAllLinksCountsEveryLink(): void
+    {
+        $this->addExclusion(1, ['type' => 'all']);
+
+        $this->get(RecordCheckService::class)->checkRecord('tt_content', 15);
+
+        self::assertSame(2, $this->get(RecordStatusRepository::class)->countExcluded([2]));
+        self::assertSame(0, $this->get(RecordStatusRepository::class)->countExcluded([1]));
     }
 
     #[Test]

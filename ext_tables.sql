@@ -47,6 +47,7 @@ CREATE TABLE tx_linkvalidator2_record_status (
 	workspace int(11) DEFAULT '0' NOT NULL,
 	last_checked int(11) unsigned DEFAULT '0' NOT NULL,
 	broken_count int(11) unsigned DEFAULT '0' NOT NULL,
+	excluded_count int(11) unsigned DEFAULT '0' NOT NULL,
 
 	PRIMARY KEY (uid),
 	UNIQUE KEY record (table_name, record_uid, workspace),

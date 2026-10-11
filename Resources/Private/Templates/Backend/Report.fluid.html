@@ -42,6 +42,14 @@
                     </div>
                 </div>
             </form>
+            <f:if condition="{excludedCount}">
+                <div class="mt-3">
+                    <f:be.infobox state="{f:constant(name: 'TYPO3\CMS\Core\Type\ContextualFeedbackSeverity::INFO')}">
+                        <f:translate key="linkvalidator2.messages:report.excludedCount" arguments="{count: excludedCount}" />
+                        <a href="{exclusionsUrl}"><f:translate key="linkvalidator2.messages:report.showExclusions" /></a>
+                    </f:be.infobox>
+                </div>
+            </f:if>
             <f:if condition="{brokenLinks}">
                 <f:then>
                     <f:render partial="Pagination" arguments="{pagination: pagination, pageUid: pageUid}" />
@@ -118,13 +126,33 @@
                     <f:render partial="Pagination" arguments="{pagination: pagination, pageUid: pageUid}" />
                 </f:then>
                 <f:else>
-                    <p class="mt-3"><f:translate key="{f:if(condition: filter.active, then: 'linkvalidator2.messages:report.emptyFiltered', else: 'linkvalidator2.messages:report.empty')}" /></p>
+                    <div class="mt-3">
+                        <f:if condition="{filter.active}">
+                            <f:then>
+                                <f:be.infobox state="{f:constant(name: 'TYPO3\CMS\Core\Type\ContextualFeedbackSeverity::INFO')}">
+                                    <f:translate key="linkvalidator2.messages:report.emptyFiltered" />
+                                </f:be.infobox>
+                            </f:then>
+                            <f:else if="{lastChecked}">
+                                <f:be.infobox title="{f:translate(key: 'linkvalidator2.messages:report.empty')}" state="{f:constant(name: 'TYPO3\CMS\Core\Type\ContextualFeedbackSeverity::OK')}">
+                                    <f:translate key="linkvalidator2.messages:report.lastChecked" arguments="{0: '{lastChecked -> f:format.date(format: \'d.m.Y H:i\')}'}" />
+                                </f:be.infobox>
+                            </f:else>
+                            <f:else>
+                                <f:be.infobox title="{f:translate(key: 'linkvalidator2.messages:report.notChecked')}" state="{f:constant(name: 'TYPO3\CMS\Core\Type\ContextualFeedbackSeverity::INFO')}">
+                                    <f:translate key="linkvalidator2.messages:report.notChecked.description" />
+                                </f:be.infobox>
+                            </f:else>
+                        </f:if>
+                    </div>
                 </f:else>
             </f:if>
         </f:then>
         <f:else>
             <h1><f:translate key="linkvalidator2.messages:report.headline" /></h1>
-            <p><f:translate key="linkvalidator2.messages:report.selectPage" /></p>
+            <f:be.infobox state="{f:constant(name: 'TYPO3\CMS\Core\Type\ContextualFeedbackSeverity::INFO')}">
+                <f:translate key="linkvalidator2.messages:report.selectPage" />
+            </f:be.infobox>
         </f:else>
     </f:if>
 </f:section>

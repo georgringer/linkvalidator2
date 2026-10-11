@@ -132,6 +132,9 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
   Datensatzes.
 - Bewusst nicht: Regex (eigener Matcher möglich), `excludedDomains` in der
   Extension-Konfiguration (später Site Setting, Schritt 6).
+- Zähler: `record_status.excluded_count` je Datensatz (je Feld + Ziel einmal), der Report
+  summiert ihn für die gewählten Seiten („N Links nicht geprüft wegen Ausschlüssen“).
+  Ausgeschlossene Links selbst werden weiter nicht gespeichert.
 - Offen: „Vorkommen akzeptieren“ (einzelner Link in einem Datensatz) als weiterer Typ.
 - Verworfen: „für die ganze Site ignorieren“ als Button (siteweit → Site Settings, s. u.),
   Grund beim Ignorieren abfragen (Feld im Formular reicht).

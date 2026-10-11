@@ -44,6 +44,7 @@ use TYPO3\CMS\Linkvalidator2\Report\ReportOrdering;
 use TYPO3\CMS\Linkvalidator2\Report\ReportPermissions;
 use TYPO3\CMS\Linkvalidator2\Report\ReportPermissionsFactory;
 use TYPO3\CMS\Linkvalidator2\Repository\BrokenLinkRepository;
+use TYPO3\CMS\Linkvalidator2\Repository\RecordStatusRepository;
 use TYPO3\CMS\Linkvalidator2\Service\PageRecordFinder;
 
 /**
@@ -67,6 +68,7 @@ final readonly class ReportController
         private BrokenLinkRepository $brokenLinkRepository,
         private TcaSchemaFactory $tcaSchemaFactory,
         private SiteFinder $siteFinder,
+        private RecordStatusRepository $recordStatusRepository,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -126,6 +128,10 @@ final readonly class ReportController
             'pagination' => $pagination,
             'columns' => $this->getColumns($pageUid, $ordering),
             'brokenLinks' => $this->getBrokenLinks($pageIds, $filter, $ordering, $pagination, $moduleUrl, $permissions),
+            'excludedCount' => $this->recordStatusRepository->countExcluded($pageIds),
+            'exclusionsUrl' => (string)$this->uriBuilder->buildUriFromRoute('linkvalidator2_report.exclusions', ['id' => $pageUid]),
+            // Tells an empty report of pages never checked from one without broken links
+            'lastChecked' => $pagination['total'] === 0 && !$filter->isActive() ? $this->recordStatusRepository->findLastChecked($pageIds) : 0,
         ]);
         return $view->renderResponse('Backend/Report');
     }

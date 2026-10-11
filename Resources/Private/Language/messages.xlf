@@ -64,34 +64,34 @@
         <source>The link cannot be resolved</source>
       </trans-unit>
       <trans-unit id="error.page.linksToItself">
-        <source>Page links to itself</source>
+        <source>Link page points to itself</source>
       </trans-unit>
       <trans-unit id="error.page.missing">
-        <source>Page does not exist</source>
+        <source>Linked page does not exist (deleted)</source>
       </trans-unit>
       <trans-unit id="error.page.hidden">
-        <source>Page is hidden</source>
+        <source>Linked page is hidden</source>
       </trans-unit>
       <trans-unit id="error.page.expired">
-        <source>Page has expired</source>
+        <source>Linked page is offline, its stop time has passed</source>
       </trans-unit>
       <trans-unit id="error.page.noFrontend">
-        <source>Page type has no frontend output</source>
+        <source>Linked page is a folder or spacer without frontend output</source>
       </trans-unit>
       <trans-unit id="error.page.hiddenByParent">
-        <source>Page is hidden by its parent page "%1$s", which extends to subpages</source>
+        <source>Linked page is hidden by its parent page "%1$s", which is hidden including subpages</source>
       </trans-unit>
       <trans-unit id="error.page.expiredByParent">
-        <source>Page has expired with its parent page "%1$s", which extends to subpages</source>
+        <source>Linked page is offline, the stop time of its parent page "%1$s" applies to subpages and has passed</source>
       </trans-unit>
       <trans-unit id="error.page.targetNotReachable">
-        <source>Shortcut or link page whose target is not reachable</source>
+        <source>Linked shortcut or link page leads nowhere, its target is not reachable</source>
       </trans-unit>
       <trans-unit id="error.page.notReachable">
-        <source>Page is not delivered by the frontend (code %1$s)</source>
+        <source>Linked page is not delivered by the frontend (code %1$s)</source>
       </trans-unit>
       <trans-unit id="error.page.noSite">
-        <source>Page does not belong to a site</source>
+        <source>Linked page does not belong to a site</source>
       </trans-unit>
       <trans-unit id="error.page.accessRestricted">
         <source>Linked page is only visible to logged-in website users (access restriction)%2$s</source>
@@ -106,25 +106,25 @@
         <source>, set on the parent page "%s" for its subpages</source>
       </trans-unit>
       <trans-unit id="error.record.missing">
-        <source>Record does not exist</source>
+        <source>Linked record does not exist (deleted)</source>
       </trans-unit>
       <trans-unit id="error.record.hidden">
-        <source>Record is hidden</source>
+        <source>Linked record is hidden</source>
       </trans-unit>
       <trans-unit id="error.record.expired">
-        <source>Record has expired</source>
+        <source>Linked record is offline, its stop time has passed</source>
       </trans-unit>
       <trans-unit id="error.record.unknownTable">
-        <source>Record table does not exist</source>
+        <source>Linked record type is unknown</source>
       </trans-unit>
       <trans-unit id="error.file.missing">
-        <source>File does not exist</source>
+        <source>Linked file does not exist</source>
       </trans-unit>
       <trans-unit id="error.folder.missing">
-        <source>Folder does not exist</source>
+        <source>Linked folder does not exist</source>
       </trans-unit>
       <trans-unit id="error.storage.offline">
-        <source>File storage is offline</source>
+        <source>File storage of the linked file is offline</source>
       </trans-unit>
       <trans-unit id="report.depth">
         <source>Levels</source>
@@ -173,6 +173,21 @@
       </trans-unit>
       <trans-unit id="filter.reset">
         <source>Reset</source>
+      </trans-unit>
+      <trans-unit id="report.excludedCount">
+        <source>{count, plural, one {# link is} other {# links are}} not checked because of exclusions.</source>
+      </trans-unit>
+      <trans-unit id="report.showExclusions">
+        <source>Show exclusions</source>
+      </trans-unit>
+      <trans-unit id="report.lastChecked">
+        <source>Last check: %s</source>
+      </trans-unit>
+      <trans-unit id="report.notChecked">
+        <source>Not checked yet</source>
+      </trans-unit>
+      <trans-unit id="report.notChecked.description">
+        <source>The links on these pages have not been checked yet. Start a check with "Check links" above, or wait for the next background run.</source>
       </trans-unit>
       <trans-unit id="report.emptyFiltered">
         <source>No broken links match the filter.</source>

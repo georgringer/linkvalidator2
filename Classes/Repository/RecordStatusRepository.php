@@ -27,11 +27,14 @@ final readonly class RecordStatusRepository
         private ConnectionPool $connectionPool,
     ) {}
 
-    public function markChecked(string $table, int $recordUid, int $pid, int $language, int $brokenCount, int $now): void
+    /**
+     * @param int $excludedCount Links not checked because of exclusions
+     */
+    public function markChecked(string $table, int $recordUid, int $pid, int $language, int $brokenCount, int $now, int $excludedCount = 0): void
     {
         $connection = $this->connectionPool->getConnectionForTable(self::TABLE);
         $identifier = ['table_name' => $table, 'record_uid' => $recordUid, 'workspace' => 0];
-        $data = ['pid' => $pid, 'language' => $language, 'last_checked' => $now, 'broken_count' => $brokenCount];
+        $data = ['pid' => $pid, 'language' => $language, 'last_checked' => $now, 'broken_count' => $brokenCount, 'excluded_count' => $excludedCount];
         if ($connection->count('uid', self::TABLE, $identifier) > 0) {
             $connection->update(self::TABLE, $data, $identifier);
             return;
@@ -85,6 +88,46 @@ final readonly class RecordStatusRepository
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
         return array_map(intval(...), $queryBuilder->select('pid')->from(self::TABLE)->groupBy('pid')->executeQuery()->fetchFirstColumn());
+    }
+
+    /**
+     * Links of the records on these pages not checked because of exclusions
+     *
+     * @param list<int> $pids
+     */
+    public function countExcluded(array $pids): int
+    {
+        $count = 0;
+        foreach (array_chunk($pids, 1000) as $chunk) {
+            $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+            $count += (int)$queryBuilder
+                ->selectLiteral('SUM(' . $queryBuilder->quoteIdentifier('excluded_count') . ')')
+                ->from(self::TABLE)
+                ->where($queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter($chunk, Connection::PARAM_INT_ARRAY)))
+                ->executeQuery()
+                ->fetchOne();
+        }
+        return $count;
+    }
+
+    /**
+     * Time of the latest check of a record on these pages, 0 if none was checked yet
+     *
+     * @param list<int> $pids
+     */
+    public function findLastChecked(array $pids): int
+    {
+        $lastChecked = 0;
+        foreach (array_chunk($pids, 1000) as $chunk) {
+            $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+            $lastChecked = max($lastChecked, (int)$queryBuilder
+                ->selectLiteral('MAX(' . $queryBuilder->quoteIdentifier('last_checked') . ')')
+                ->from(self::TABLE)
+                ->where($queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter($chunk, Connection::PARAM_INT_ARRAY)))
+                ->executeQuery()
+                ->fetchOne());
+        }
+        return $lastChecked;
     }
 
     /**
