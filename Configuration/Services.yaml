@@ -10,3 +10,7 @@ services:
   TYPO3\CMS\Linkvalidator2\Check\CheckerRegistry:
     arguments:
       $checkers: !tagged_iterator linkvalidator2.checker
+
+  # Instantiated by the DataHandler through GeneralUtility::makeInstance()
+  TYPO3\CMS\Linkvalidator2\Hook\DataHandlerHook:
+    public: true

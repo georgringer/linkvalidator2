@@ -17,7 +17,7 @@ wirklich kaputt, nicht editierbar, irrelevant oder veraltet.
 | 401/403 (Login) | ✅ unknown |
 | Felder, die für den Typ nicht gerendert werden (bodytext bei Plugins) | ✅ nur Felder des Record-Types |
 | Keine Rechte zum Bearbeiten | 📋 Berechtigungen (#105413, #104004), bis dahin admin-only |
-| Veraltete Ergebnisse (gefixt, gelöscht) | 🟡 Abgleich beim Prüfen einer Seite ✅ (#89426), gelöschte Seite, #105911, DataHandler Schritt 4 📋 |
+| Veraltete Ergebnisse (gefixt, gelöscht) | ✅ Abgleich beim Prüfen einer Seite + DataHandler-Hook (#89426, #105911) |
 | Ausschluss von URLs | 📋 Schritt 5 (#85127, #92822) |
 | `&nbsp;` in Text-URLs | ✅ #97937 |
 | Versteckte/unsichtbare Quelle | 🟡 eigener Datensatz ✅, Seite/Original/Sprache 📋 Schritt 7 (#94195) |

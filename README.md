@@ -26,6 +26,8 @@ Status: **work in progress**. Design decisions and the implementation plan live 
 bin/typo3 linkvalidator2:check --record=tt_content:471
 # check all records of a page and its subpages
 bin/typo3 linkvalidator2:check --page=1287 --depth=1
+# background run (scheduler): records never checked, due ones, then those older than 24 h
+bin/typo3 linkvalidator2:check --time-limit=300 --interval=24
 ```
 
 Backend: *Link Management → Check Links (new)* (admins only for now), select a page,
@@ -98,15 +100,15 @@ solved ones in `done/`.
 | Exclude link targets (URL / domain) | ❌ | ✅ records + own module | ❌ | 📋 step 5: records, tab in module, custom permission | #85127, #92822 |
 | Accept a single occurrence | ❌ | ❌ | ❌ | 📋 later | |
 | **Running checks** | | | | | |
-| Scheduler | ✅ own scheduler task | ✅ schedulable command | ❌ | 📋 task 8: command via "Execute console commands" | |
+| Scheduler | ✅ own scheduler task | ✅ schedulable command | ✅ queue command via "Execute console commands", lock against overlapping runs | | |
 | Disable on staging (survives DB sync) | ❌ task lives in the DB | ❓ | ❌ | 📋 mail report per site: recipients via `%env()%`, global switch in extension configuration | #110615 |
-| CLI command | ❌ | ✅ `brofix:checklinks` | ✅ `--record`, `--page`, `--depth`, `--no-external` | 📋 task 8: queue with `--limit` / `--time-limit` | |
+| CLI command | ❌ | ✅ `brofix:checklinks` | ✅ `--record`, `--page`, `--depth`, `--no-external`; without them the queue: never checked, due, older than `--interval` (24 h), with `--limit` / `--time-limit` | 📋 `--site` | |
 | Link types to check | 🟡 TSconfig `linktypes`, report shows stale results of the other types | ✅ | ✅ always all links of a record, results replaced per record; link type is a report filter | | #92586 |
 | Interactive check of large trees without timeouts | ❌ synchronous | ❓ not verified | ✅ browser checks page by page via AJAX (5 s budget per request, a page continues in the next request), progress bar, cancel, summary notification with new broken links | | #89266 |
 | Report during a running check / parallel checks | ❌ list emptied first, duplicates | ❓ | 🟡 previous results stay visible, report reloads when done; parallel runs not locked | 📋 transaction in `replaceForRecord()` | #89266 |
-| Recheck on save | 🟡 when returning to the module (`actionAfterEditRecord`) | 🟡 when returning to the module | ❌ | 📋 step 4: DataHandler, internal immediately, external from cache | #105911 |
-| Clean up on delete / move | ❌ deleted pages stay forever | ✅ delete | 🟡 checking a page removes results of records no longer on it (deleted, moved); results of a deleted page itself stay (hidden in the report) | 📋 step 4 (DataHandler), orphan cleanup | #89426 |
-| Record hidden after the check | ❌ stays in the report | ❓ | 🟡 removed on the next check of the record | 📋 step 4 (DataHandler) | #105911 |
+| Recheck on save | 🟡 when returning to the module (`actionAfterEditRecord`) | 🟡 when returning to the module | ✅ DataHandler hook (save, new, move, restore, copy, localize, publish): internal immediately, external from cache, records with unchecked URLs become due | 📋 records linking to a page whose visibility changed are not rechecked | #105911 |
+| Clean up on delete / move | ❌ deleted pages stay forever | ✅ delete | ✅ DataHandler: delete removes results (incl. translations, everything below a deleted page), move updates the page; checking a page reconciles changes made around the DataHandler | 📋 orphan cleanup in the queue run | #89426 |
+| Record hidden after the check | ❌ stays in the report | ❓ | ✅ removed when saved; an end time passing removes it with the next check | | #105911 |
 | Results kept between runs | ❌ list is rebuilt | ✅ updated | ✅ only changed records rewritten, `first_detected` kept | | |
 | **Backend module** | | | | | |
 | Placement | Link Management | own module | ✅ Link Management | | |

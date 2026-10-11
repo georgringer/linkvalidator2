@@ -77,4 +77,26 @@ final readonly class RecordStatusRepository
             ->fetchAllAssociative();
         return array_map(static fn(array $row): array => ['table' => (string)$row['table_name'], 'uid' => (int)$row['record_uid']], $rows);
     }
+
+    /**
+     * @return list<int>
+     */
+    public function findPids(): array
+    {
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+        return array_map(intval(...), $queryBuilder->select('pid')->from(self::TABLE)->groupBy('pid')->executeQuery()->fetchFirstColumn());
+    }
+
+    /**
+     * @param list<int> $pids
+     */
+    public function removeByPids(array $pids): void
+    {
+        foreach (array_chunk($pids, 1000) as $chunk) {
+            $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+            $queryBuilder->delete(self::TABLE)
+                ->where($queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter($chunk, Connection::PARAM_INT_ARRAY)))
+                ->executeStatement();
+        }
+    }
 }

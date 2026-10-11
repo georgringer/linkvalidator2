@@ -1,7 +1,7 @@
 # #89426 – Remove stale broken links in tx_linkvalidator_link
 
 - Forge: https://forge.typo3.org/issues/89426 (Feature, New, angelegt 2019-10-15)
-- **Status linkvalidator2:** 🟡 teilweise – Datensätze ✅, gelöschte Seite selbst ❌
+- **Status linkvalidator2:** ✅ gelöst (2026-10-11)
 
 ## Problem
 
@@ -41,3 +41,17 @@ Offen – genau der Fall aus dem Issue: **die gelöschte Seite selbst**. Sie ist
 im Baum, ihre `pid` wird nie mehr geprüft; die Zeilen bleiben in der DB (im Report
 unsichtbar). Lösung über Teil 2 (DataHandler) bzw. Teil 3 (Waisen-Cleanup: Zeilen, deren
 `pid` auf keine bestehende Seite zeigt).
+
+## Lösung DataHandler (2026-10-11)
+
+`Hook/DataHandlerHook` (processDatamapClass/processCmdmapClass, nur Live-Workspace,
+Publizieren zählt als Änderung): gespeicherte, neue, verschobene, wiederhergestellte,
+kopierte und übersetzte Datensätze werden nach dem DataHandler-Lauf geprüft (intern sofort,
+extern aus dem Cache, ungecachte extern → Datensatz fällig, `last_checked = 0`). Löschen
+gleicht die Seite des Datensatzes ab (auch mitgelöschte Übersetzungen); Löschen einer Seite
+entfernt alle Ergebnisse, deren Seite nicht mehr existiert
+(`RecordCheckService::removeResultsOfMissingPages()`). Fehler blockieren das Speichern nie.
+Tests: `Tests/Functional/Hook/DataHandlerHookTest.php`.
+
+Bleibt (nicht Teil dieses Issues): Änderungen am DataHandler vorbei (SQL, Import) – Abgleich
+beim Prüfen einer Seite deckt Datensätze ab, Waisen-Cleanup im Queue-Lauf für den Rest.

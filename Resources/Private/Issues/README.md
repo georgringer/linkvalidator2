@@ -18,7 +18,6 @@ Source: https://forge.typo3.org/projects/typo3cms-core/issues?set_filter=1&f[]=s
 | [#107983](107983-workspace-users.md) | Make Link Validator (linkvalidator) accessible for Preview-Workspace users | 📋 offen (Berechtigungen, Workspaces) |
 | [#106677](106677-mail-report-clickable-urls.md) | Improve Linkvalidator broken URL output in E-Mail Report | 📋 offen (Mail-Report, später) |
 | [#106487](106487-mail-report-template.md) | Improve linkvalidator report mail template | 📋 offen (Mail-Report, später) |
-| [#105911](105911-hide-results-for-hidden-records.md) | Linkvalidator should hide results for hidden records | 🟡 teilweise |
 | [#105413](105413-permissions-page-attributes.md) | Linkvalidator BE-Module wrong permissions for invalid links in page attributes | 🟡 Ursache im Datenmodell gelöst, Berechtigungen 📋 offen |
 | [#104004](104004-authmode-permissions.md) | Incorrect handling of authMode in EditableRestriction in linkvalidator | 📋 offen (Berechtigungen) |
 | [#101935](101935-curl-error-codes.md) | Better handling of curl error codes in linkvalidator | 🟡 teilweise |
@@ -27,7 +26,6 @@ Source: https://forge.typo3.org/projects/typo3cms-core/issues?set_filter=1&f[]=s
 | [#94195](94195-translation-of-hidden-original.md) | Translated (connected mode) content will still get checked by linkvalidator if original content is hidden | 📋 offen (Schritt 7: Sprachregel) |
 | [#92822](92822-ignore-button.md) | Ignore button for link targets | 📋 offen (Schritt 5: Ziel-Ausschlüsse) |
 | [#92542](92542-shortcut-pages.md) | Linkvalidator should check shortcut pages | 🟡 teilweise |
-| [#89426](89426-remove-stale-broken-links.md) | Remove stale broken links in tx_linkvalidator_link | 🟡 teilweise – Datensätze ✅, gelöschte Seite selbst ❌ |
 | [#89287](89287-polite-crawling.md) | Make linkvalidator crawling polite | 🟡 teilweise |
 | [#89266](89266-concurrent-checks-feedback.md) | Prevention of running link checking more than once and visible feedback about still running checks | 🟡 teilweise – Feedback ✅, Parallelität 📋 |
 | [#85127](85127-exclude-urls-domains.md) | linkvalidator: Add possibility to exclude specific external URLs / domains  or patterns | 📋 offen (Schritt 5: Ziel-Ausschlüsse) |
@@ -37,6 +35,8 @@ Source: https://forge.typo3.org/projects/typo3cms-core/issues?set_filter=1&f[]=s
 
 | Issue | Subject | Status linkvalidator2 |
 |---|---|---|
+| [#89426](done/89426-remove-stale-broken-links.md) | Remove stale broken links in tx_linkvalidator_link | ✅ gelöst (2026-10-11) |
+| [#105911](done/105911-hide-results-for-hidden-records.md) | Linkvalidator should hide results for hidden records | ✅ gelöst (2026-10-11) |
 | [#106675](done/106675-page-hidden-via-rootline.md) | Checking links to pages does not check if page is hidden via rootline (e.g. if child of hidden=1 and extendToSubpages=1) | ✅ gelöst (2026-10-11) |
 | [#101367](done/101367-page-child-of-hidden-extend-to-subpages.md) | page link to not hidden child of hidden page with extendToSubpages is not considered broken (linkvalidator) | ✅ gelöst (2026-10-11) |
 | [#94086](done/94086-custom-linkhandler.md) | Softref for custom linkhandler | ✅ gelöst (2026-10-11) |

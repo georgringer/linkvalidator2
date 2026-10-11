@@ -19,11 +19,20 @@ forgotten.
 
 ## For integrators
 
+- Saving in the backend checks the saved records right away: internal links immediately,
+  external URLs from the cache. Records with external URLs not checked yet become due for
+  the next background run. Deleting removes the results. Only the live workspace is
+  checked, publishing counts as saving.
+
 - Extension configuration: `excludedFields`, `externalCacheLifetime`,
   `externalTimeout`, `externalUserAgent`.
 - No Page TSconfig any more (`mod.linkvalidator.*`), migration table in the breaking
   changelog.
-- Scheduler: "Execute console commands" with `linkvalidator2:check` (once the queue exists).
+- Scheduler: task "Execute console commands" with `linkvalidator2:check` and e.g.
+  `--time-limit=300`. Each run checks records never checked first, then records marked due
+  (saved with external URLs not checked yet), then records checked longer ago than
+  `--interval` hours (default 24). `--limit` caps the number of records. Overlapping runs
+  are prevented by a lock. Results of deleted pages are cleaned up at the start.
 - `robots.txt` is not respected on purpose: single HEAD requests to linked URLs, not a
   crawler (Forge #89287).
 
@@ -84,6 +93,12 @@ rendering, see Notes "Frontend-Wahrheit"). Whoever needs the rendered result –
 `#c123` that only exist in the HTML – can register a checker for the type `page` that
 requests the frontend over HTTP, like cs_seo's `FrontendPageService` (`PreviewUriBuilder`,
 `RequestFactory`, forwarding basic auth). Document as an example once decided.
+
+### Labels in JavaScript
+
+`check-links.js` imports its labels as `~labels/linkvalidator2.messages` and formats them
+with ICU MessageFormat (`{count, plural, one {…} other {…}}`), no labels in data attributes.
+On the core move the domain becomes `linkvalidator.messages`.
 
 ### Open for extensibility
 

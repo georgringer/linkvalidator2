@@ -25,6 +25,10 @@
 - Vor Gerrit-Einzug: volle Testabdeckung (Unit + Functional) Pflicht.
 
 ## Bau-Reihenfolge
+
+(Stand 2026-10-11: 1, 2, 3 umgesetzt; 4 DataHandler umgesetzt, `Hook/DataHandlerHook`; Queue-Command
+(Task 8) umgesetzt: `RecordQueue` – nie geprüft (LEFT JOIN) → fällig (0) → älter als `--interval`,
+Keyset-Cursor, Lock `linkvalidator2-queue`, Waisen-Cleanup zu Beginn; 2.000 Datensätze ~10 s ohne extern.)
 1. Engine (Tabellen, Schema-Extraktion + Opt-out, Softref → LinkService → Checker,
    CheckResult, Status-Queue, Command; Checker page/record/file)
 2. Externe Links  3. Modul (admin-only)  4. DataHandler  5. Ziel-Ausschlüsse
@@ -328,7 +332,14 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 ## TODO später
 - [ ] Vorkommen akzeptieren (Flag auf Link-Zeile, taucht bei Fehleränderung/
       Bearbeitung wieder auf).
-- [ ] Eager-Befüllung der Status-Tabelle (DataHandler beim Anlegen + Initial-Command).
+- [ ] Eager-Befüllung der Status-Tabelle (Initial-Command; DataHandler legt seit Schritt 4
+      beim Anlegen an).
+- [x] Notification-Text: Singular/Plural – ICU-Labels + `~labels/linkvalidator2.messages` im JS (2026-10-11).
+- [ ] **Ziel ändert sich** (Seite versteckt/eingeschränkt/gelöscht nach dem Verlinken):
+      Datensätze, die darauf verlinken, werden beim Speichern der Zielseite nicht neu
+      geprüft (OK-Links sind nicht gespeichert). Über `sys_refindex` (ref_table/ref_uid,
+      bei extendToSubpages auch Unterseiten) die verlinkenden Datensätze finden und neu
+      prüfen bzw. fällig markieren.
 - [ ] Messenger als Transport für Hintergrund-Prüfung.
 - [ ] Workspace-Prüfung (Quelle + Ziel-Sicht, Publish/Discard umhängen).
 - [ ] Events (alle): welche Erweiterungspunkte braucht es wirklich.

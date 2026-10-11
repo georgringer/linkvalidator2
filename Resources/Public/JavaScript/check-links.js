@@ -13,6 +13,7 @@
 
 import AjaxRequest from '@typo3/core/ajax/ajax-request.js';
 import Notification from '@typo3/backend/notification.js';
+import labels from '~labels/linkvalidator2.messages';
 import '@typo3/backend/element/progress-bar-element.js';
 
 /**
@@ -26,7 +27,6 @@ class CheckLinks {
   constructor(button, progress) {
     this.button = button;
     this.progress = progress;
-    this.labels = progress.dataset;
     this.progressBar = progress.querySelector('typo3-backend-progress-bar');
     this.cancelButton = progress.querySelector('[data-linkvalidator2-check-cancel]');
     this.cancelled = false;
@@ -37,7 +37,7 @@ class CheckLinks {
     this.cancelButton.addEventListener('click', () => {
       this.cancelled = true;
       this.cancelButton.disabled = true;
-      this.progressBar.label = this.labels.labelCancelling;
+      this.progressBar.label = labels.get('check.cancelling');
     });
   }
 
@@ -46,7 +46,7 @@ class CheckLinks {
     this.button.disabled = true;
     this.cancelButton.disabled = false;
     this.progress.hidden = false;
-    this.update(0, 1, this.labels.labelStarting);
+    this.update(0, 1, labels.get('check.starting'));
     try {
       const start = await (await new AjaxRequest(TYPO3.settings.ajaxUrls.linkvalidator2_check_start)
         .withQueryArguments({ id: this.button.dataset.pageId, depth: this.button.dataset.depth })
@@ -70,17 +70,17 @@ class CheckLinks {
         newBrokenLinks += result.newBrokenLinkCount;
         notices += result.noticeCount;
         if (!this.cancelled) {
-          this.update(checkedPages, pageIds.length, this.format(this.labels.labelProgress, checkedPages, pageIds.length, brokenLinks, newBrokenLinks));
+          this.update(checkedPages, pageIds.length, labels.get('check.progress', { page: checkedPages, pages: pageIds.length, broken: brokenLinks, new: newBrokenLinks }));
         }
       }
       if (this.cancelled) {
-        Notification.info(this.labels.labelDone, this.format(this.labels.labelCancelled, checkedPages, pageIds.length));
+        Notification.info(labels.get('check.done'), labels.get('check.cancelled', { checked: checkedPages, pages: pageIds.length }));
       } else {
-        const message = this.format(this.labels.labelDoneMessage, checkedPages, brokenLinks, newBrokenLinks, notices);
+        const message = labels.get('check.doneMessage', { pages: checkedPages, broken: brokenLinks, new: newBrokenLinks, notices });
         if (newBrokenLinks > 0) {
-          Notification.warning(this.labels.labelDone, message);
+          Notification.warning(labels.get('check.done'), message);
         } else {
-          Notification.success(this.labels.labelDone, message);
+          Notification.success(labels.get('check.done'), message);
         }
       }
       window.location.reload();
@@ -89,7 +89,7 @@ class CheckLinks {
       if (typeof error?.resolve === 'function') {
         message = (await error.resolve().catch(() => ({})))?.error ?? '';
       }
-      Notification.error(this.labels.labelFailed, message);
+      Notification.error(labels.get('check.failed'), message);
       this.progress.hidden = true;
       this.button.disabled = false;
     }
@@ -122,9 +122,6 @@ class CheckLinks {
     this.progressBar.label = label;
   }
 
-  format(label, ...values) {
-    return values.reduce((text, value, index) => text.replace('%' + (index + 1) + '$d', String(value)), label);
-  }
 }
 
 const button = document.querySelector('[data-linkvalidator2-check]');

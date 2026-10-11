@@ -19,7 +19,7 @@
         <source>Check links</source>
       </trans-unit>
       <trans-unit id="check.progress">
-        <source>Page %1$d of %2$d checked, %3$d broken links so far (%4$d new)</source>
+        <source>Page {page} of {pages} checked, {broken, plural, =0 {no broken links} one {# broken link} other {# broken links}} so far ({new} new)</source>
       </trans-unit>
       <trans-unit id="check.starting">
         <source>Collecting pages…</source>
@@ -34,10 +34,10 @@
         <source>Links checked</source>
       </trans-unit>
       <trans-unit id="check.doneMessage">
-        <source>%1$d pages checked, %2$d broken links, %3$d of them new. %4$d notices.</source>
+        <source>{pages, plural, one {# page} other {# pages}} checked: {broken, plural, =0 {no broken links} one {# broken link} other {# broken links}} ({new} new), {notices, plural, =0 {no notices} one {# notice} other {# notices}}.</source>
       </trans-unit>
       <trans-unit id="check.cancelled">
-        <source>Checking stopped after %1$d of %2$d pages.</source>
+        <source>Checking stopped after {checked} of {pages, plural, one {# page} other {# pages}}.</source>
       </trans-unit>
       <trans-unit id="check.failed">
         <source>Checking links failed</source>

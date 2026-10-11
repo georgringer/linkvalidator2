@@ -1721,6 +1721,9 @@ git add -A && git commit -m "Check a record and persist broken links and status"
 
 ### Task 8: Queue und Budget-Lauf
 
+**Erledigt 2026-10-11** (abweichend vom Entwurf unten: Keyset-Cursor statt erneuter Abfrage,
+`--interval`, Lock, Waisen-Cleanup; Tests `CheckCommandQueueTest`).
+
 **Files:**
 - Create: `Classes/Service/RecordQueue.php`
 - Modify: `Classes/Command/CheckCommand.php` (Optionen `--limit`, `--time-limit`)

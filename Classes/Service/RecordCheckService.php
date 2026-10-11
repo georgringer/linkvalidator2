@@ -18,9 +18,13 @@ namespace TYPO3\CMS\Linkvalidator2\Service;
 
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Context\Context;
+use TYPO3\CMS\Core\Database\Connection;
+use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Schema\Capability\TcaSchemaCapability;
 use TYPO3\CMS\Core\Schema\TcaSchema;
 use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Linkvalidator2\Check\CacheableLinkCheckerInterface;
 use TYPO3\CMS\Linkvalidator2\Check\CheckerRegistry;
 use TYPO3\CMS\Linkvalidator2\Check\CheckStatus;
@@ -41,6 +45,7 @@ final readonly class RecordCheckService
         private BrokenLinkRepository $brokenLinkRepository,
         private RecordStatusRepository $recordStatusRepository,
         private Context $context,
+        private ConnectionPool $connectionPool,
     ) {}
 
     /**
@@ -72,6 +77,7 @@ final readonly class RecordCheckService
 
         $checkedLinks = [];
         $brokenLinks = [];
+        $skippedUnchecked = false;
         $seen = [];
         foreach ($this->linkExtractor->extract($table, $row, $pid, $language) as $candidate) {
             $target = $this->linkTargetFactory->create($candidate);
@@ -95,7 +101,7 @@ final readonly class RecordCheckService
                 // Reused results keep their check time, so they expire after the cache lifetime
                 ['uid' => $targetUid, 'result' => $result] = $stored;
             } elseif ($cachedOnly && $checker instanceof CacheableLinkCheckerInterface) {
-                // @todo Mark the record as due for a full check once there is a queue (task 8)
+                $skippedUnchecked = true;
                 continue;
             } else {
                 $result = $checker->check($target, $candidate);
@@ -109,7 +115,8 @@ final readonly class RecordCheckService
         $this->brokenLinkRepository->replaceForRecord($table, $uid, $brokenLinks, $now);
         // Notices are stored for the report, but the record is not broken because of them
         $brokenCount = count(array_filter($brokenLinks, static fn(array $brokenLink): bool => $brokenLink['result']->status !== CheckStatus::Info));
-        $this->recordStatusRepository->markChecked($table, $uid, $pid, $language, $brokenCount, $now);
+        // A link without stored result makes the record due: it is the first to be checked completely
+        $this->recordStatusRepository->markChecked($table, $uid, $pid, $language, $brokenCount, $skippedUnchecked ? 0 : $now);
         return $checkedLinks;
     }
 
@@ -132,6 +139,39 @@ final readonly class RecordCheckService
                 $this->recordStatusRepository->remove($table, $uid);
             }
         }
+    }
+
+    /**
+     * Removes stored results of records whose page no longer exists, e.g. below a deleted page.
+     */
+    public function removeResultsOfMissingPages(): void
+    {
+        $pids = array_values(array_unique([...$this->recordStatusRepository->findPids(), ...$this->brokenLinkRepository->findPids()]));
+        $missing = array_diff($pids, $this->findExistingPages($pids), [0]);
+        if ($missing !== []) {
+            $this->brokenLinkRepository->removeByPids($missing);
+            $this->recordStatusRepository->removeByPids($missing);
+        }
+    }
+
+    /**
+     * @param list<int> $pids
+     * @return list<int>
+     */
+    private function findExistingPages(array $pids): array
+    {
+        $existing = [];
+        foreach (array_chunk($pids, 1000) as $chunk) {
+            $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
+            $queryBuilder->getRestrictions()->removeAll()->add(GeneralUtility::makeInstance(DeletedRestriction::class));
+            $existing = [...$existing, ...array_map(intval(...), $queryBuilder
+                ->select('uid')
+                ->from('pages')
+                ->where($queryBuilder->expr()->in('uid', $queryBuilder->createNamedParameter($chunk, Connection::PARAM_INT_ARRAY)))
+                ->executeQuery()
+                ->fetchFirstColumn())];
+        }
+        return $existing;
     }
 
     /**
