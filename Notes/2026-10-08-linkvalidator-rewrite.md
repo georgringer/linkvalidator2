@@ -379,11 +379,12 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 - [ ] Eager-Befüllung der Status-Tabelle (Initial-Command; DataHandler legt seit Schritt 4
       beim Anlegen an).
 - [x] Notification-Text: Singular/Plural – ICU-Labels + `~labels/linkvalidator2.messages` im JS (2026-10-11).
-- [ ] **Ziel ändert sich** (Seite versteckt/eingeschränkt/gelöscht nach dem Verlinken):
-      Datensätze, die darauf verlinken, werden beim Speichern der Zielseite nicht neu
-      geprüft (OK-Links sind nicht gespeichert). Über `sys_refindex` (ref_table/ref_uid,
-      bei extendToSubpages auch Unterseiten) die verlinkenden Datensätze finden und neu
-      prüfen bzw. fällig markieren.
+- [x] **Ziel ändert sich** (2026-10-11): Ändert sich ein Datensatz (Update, Löschen,
+      Verschieben, Wiederherstellen), werden alle Datensätze, die laut `sys_refindex` auf ihn
+      verweisen (prüfbare Tabellen, Live), **fällig markiert** – allgemein, ohne Feld- oder
+      Typ-Sonderfälle. Nicht sofort geprüft: der Hook läuft vor dem Cache-Clear des
+      DataHandlers, die Seitenauflösung sähe den alten Stand (Runtime-Cache ohne Tags).
+      `extendToSubpages` bewusst nicht (Unterseiten): fängt der Queue-Lauf ab.
 - [ ] Messenger als Transport für Hintergrund-Prüfung.
 - [ ] Workspace-Prüfung (Quelle + Ziel-Sicht, Publish/Discard umhängen).
 - [ ] Events (alle): welche Erweiterungspunkte braucht es wirklich.

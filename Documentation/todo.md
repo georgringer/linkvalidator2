@@ -37,6 +37,9 @@ forgotten.
   external URLs from the cache. Records with external URLs not checked yet become due for
   the next background run. Deleting removes the results. Only the live workspace is
   checked, publishing counts as saving.
+- Changing a record (e.g. hiding or deleting a page) makes the records linking to it due,
+  found through the reference index: the next background run or "Check links" reports the
+  link. Keep the reference index up to date after imports around the DataHandler.
 
 - Extension configuration: `excludedFields`, `externalCacheLifetime`,
   `externalTimeout`, `externalUserAgent`.

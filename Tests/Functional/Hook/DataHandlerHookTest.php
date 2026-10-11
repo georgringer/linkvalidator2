@@ -18,6 +18,7 @@ declare(strict_types=1);
 namespace TYPO3\CMS\Linkvalidator2\Tests\Functional\Hook;
 
 use PHPUnit\Framework\Attributes\Test;
+use TYPO3\CMS\Core\Cache\CacheManager;
 use TYPO3\CMS\Core\DataHandling\DataHandler;
 use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -140,6 +141,57 @@ final class DataHandlerHookTest extends FunctionalTestCase
         // Requesting the URL would have reported the .invalid host as broken
         self::assertSame([], $this->getErrorTypes($uid));
         self::assertSame(0, $this->getStatus($uid)['last_checked']);
+    }
+
+    /**
+     * The target changes, not the record with the link: records referencing it become due
+     */
+    #[Test]
+    public function recordsLinkingToAChangedPageBecomeDue(): void
+    {
+        $uid = $this->createContentLinkingTo(2);
+        $otherUid = $this->createContentLinkingTo(1);
+
+        $this->process(['pages' => [2 => ['hidden' => 1]]]);
+
+        self::assertSame(0, $this->getStatus($uid)['last_checked']);
+        self::assertGreaterThan(0, $this->getStatus($otherUid)['last_checked'], 'Not linking to the page');
+    }
+
+    #[Test]
+    public function recordsLinkingToADeletedPageBecomeDue(): void
+    {
+        $uid = $this->createContentLinkingTo(2);
+
+        $this->process([], ['pages' => [2 => ['delete' => 1]]]);
+
+        self::assertSame(0, $this->getStatus($uid)['last_checked']);
+    }
+
+    #[Test]
+    public function dueRecordReportsTheHiddenTargetWhenChecked(): void
+    {
+        $uid = $this->createContentLinkingTo(2);
+        $this->process(['pages' => [2 => ['hidden' => 1]]]);
+        // The queue checks in a request of its own
+        $this->get(CacheManager::class)->getCache('runtime')->flush();
+
+        $this->get(RecordCheckService::class)->checkRecord('tt_content', $uid);
+
+        self::assertSame(['page.hidden'], $this->getErrorTypes($uid));
+    }
+
+    private function createContentLinkingTo(int $pageUid): int
+    {
+        $dataHandler = $this->process(['tt_content' => ['NEW1' => [
+            'pid' => 1,
+            'CType' => 'text',
+            'header' => 'Link',
+            'bodytext' => '<p><a href="t3://page?uid=' . $pageUid . '">target</a></p>',
+        ]]]);
+        $uid = (int)$dataHandler->substNEWwithIDs['NEW1'];
+        self::assertSame([], $this->getErrorTypes($uid), 'Target is reachable at first');
+        return $uid;
     }
 
     private function process(array $data, array $commands = []): DataHandler

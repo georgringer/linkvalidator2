@@ -23,7 +23,9 @@ use TYPO3\CMS\Core\Utility\MathUtility;
 use TYPO3\CMS\Linkvalidator2\Exclusion\ExclusionChangeProcessor;
 use TYPO3\CMS\Linkvalidator2\Exclusion\ExclusionRepository;
 use TYPO3\CMS\Linkvalidator2\Extraction\CheckableFieldResolver;
+use TYPO3\CMS\Linkvalidator2\Repository\RecordStatusRepository;
 use TYPO3\CMS\Linkvalidator2\Service\PageRecordFinder;
+use TYPO3\CMS\Linkvalidator2\Service\ReferencingRecordFinder;
 use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
 
 /**
@@ -31,7 +33,10 @@ use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
  * once the DataHandler is done (internal targets immediately, external ones from the cache,
  * records with external links not checked yet become due), deleted records and pages lose
  * their results. Only the live workspace is checked; publishing counts as a change.
- * Changed exclusions are applied to the results of their subtree.
+ * Changed exclusions are applied to the results of their subtree. When a record changes, the
+ * records referencing it (reference index) become due, as their links may point to it: e.g.
+ * a page that got hidden or deleted. They are not checked right away: the hook runs before
+ * the DataHandler clears the caches, so the page resolution would still see the old state.
  *
  * Never lets checking break saving: failures are logged.
  *
@@ -47,6 +52,9 @@ final class DataHandlerHook
     /** @var array<string, true>|null */
     private ?array $checkableTables = null;
 
+    /** @var array<string, array<int, int>> Changed records, by table, whose referencing records become due */
+    private array $targets = [];
+
     /** @var array<int, true> Pages with exclusions that apply now */
     private array $addedExclusionPids = [];
 
@@ -58,6 +66,8 @@ final class DataHandlerHook
         private readonly PageRecordFinder $pageRecordFinder,
         private readonly CheckableFieldResolver $checkableFieldResolver,
         private readonly ExclusionChangeProcessor $exclusionChangeProcessor,
+        private readonly ReferencingRecordFinder $referencingRecordFinder,
+        private readonly RecordStatusRepository $recordStatusRepository,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -73,6 +83,9 @@ final class DataHandlerHook
             return;
         }
         $this->remember($table, $uid);
+        if ($status !== 'new') {
+            $this->rememberTarget($table, $uid);
+        }
     }
 
     public function processDatamap_afterAllOperations(DataHandler $dataHandler): void
@@ -104,6 +117,9 @@ final class DataHandlerHook
         }
         if (!$this->isLiveWorkspace($dataHandler)) {
             return;
+        }
+        if (in_array($command, ['delete', 'undelete', 'move'], true)) {
+            $this->rememberTarget($table, $uid);
         }
         match (true) {
             $command === 'delete' => $this->removeResultsOfDeleted($table, $uid),
@@ -143,6 +159,13 @@ final class DataHandlerHook
         }
     }
 
+    private function rememberTarget(string $table, int $uid): void
+    {
+        if ($uid > 0) {
+            $this->targets[$table][$uid] = $uid;
+        }
+    }
+
     private function checkRemembered(): void
     {
         $this->processRememberedExclusions();
@@ -154,6 +177,25 @@ final class DataHandlerHook
             } catch (\Throwable $e) {
                 $this->logger->warning('Checking links of {table}:{uid} after saving failed: {message}', ['table' => $table, 'uid' => $uid, 'message' => $e->getMessage(), 'exception' => $e]);
             }
+        }
+        // After the checks above, which mark records as checked
+        $this->markReferencingRecordsDue();
+    }
+
+    private function markReferencingRecordsDue(): void
+    {
+        $targets = $this->targets;
+        $this->targets = [];
+        try {
+            foreach ($targets as $table => $uids) {
+                $records = array_filter(
+                    $this->referencingRecordFinder->find($table, array_values($uids)),
+                    fn(array $record): bool => isset($this->getCheckableTables()[$record['table']])
+                );
+                $this->recordStatusRepository->markDue(array_values($records));
+            }
+        } catch (\Throwable $e) {
+            $this->logger->warning('Marking records referencing changed records as due failed: {message}', ['message' => $e->getMessage(), 'exception' => $e]);
         }
     }
 

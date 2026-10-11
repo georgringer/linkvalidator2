@@ -90,6 +90,19 @@ final readonly class RecordStatusRepository
     /**
      * The queue checks these records next
      *
+     * @param list<array{table: string, uid: int}> $records
+     */
+    public function markDue(array $records): void
+    {
+        $connection = $this->connectionPool->getConnectionForTable(self::TABLE);
+        foreach ($records as ['table' => $table, 'uid' => $uid]) {
+            $connection->update(self::TABLE, ['last_checked' => 0], ['table_name' => $table, 'record_uid' => $uid]);
+        }
+    }
+
+    /**
+     * The queue checks these records next
+     *
      * @param list<int>|null $pids null for all pages
      */
     public function markDueByPids(?array $pids): void

@@ -75,6 +75,7 @@ solved ones in `done/`.
 | Workspaces | ❌ live only | 🟡 live only, `doNotCheckLinksOnWorkspace` | ❌ live only, column prepared | 📋 later | |
 | **Checking internal targets** | | | | | |
 | Page missing / deleted / hidden | ✅ | ✅ | ✅ | | |
+| Target changed after linking (page hidden, deleted, …) | ❌ only on the next full run | ❓ | ✅ records referencing a changed record (reference index) become due, checked by the next run or "Check links"; subpages via `extendToSubpages` only by the regular run | | |
 | Shortcut / link page whose target is not reachable | ❌ | ❓ | ✅ `page.targetNotReachable` (frontend resolution) | | #92542 |
 | Page hidden / expired via a parent with `extendToSubpages` | ❌ | ❓ | ✅ decided by the frontend's page resolution (`PageInformationFactory`, without rendering) | | #106675, #101367 |
 | Restricted or scheduled target (fe_group, start time, future stop time, also via parent) | ❌ | ❓ | ✅ reported as notice, not as broken; listed with a badge, status filter | | #106675 |
