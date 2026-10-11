@@ -65,7 +65,7 @@ solved ones in `done/`.
 | Opt-out of tables / fields | 🟡 by not listing them | ✅ TSconfig, `excludeCtype` | ✅ extension configuration `excludedFields` | | |
 | Links in FlexForms | ❌ | 🟡 FormEngine-based field check | ❌ | 📋 later | |
 | File fields (`type=file`, e.g. `pages.media`) | ❌ | ❓ | ➖ by design: references, not links; links *to* files are checked | | #103478 |
-| Shortcut pages | ❌ | ❌ | 🟡 `shortcut_mode` "selected page" only | 📋 first/random subpage, parent page | #92542 |
+| Shortcut pages | ❌ | ❌ | ✅ all modes: a selected page is checked as link target, otherwise (first/random subpage, parent page, nothing selected) the frontend's resolution of the shortcut page itself decides | | #92542 |
 | Plain-text URLs (softref `url`) | 🟡 `&nbsp;` after a URL becomes part of it | ✅ | ✅ core parser, URL ends at a non-breaking space | | #97937 |
 | Link type detection | own `fetchType()` heuristics per link type | own link types | ✅ core `LinkService::resolve()` | | |
 | Hidden / expired source records | 🟡 option `checkhidden` | 🟡 option `reportHiddenRecords` | ✅ never reported | | |

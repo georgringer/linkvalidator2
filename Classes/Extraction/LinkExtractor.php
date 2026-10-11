@@ -113,21 +113,19 @@ final readonly class LinkExtractor
     }
 
     /**
-     * @todo Only SHORTCUT_MODE_NONE is checked. "First subpage" and "random subpage" are broken
-     *       without a visible subpage, "parent page" on a root page.
+     * A shortcut to a fixed page links to that page. In the other modes (first or random subpage,
+     * parent page, or no page selected) the shortcut page links to itself: the frontend's page
+     * resolution of it decides whether the shortcut leads anywhere (Forge #92542).
      */
     private function extractShortcut(string $table, array $row, int $pid, int $language): ?LinkCandidate
     {
-        if ($table !== 'pages'
-            || (int)($row['doktype'] ?? 0) !== PageRepository::DOKTYPE_SHORTCUT
-            || (int)($row['shortcut_mode'] ?? 0) !== PageRepository::SHORTCUT_MODE_NONE
-        ) {
+        if ($table !== 'pages' || (int)($row['doktype'] ?? 0) !== PageRepository::DOKTYPE_SHORTCUT) {
             return null;
         }
         $targetUid = (int)preg_replace('/^pages_/', '', (string)($row['shortcut'] ?? ''));
-        if ($targetUid <= 0) {
-            return null;
+        if ((int)($row['shortcut_mode'] ?? 0) === PageRepository::SHORTCUT_MODE_NONE && $targetUid > 0) {
+            return new LinkCandidate($table, (int)$row['uid'], $pid, $language, 'shortcut', 't3://page?uid=' . $targetUid, '');
         }
-        return new LinkCandidate($table, (int)$row['uid'], $pid, $language, 'shortcut', 't3://page?uid=' . $targetUid, '');
+        return new LinkCandidate($table, (int)$row['uid'], $pid, $language, 'shortcut_mode', 't3://page?uid=' . $pid, '');
     }
 }

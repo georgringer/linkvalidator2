@@ -17,6 +17,7 @@ declare(strict_types=1);
 
 namespace TYPO3\CMS\Linkvalidator2\Tests\Functional\Service;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Linkvalidator2\Report\ReportFilter;
 use TYPO3\CMS\Linkvalidator2\Repository\BrokenLinkRepository;
@@ -225,6 +226,32 @@ final class RecordCheckServiceTest extends FunctionalTestCase
         self::assertSame('link', $checkedLinks[0]->candidate->field);
         self::assertSame('page.linksToItself', $checkedLinks[0]->result->errorType);
         self::assertSame(1, $this->getStatus('pages', 12)['broken_count']);
+    }
+
+    public static function shortcutModeDataProvider(): \Generator
+    {
+        yield 'first subpage without subpages' => [20, 'page.targetNotReachable'];
+        yield 'first subpage with only a hidden subpage' => [21, 'page.targetNotReachable'];
+        yield 'first subpage with a visible subpage' => [23, null];
+        yield 'parent page not reachable' => [25, 'page.targetNotReachable'];
+        yield 'parent page reachable' => [26, null];
+        yield 'fixed target missing, no subpage' => [27, 'page.targetNotReachable'];
+    }
+
+    /**
+     * Forge #92542: the frontend's page resolution decides where the shortcut leads to
+     */
+    #[DataProvider('shortcutModeDataProvider')]
+    #[Test]
+    public function shortcutIsCheckedForEveryMode(int $pageUid, ?string $expectedErrorType): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/pages_shortcut_modes.csv');
+
+        $checkedLinks = $this->get(RecordCheckService::class)->checkRecord('pages', $pageUid);
+
+        self::assertCount(1, $checkedLinks);
+        self::assertSame('shortcut_mode', $checkedLinks[0]->candidate->field);
+        self::assertSame($expectedErrorType, $checkedLinks[0]->result->isOk() ? null : $checkedLinks[0]->result->errorType);
     }
 
     private function countRows(string $table): int

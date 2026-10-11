@@ -45,7 +45,9 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 - 7 Sprachregel: #94195 (+ Quelle unter versteckter Seite)
 - ~~8 Anker~~: #100933 durch Entscheidung erledigt – Anker werden nicht geprüft
 - Berechtigungen: #105413, #104004, danach #107983 (Workspace-User)
-- Teilweise offen ohne Schritt: #92542 Shortcut-Modi
+- #92542 Shortcut-Modi ✅ (2026-10-11): Modus „feste Seite“ mit Ziel → Link aufs Ziel (Feld
+  `shortcut`); sonst Link der Shortcut-Seite auf sich selbst (Feld `shortcut_mode`), die
+  Frontend-Auflösung entscheidet – kein Nachbau von `getPageShortcut()`.
 
 ## Datenmodell
 - `tx_linkvalidator_target`: Prüf-Cache, ein Eintrag pro eindeutigem Ziel, auch ok.

@@ -2,7 +2,7 @@
 
 - Forge: https://forge.typo3.org/issues/92542 (Feature, New, angelegt 2020-10-12)
 - Verwandt: #89182, #89177
-- **Status linkvalidator2:** 🟡 teilweise
+- **Status linkvalidator2:** ✅ gelöst (2026-10-11)
 
 ## Problem
 
@@ -34,3 +34,18 @@ weil das Ziel von `shortcut_mode` abhängt.
 
 Shortcut „erste Unterseite“ ohne Unterseiten → broken; mit versteckter einziger
 Unterseite → broken; mit sichtbarer → ok.
+
+## Lösung (2026-10-11)
+
+Anders als oben geplant ohne eigene Fehlertypen und ohne `getMenu()`:
+
+- „Feste Zielseite“ mit Ziel: wie bisher Link aufs Ziel (Feld `shortcut`) – genaue
+  Meldung (versteckt, gelöscht, …) für die Zielseite.
+- Alle anderen Modi (erste/zufällige Unterseite, Elternseite, keine Seite gewählt): die
+  Shortcut-Seite verlinkt auf sich selbst (Feld `shortcut_mode`). Der `PageChecker` lässt
+  sie vom `FrontendPageResolver` auflösen wie einen Seitenaufruf; führt der Shortcut
+  nirgends hin, ist das `page.targetNotReachable`. Die Regeln (sichtbare Unterseiten,
+  ausgeschlossene Doktypen, erreichbare Elternseite) bleiben beim Core.
+- Grenze: Hat die Shortcut-Seite selbst `fe_group` oder eine künftige Stoppzeit, erscheint
+  der Hinweis dazu auch an ihr selbst.
+- Tests: `RecordCheckServiceTest::shortcutIsCheckedForEveryMode` (6 Fälle).

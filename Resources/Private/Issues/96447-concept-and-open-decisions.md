@@ -26,7 +26,7 @@ Punkt:
 | Falsch-Positive | 🟡 unknown-Status ✅, Rest siehe #85006 |
 | Nicht gerenderte Inhalte (bodytext bei Plugins, pages.url bei doktype≠3) | ✅ nur Felder des Record-Types (`CheckableFieldResolver`) |
 | l18n_cfg, versteckte Grid-Container, Übersetzung mit verstecktem Original | 📋 Sprachregel Schritt 7 (#94195); Grid-Container ❌ nicht geplant |
-| Shortcut-Seiten | 🟡 nur `shortcut_mode` NONE (#92542) |
+| Shortcut-Seiten | ✅ alle Modi über die Frontend-Auflösung (#92542) |
 | Mehrere Start-Pids / alle Sites | 📋 CLI `--site`, Queue (Task 8) |
 | Eigenes Modul, Pagination, Sortierung, Filter | ✅ |
 | Seite/Seitenmodul öffnen, Recheck einzelner Links | ❌ / 💭 |
