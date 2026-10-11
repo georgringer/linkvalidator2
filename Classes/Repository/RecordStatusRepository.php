@@ -16,6 +16,7 @@ declare(strict_types=1);
  */
 namespace TYPO3\CMS\Linkvalidator2\Repository;
 
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
 final readonly class RecordStatusRepository
@@ -42,5 +43,38 @@ final readonly class RecordStatusRepository
     {
         $this->connectionPool->getConnectionForTable(self::TABLE)
             ->delete(self::TABLE, ['table_name' => $table, 'record_uid' => $recordUid]);
+    }
+
+    /**
+     * @return array<string, true> keyed by "table:uid"
+     */
+    public function findRecordsCheckedSince(int $pid, int $since): array
+    {
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+        $rows = $queryBuilder
+            ->select('table_name', 'record_uid')
+            ->from(self::TABLE)
+            ->where(
+                $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter($pid, Connection::PARAM_INT)),
+                $queryBuilder->expr()->gte('last_checked', $queryBuilder->createNamedParameter($since, Connection::PARAM_INT))
+            )
+            ->executeQuery()
+            ->fetchAllAssociative();
+        $result = [];
+        foreach ($rows as $row) {
+            $result[$row['table_name'] . ':' . $row['record_uid']] = true;
+        }
+        return $result;
+    }
+
+    /**
+     * @return list<array{table: string, uid: int}>
+     */
+    public function findRecordsByPid(int $pid): array
+    {
+        $rows = $this->connectionPool->getConnectionForTable(self::TABLE)
+            ->select(['table_name', 'record_uid'], self::TABLE, ['pid' => $pid])
+            ->fetchAllAssociative();
+        return array_map(static fn(array $row): array => ['table' => (string)$row['table_name'], 'uid' => (int)$row['record_uid']], $rows);
     }
 }

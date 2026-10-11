@@ -23,6 +23,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Linkvalidator2\Service\PageCheckService;
 use TYPO3\CMS\Linkvalidator2\Service\PageRecordFinder;
 use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
 
@@ -32,6 +33,7 @@ final class CheckCommand extends Command
     public function __construct(
         private readonly RecordCheckService $recordCheckService,
         private readonly PageRecordFinder $pageRecordFinder,
+        private readonly PageCheckService $pageCheckService,
     ) {
         parent::__construct();
     }
@@ -70,17 +72,15 @@ final class CheckCommand extends Command
         $pageUid = (int)$input->getOption('page');
         if ($pageUid > 0) {
             $pageIds = $this->pageRecordFinder->findPageIds($pageUid, (int)$input->getOption('depth'));
+            $runStartedAt = time();
             $recordCount = 0;
             $broken = 0;
             foreach ($pageIds as $pageId) {
-                foreach ($this->pageRecordFinder->findOnPage($pageId) as ['table' => $table, 'uid' => $uid]) {
-                    foreach ($this->recordCheckService->checkRecord($table, $uid, $cachedOnly) as $checkedLink) {
-                        $broken += $checkedLink->result->isOk() ? 0 : 1;
-                    }
-                    $recordCount++;
-                    if ($output->isVerbose()) {
-                        $io->writeln(sprintf('%s:%d', $table, $uid));
-                    }
+                $result = $this->pageCheckService->checkPage($pageId, $runStartedAt, null, $cachedOnly);
+                $recordCount += $result->recordCount;
+                $broken += $result->brokenLinkCount;
+                if ($output->isVerbose()) {
+                    $io->writeln(sprintf('pages:%d  %d records, %d broken links', $pageId, $result->recordCount, $result->brokenLinkCount));
                 }
             }
             $io->success(sprintf('Checked %d records on %d pages, found %d broken links.', $recordCount, count($pageIds), $broken));

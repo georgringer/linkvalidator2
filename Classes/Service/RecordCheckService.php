@@ -46,9 +46,11 @@ final readonly class RecordCheckService
      * @param bool $cachedOnly Cacheable checks (external URLs) only use stored results, regardless of their
      *                         age; links without a stored result are skipped. For interactive use until
      *                         checks run in batches.
+     * @param int $freshSince Stored results checked since this timestamp are reused regardless of the cache
+     *                        lifetime, so a run requests each URL once
      * @return list<CheckedLink>
      */
-    public function checkRecord(string $table, int $uid, bool $cachedOnly = false): array
+    public function checkRecord(string $table, int $uid, bool $cachedOnly = false, int $freshSince = 0): array
     {
         $row = $this->tcaSchemaFactory->has($table) ? BackendUtility::getRecord($table, $uid) : null;
         if ($row === null) {
@@ -84,7 +86,11 @@ final readonly class RecordCheckService
             }
             $seen[$key] = true;
             $stored = $checker instanceof CacheableLinkCheckerInterface ? $this->targetRepository->findStored($target) : null;
-            if ($stored !== null && ($cachedOnly || $stored['lastChecked'] + $checker->getCacheLifetime() > $now)) {
+            if ($stored !== null && (
+                $cachedOnly
+                || $stored['lastChecked'] + $checker->getCacheLifetime() > $now
+                || ($freshSince > 0 && $stored['lastChecked'] >= $freshSince)
+            )) {
                 // Reused results keep their check time, so they expire after the cache lifetime
                 ['uid' => $targetUid, 'result' => $result] = $stored;
             } elseif ($cachedOnly && $checker instanceof CacheableLinkCheckerInterface) {
@@ -102,6 +108,27 @@ final readonly class RecordCheckService
         $this->brokenLinkRepository->replaceForRecord($table, $uid, $brokenLinks, $now);
         $this->recordStatusRepository->markChecked($table, $uid, $pid, $language, count($brokenLinks), $now);
         return $checkedLinks;
+    }
+
+    /**
+     * Removes stored results of records that are stored for this page but no longer found on it:
+     * deleted, moved, imported around the DataHandler or excluded from checking since.
+     *
+     * @param list<array{table: string, uid: int}> $foundRecords Records on the page, see PageRecordFinder::findOnPage()
+     */
+    public function removeStaleResults(int $pid, array $foundRecords): void
+    {
+        $found = [];
+        foreach ($foundRecords as ['table' => $table, 'uid' => $uid]) {
+            $found[$table . ':' . $uid] = true;
+        }
+        $stored = [...$this->recordStatusRepository->findRecordsByPid($pid), ...$this->brokenLinkRepository->findRecordsByPid($pid)];
+        foreach ($stored as ['table' => $table, 'uid' => $uid]) {
+            if (!isset($found[$table . ':' . $uid])) {
+                $this->brokenLinkRepository->removeForRecord($table, $uid);
+                $this->recordStatusRepository->remove($table, $uid);
+            }
+        }
     }
 
     /**

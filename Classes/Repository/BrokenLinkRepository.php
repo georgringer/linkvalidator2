@@ -185,4 +185,29 @@ final readonly class BrokenLinkRepository
         $this->connectionPool->getConnectionForTable(self::TABLE)
             ->delete(self::TABLE, ['table_name' => $table, 'record_uid' => $recordUid]);
     }
+
+    public function countDetectedSince(int $pid, int $since): int
+    {
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+        return (int)$queryBuilder
+            ->count('uid')
+            ->from(self::TABLE)
+            ->where(
+                $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter($pid, Connection::PARAM_INT)),
+                $queryBuilder->expr()->gte('first_detected', $queryBuilder->createNamedParameter($since, Connection::PARAM_INT))
+            )
+            ->executeQuery()
+            ->fetchOne();
+    }
+
+    /**
+     * @return list<array{table: string, uid: int}>
+     */
+    public function findRecordsByPid(int $pid): array
+    {
+        $rows = $this->connectionPool->getConnectionForTable(self::TABLE)
+            ->select(['table_name', 'record_uid'], self::TABLE, ['pid' => $pid])
+            ->fetchAllAssociative();
+        return array_map(static fn(array $row): array => ['table' => (string)$row['table_name'], 'uid' => (int)$row['record_uid']], $rows);
+    }
 }

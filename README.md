@@ -64,7 +64,7 @@ solved ones in `done/`.
 | Links in FlexForms | ❌ | 🟡 FormEngine-based field check | ❌ | 📋 later | |
 | File fields (`type=file`, e.g. `pages.media`) | ❌ | ❓ | ➖ by design: references, not links; links *to* files are checked | | #103478 |
 | Shortcut pages | ❌ | ❌ | 🟡 `shortcut_mode` "selected page" only | 📋 first/random subpage, parent page | #92542 |
-| Plain-text URLs (softref `url`) | 🟡 `&nbsp;` after a URL becomes part of it | ✅ | 🟡 same core parser: `https://example.org&nbsp;` reported as unknown host | 📋 split at `&nbsp;` before parsing | #97937 |
+| Plain-text URLs (softref `url`) | 🟡 `&nbsp;` after a URL becomes part of it | ✅ | ✅ core parser, URL ends at a non-breaking space | | #97937 |
 | Link type detection | own `fetchType()` heuristics per link type | own link types | ✅ core `LinkService::resolve()` | | |
 | Hidden / expired source records | 🟡 option `checkhidden` | 🟡 option `reportHiddenRecords` | ✅ never reported | | |
 | Source hidden by its page (hidden/expired page, `extendToSubpages`) | ❌ | ❓ | ❌ reported | 📋 step 7: not reported, shown as skipped | #96447 |
@@ -83,7 +83,7 @@ solved ones in `done/`.
 | Files / folders | ✅ files | ✅ files | ✅ files and folders, offline storage = unknown | | |
 | Unresolvable `t3://` links | 🟡 | 🟡 | ✅ reported as invalid | | |
 | **Checking external URLs** | | | | | |
-| External checking | 🟡 off by default | ✅ | 🟡 CLI; module with 20 s time budget per "Check", rest from cache | 📋 module with browser batches | |
+| External checking | 🟡 off by default | ✅ | ✅ CLI and module; each URL requested once per run | | |
 | Cache across runs | ❌ only within one run | ✅ link target cache with expiry | ✅ per target, configurable lifetime (default 7 days), cache-only mode | | #92700 |
 | HEAD with GET fallback, redirects | ✅ | ✅ | ✅ GET on 405/501, max. 5 redirects | | |
 | 401/403/429/5xx/999/TLS/timeouts as "unknown" instead of broken | ❌ | ❌ | ✅ broken only 404, 410, unknown host; status filter | 📋 escalation after 3 checks / 7 days | #96525, #85006 |
@@ -99,15 +99,15 @@ solved ones in `done/`.
 | Disable on staging (survives DB sync) | ❌ task lives in the DB | ❓ | ❌ | 📋 mail report per site: recipients via `%env()%`, global switch in extension configuration | #110615 |
 | CLI command | ❌ | ✅ `brofix:checklinks` | ✅ `--record`, `--page`, `--depth`, `--no-external` | 📋 task 8: queue with `--limit` / `--time-limit` | |
 | Link types to check | 🟡 TSconfig `linktypes`, report shows stale results of the other types | ✅ | ✅ always all links of a record, results replaced per record; link type is a report filter | | #92586 |
-| Interactive check of large trees without timeouts | ❌ synchronous | ❓ not verified | 🟡 synchronous, time budget for external URLs | 📋 browser batches with progress + time budget | #89266 |
-| Report during a running check / parallel checks | ❌ list emptied first, duplicates | ❓ | 🟡 previous results stay visible; parallel runs not locked | 📋 batches, transaction in `replaceForRecord()` | #89266 |
+| Interactive check of large trees without timeouts | ❌ synchronous | ❓ not verified | ✅ browser checks page by page via AJAX (5 s budget per request, a page continues in the next request), progress bar, cancel, summary notification with new broken links | | #89266 |
+| Report during a running check / parallel checks | ❌ list emptied first, duplicates | ❓ | 🟡 previous results stay visible, report reloads when done; parallel runs not locked | 📋 transaction in `replaceForRecord()` | #89266 |
 | Recheck on save | 🟡 when returning to the module (`actionAfterEditRecord`) | 🟡 when returning to the module | ❌ | 📋 step 4: DataHandler, internal immediately, external from cache | #105911 |
-| Clean up on delete / move | ❌ deleted pages stay forever | ✅ delete | ❌ known bug: results of deleted/moved records stay, even after rechecking the page | 📋 reconcile on page check + step 4 (DataHandler, orphan cleanup) | #89426 |
+| Clean up on delete / move | ❌ deleted pages stay forever | ✅ delete | 🟡 checking a page removes results of records no longer on it (deleted, moved); results of a deleted page itself stay (hidden in the report) | 📋 step 4 (DataHandler), orphan cleanup | #89426 |
 | Record hidden after the check | ❌ stays in the report | ❓ | 🟡 removed on the next check of the record | 📋 step 4 (DataHandler) | #105911 |
 | Results kept between runs | ❌ list is rebuilt | ✅ updated | ✅ only changed records rewritten, `first_detected` kept | | |
 | **Backend module** | | | | | |
 | Placement | Link Management | own module | ✅ Link Management | | |
-| Depth selector | ✅ | ✅ | ✅ same scope for checking and listing | | |
+| Depth selector | ✅ | ✅ | ✅ separate levels for checking (doc header, next to "Check links", no reload) and listing (filter form) | | |
 | Filter (status, link type, table, language, text) | 🟡 link type only | ✅ | ✅ | | #96447 |
 | Paginate | ❌ | ✅ | ✅ 50 per page, in SQL | | #89454 |
 | Sort | ❌ | ✅ | ✅ by every column | | #96447 |

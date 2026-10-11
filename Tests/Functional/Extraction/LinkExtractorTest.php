@@ -87,6 +87,30 @@ final class LinkExtractorTest extends FunctionalTestCase
         );
     }
 
+    /**
+     * Forge #97937
+     */
+    #[Test]
+    public function plainTextUrlEndsAtNonBreakingSpace(): void
+    {
+        $row = $this->contentRow([
+            'bodytext' => '<p>lorem ipsum https://weber.digital&nbsp; &nbsp; dolor https://example.org&#160;sit https://example.com' . "\u{00A0}" . 'amet https://example.net&#xA0;</p>'
+                . '<p>Linear Icons Free (<a class="external" href="https://linearicons.com">https://linearicons.com</a>) (CC BY-SA 4.0) by Perxis (<a class="external" href="https://perxis.com">https://perxis.com</a>)</p>',
+        ]);
+
+        self::assertSame(
+            [
+                'https://linearicons.com',
+                'https://perxis.com',
+                'https://weber.digital',
+                'https://example.org',
+                'https://example.com',
+                'https://example.net',
+            ],
+            array_values(array_unique(array_column($this->extract('tt_content', $row), 1)))
+        );
+    }
+
     #[Test]
     public function fieldsNotShownForTheRecordTypeAreIgnored(): void
     {

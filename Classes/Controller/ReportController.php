@@ -20,21 +20,24 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Backend\Attribute\AsController;
 use TYPO3\CMS\Backend\Routing\UriBuilder;
+use TYPO3\CMS\Backend\Template\Components\ButtonBar;
+use TYPO3\CMS\Backend\Template\Components\ComponentFactory;
 use TYPO3\CMS\Backend\Template\ModuleTemplate;
 use TYPO3\CMS\Backend\Template\ModuleTemplateFactory;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\Exception\SiteNotFoundException;
+use TYPO3\CMS\Core\Imaging\IconFactory;
+use TYPO3\CMS\Core\Imaging\IconSize;
 use TYPO3\CMS\Core\Localization\LanguageService;
+use TYPO3\CMS\Core\Page\PageRenderer;
 use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
 use TYPO3\CMS\Core\Site\SiteFinder;
 use TYPO3\CMS\Core\Type\Bitmask\Permission;
-use TYPO3\CMS\Core\Type\ContextualFeedbackSeverity;
 use TYPO3\CMS\Linkvalidator2\Report\ReportFilter;
 use TYPO3\CMS\Linkvalidator2\Report\ReportOrdering;
 use TYPO3\CMS\Linkvalidator2\Repository\BrokenLinkRepository;
 use TYPO3\CMS\Linkvalidator2\Service\PageRecordFinder;
-use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
 
 /**
  * @internal This class is a specific Backend controller implementation and is not part of the TYPO3's Core API.
@@ -44,14 +47,14 @@ final readonly class ReportController
 {
     private const DEPTH_OPTIONS = [0, 1, 2, 3, 4, 999];
     private const ITEMS_PER_PAGE = 50;
-    /** Seconds external URLs are requested during "Check", the rest uses stored results */
-    private const EXTERNAL_TIME_BUDGET = 20;
 
     public function __construct(
         private ModuleTemplateFactory $moduleTemplateFactory,
         private UriBuilder $uriBuilder,
         private PageRecordFinder $pageRecordFinder,
-        private RecordCheckService $recordCheckService,
+        private PageRenderer $pageRenderer,
+        private ComponentFactory $componentFactory,
+        private IconFactory $iconFactory,
         private BrokenLinkRepository $brokenLinkRepository,
         private TcaSchemaFactory $tcaSchemaFactory,
         private SiteFinder $siteFinder,
@@ -81,9 +84,9 @@ final readonly class ReportController
             (int)($request->getQueryParams()['page'] ?? 1)
         );
 
-        $checkExternal = (bool)$request->getAttribute('moduleData')->get('checkExternal', false);
-        if ($pageIds !== [] && ($request->getParsedBody()['checkPage'] ?? false)) {
-            $this->checkPages($view, $pageIds, $checkExternal);
+        if ($pageRecord !== []) {
+            $this->addDocHeaderButtons($view, $pageUid, $depth);
+            $this->pageRenderer->loadJavaScriptModule('@typo3/linkvalidator2/check-links.js');
         }
 
         $view->assignMultiple([
@@ -92,7 +95,6 @@ final readonly class ReportController
             'moduleUrl' => $moduleUrl,
             'depth' => $depth,
             'depthOptions' => $this->getDepthOptions(),
-            'checkExternal' => $checkExternal,
             'filter' => $filter,
             'filterOptions' => $this->getFilterOptions($pageIds, $pageUid, $filter),
             'resetFilterUrl' => (string)$this->uriBuilder->buildUriFromRoute(
@@ -116,6 +118,45 @@ final readonly class ReportController
             $options[$depth] = $this->getLanguageService()->sL('linkvalidator2.messages:report.depth.' . $depth);
         }
         return $options;
+    }
+
+    /**
+     * "Check links" with its own levels: choosing them only sets the scope of the next check
+     * (no reload), the report is filtered by the levels of the filter form. Preselected are
+     * the levels of the report.
+     */
+    private function addDocHeaderButtons(ModuleTemplate $view, int $pageUid, int $depth): void
+    {
+        $languageService = $this->getLanguageService();
+        $depthButton = $this->componentFactory->createDropDownButton()
+            ->setLabel($languageService->sL('linkvalidator2.messages:report.depth'))
+            ->setIcon($this->iconFactory->getIcon('actions-pagetree', IconSize::SMALL))
+            ->setShowLabelText(true)
+            ->setShowActiveLabelText(true);
+        foreach (self::DEPTH_OPTIONS as $option) {
+            $depthButton->addItem(
+                $this->componentFactory->createDropDownRadio()
+                    ->setTag('button')
+                    ->setActive($option === $depth)
+                    ->setLabel($languageService->sL('linkvalidator2.messages:report.depth.' . $option))
+                    ->setAttributes(['data-linkvalidator2-check-depth' => (string)$option])
+            );
+        }
+        $view->addButtonToButtonBar($depthButton, ButtonBar::BUTTON_POSITION_LEFT, 1);
+
+        $checkButton = $this->componentFactory->createGenericButton()
+            ->setTag('button')
+            ->setLabel($languageService->sL('linkvalidator2.messages:report.checkPage'))
+            ->setShowLabelText(true)
+            ->setIcon($this->iconFactory->getIcon('actions-play', IconSize::SMALL))
+            ->setAttributes([
+                'type' => 'button',
+                // An empty attribute value is not rendered
+                'data-linkvalidator2-check' => '1',
+                'data-page-id' => (string)$pageUid,
+                'data-depth' => (string)$depth,
+            ]);
+        $view->addButtonToButtonBar($checkButton, ButtonBar::BUTTON_POSITION_LEFT, 1);
     }
 
     /**
@@ -146,43 +187,6 @@ final readonly class ReportController
             $result[] = $row;
         }
         return $result;
-    }
-
-    /**
-     * External URLs are requested only within a time budget, a synchronous check of a larger tree would
-     * otherwise run into the request timeout. Records after that use stored results; checking again
-     * continues, as URLs requested before are then taken from the cache.
-     *
-     * @todo Replace by browser-driven batches on top of the queue service (task 8).
-     *
-     * @param list<int> $pageIds
-     */
-    private function checkPages(ModuleTemplate $view, array $pageIds, bool $checkExternal): void
-    {
-        $languageService = $this->getLanguageService();
-        $start = microtime(true);
-        $recordCount = 0;
-        $recordsWithoutExternal = 0;
-        foreach ($pageIds as $pageId) {
-            foreach ($this->pageRecordFinder->findOnPage($pageId) as ['table' => $table, 'uid' => $uid]) {
-                $cachedOnly = !$checkExternal || microtime(true) - $start > self::EXTERNAL_TIME_BUDGET;
-                $this->recordCheckService->checkRecord($table, $uid, $cachedOnly);
-                $recordCount++;
-                $recordsWithoutExternal += $checkExternal && $cachedOnly ? 1 : 0;
-            }
-        }
-        $view->addFlashMessage(
-            sprintf($languageService->sL('linkvalidator2.messages:report.checked'), $recordCount, count($pageIds)),
-            '',
-            ContextualFeedbackSeverity::OK
-        );
-        if ($recordsWithoutExternal > 0) {
-            $view->addFlashMessage(
-                sprintf($languageService->sL('linkvalidator2.messages:report.externalBudgetExceeded'), self::EXTERNAL_TIME_BUDGET, $recordsWithoutExternal),
-                '',
-                ContextualFeedbackSeverity::WARNING
-            );
-        }
     }
 
     /**

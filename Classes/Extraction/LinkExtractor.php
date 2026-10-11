@@ -99,6 +99,8 @@ final readonly class LinkExtractor
     private function extractPlainUrls(string $value): array
     {
         $links = [];
+        // The parser takes a non-breaking space for part of the URL
+        $value = preg_replace('/&nbsp;|&#160;|&#x0*a0;|\x{00A0}/iu', ' ', $value) ?? $value;
         $result = $this->softReferenceParserFactory->getSoftReferenceParser('url')->parse('', '', 0, $value);
         foreach ($result->getMatchedElements() as $element) {
             // Sentence punctuation directly after a URL is matched by the parser as well

@@ -1,0 +1,113 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * This file is part of the TYPO3 CMS project.
+ *
+ * It is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License, either version 2
+ * of the License, or any later version.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE.txt file that was distributed with this source code.
+ *
+ * The TYPO3 project - inspiring people to share!
+ */
+namespace TYPO3\CMS\Linkvalidator2\Controller;
+
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use TYPO3\CMS\Backend\Attribute\AsController;
+use TYPO3\CMS\Backend\Module\ModuleProvider;
+use TYPO3\CMS\Backend\Utility\BackendUtility;
+use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
+use TYPO3\CMS\Core\Http\JsonResponse;
+use TYPO3\CMS\Core\Type\Bitmask\Permission;
+use TYPO3\CMS\Linkvalidator2\Service\PageCheckService;
+use TYPO3\CMS\Linkvalidator2\Service\PageRecordFinder;
+
+/**
+ * AJAX endpoints for checking a page tree from the backend module in batches: the browser
+ * fetches the pages of the scope, then checks one page per request until it is done.
+ *
+ * @internal This class is a specific Backend controller implementation and is not part of the TYPO3's Core API.
+ */
+#[AsController]
+final readonly class CheckController
+{
+    private const MODULE = 'linkvalidator2_report';
+    private const DEPTH_OPTIONS = [0, 1, 2, 3, 4, 999];
+    /** Seconds per request; checking a page continues with the next request when exceeded */
+    private const TIME_BUDGET = 5.0;
+
+    public function __construct(
+        private ModuleProvider $moduleProvider,
+        private PageRecordFinder $pageRecordFinder,
+        private PageCheckService $pageCheckService,
+    ) {}
+
+    public function startAction(ServerRequestInterface $request): ResponseInterface
+    {
+        if (!$this->hasModuleAccess()) {
+            return $this->error('Access denied', 403);
+        }
+        $pageUid = (int)($request->getQueryParams()['id'] ?? 0);
+        $depth = (int)($request->getQueryParams()['depth'] ?? 0);
+        if (!in_array($depth, self::DEPTH_OPTIONS, true)) {
+            return $this->error('Invalid depth', 400);
+        }
+        if (!$this->hasPageAccess($pageUid)) {
+            return $this->error('Page not found', 404);
+        }
+        return new JsonResponse([
+            'pageIds' => $this->pageRecordFinder->findPageIds($pageUid, $depth),
+            'runStartedAt' => time(),
+        ]);
+    }
+
+    public function pageAction(ServerRequestInterface $request): ResponseInterface
+    {
+        if (!$this->hasModuleAccess()) {
+            return $this->error('Access denied', 403);
+        }
+        $body = (array)$request->getParsedBody();
+        $pageId = (int)($body['pageId'] ?? 0);
+        $runStartedAt = (int)($body['runStartedAt'] ?? 0);
+        if ($runStartedAt <= 0) {
+            return $this->error('Missing run start', 400);
+        }
+        if (!$this->hasPageAccess($pageId)) {
+            return $this->error('Page not found', 404);
+        }
+        $result = $this->pageCheckService->checkPage($pageId, $runStartedAt, self::TIME_BUDGET);
+        return new JsonResponse([
+            'done' => $result->done,
+            'recordCount' => $result->recordCount,
+            'checkedCount' => $result->checkedCount,
+            'brokenLinkCount' => $result->brokenLinkCount,
+            'newBrokenLinkCount' => $result->newBrokenLinkCount,
+        ]);
+    }
+
+    private function hasModuleAccess(): bool
+    {
+        return $this->moduleProvider->accessGranted(self::MODULE, $this->getBackendUser());
+    }
+
+    private function hasPageAccess(int $pageUid): bool
+    {
+        return $pageUid > 0
+            && BackendUtility::readPageAccess($pageUid, $this->getBackendUser()->getPagePermsClause(Permission::PAGE_SHOW)) !== false;
+    }
+
+    private function error(string $message, int $status): ResponseInterface
+    {
+        return new JsonResponse(['error' => $message], $status);
+    }
+
+    private function getBackendUser(): BackendUserAuthentication
+    {
+        return $GLOBALS['BE_USER'];
+    }
+}

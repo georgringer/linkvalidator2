@@ -1,7 +1,7 @@
 # #89266 – Prevention of running link checking more than once and visible feedback about still running checks
 
 - Forge: https://forge.typo3.org/issues/89266 (Feature, New, angelegt 2019-09-25)
-- **Status linkvalidator2:** 📋 offen (Browser-Batches)
+- **Status linkvalidator2:** 🟡 teilweise – Feedback ✅, Parallelität 📋
 
 ## Problem
 
@@ -27,3 +27,14 @@ vorher alles gelöscht wurde.
   Service mit ~5 s Budget, Fortschrittsbalken, Ende-Meldung, Report lädt danach neu.
 - `replaceForRecord()` in Transaktion, damit parallele Läufe keine Duplikate erzeugen.
 - Optional: Lock (`LockFactory`) pro Seitenbereich für das Modul.
+
+## Stand 2026-10-11
+
+Browser-Batches umgesetzt: `CheckController` (AJAX `linkvalidator2_check_start` liefert die
+Seiten des Bereichs, `linkvalidator2_check_page` prüft eine Seite mit 5 s Budget über
+`PageCheckService`), `Resources/Public/JavaScript/check-links.js` mit Fortschrittsbalken
+(„Seite x von y, n kaputte Links“), Abbrechen und Neuladen des Reports am Ende. Der
+synchrone „Prüfen“-POST und die Checkbox „Externe prüfen“ sind entfernt.
+
+Offen: parallele Läufe (zwei Browser/CLI gleichzeitig) – `replaceForRecord()` in eine
+Transaktion, optional Lock pro Bereich.

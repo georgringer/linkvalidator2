@@ -69,6 +69,8 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
   - Gelöschte Seite: Zeilen bleiben in der DB, im Report unsichtbar (Seite nicht mehr im Baum).
   - Verschobener Datensatz/Seite: `pid` veraltet, Treffer erscheint unter der alten Seite, bis
     er am neuen Ort geprüft wird.
+  - **Stand 2026-10-11:** (1) umgesetzt (`RecordCheckService::removeStaleResults()`, Tests in
+    `CheckCommandTest`); offen bleibt die gelöschte Seite selbst → (2)/(3).
   - Geplante Abhilfe: (1) beim Prüfen einer Seite Ergebnis-/Statuszeilen dieser pid mit den
     gefundenen Datensätzen abgleichen und Überzählige löschen (deckt auch SQL/Import und neu
     ausgeschlossene Felder/Tabellen ab); (2) DataHandler-Hook (Schritt 4) für sofortige
@@ -236,6 +238,14 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
   abbrechen, Unterseiten können erlaubt sein (#105413).
 - `authMode` für jedes `select`-Feld mit `authMode`, nicht nur das Type-Feld; leere
   Erlaubt-Liste = nichts erlaubt; auch für pages (#104004).
+- Sprachen (entschieden 2026-10-11): **Prüfen immer alle Sprachen** einer Seite (Ergebnisse
+  sind geteilt, gleich alt; intern billig, extern pro Lauf einmal). Sprache nur beim
+  **Anzeigen** filtern: `language IN (allowed_languages)` in SQL, Sprachfilter bietet nur
+  erlaubte Sprachen an, `brokenLinkCount` der AJAX-Prüfung ebenso gefiltert. Ein Redakteur,
+  der prüft, prüft alle Sprachen mit (kein Leck, er sieht nur seine). Sprachauswahl beim
+  Prüfen erst bei Performance-Bedarf, dann über den aktiven Sprachfilter.
+  Offen: Sprache `-1` – Tendenz sichtbar mit Recht auf Standardsprache, gegen
+  `BackendUserAuthentication::checkLanguageAccess()` prüfen.
 - „Ziel ausnehmen“: Custom Permission.
 - **HARTE BEDINGUNG:** bis zur Umsetzung Modul-Access `admin` (sonst Info-Leck).
 
@@ -266,8 +276,7 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
       den Datensatz selbst. Inhalte auf versteckter/abgelaufener Seite oder unter
       `extend_to_subpages` werden gemeldet, obwohl unsichtbar → mit Sprachregel (Schritt 7)
       als „übersprungen“ behandeln.
-- [ ] Synchrone Prüfung im Modul durch Browser-Batches ersetzen (siehe „Modul: Level,
-      Filter, Pagination“), **vor Schritt 2**, sonst Timeouts mit externen Links.
+- [x] Synchrone Prüfung im Modul durch Browser-Batches ersetzt (2026-10-11).
 - [ ] Modul-Liste: `ReportController::getBrokenLinks()` lädt Datensatz + Seitentitel pro
       Zeile (max. eine Seite à 50) → gesammelt laden.
 - [ ] Dedupe nur pro Feld (`field|identifier`): gleiches Ziel in zwei Feldern = zwei Zeilen.
@@ -276,9 +285,7 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
       Identifier (`category` → `sys_category`) werden als `record.unknownTable` markiert,
       obwohl gültig. Seite aus Request/FormEngine-Kontext ermitteln oder unbekannte Tabellen
       im RTE nicht markieren. Reproduzierbar mit `seed-bigtree.php` (Kategorie-Links).
-- [ ] **Bug Plain-URLs (#97937, reproduziert 2026-10-11):** `https://x.org&nbsp;` →
-      Host `x.org&nbsp` → `url.unknownHost` (broken). `&nbsp;`/`&#160;` vor dem Parsen in
-      `LinkExtractor::extractPlainUrls()` zu Leerzeichen machen.
+- [x] **Bug Plain-URLs (#97937):** `&nbsp;` beendet die URL jetzt (2026-10-11, mit Test).
 - [ ] **Bug eigene LinkHandler (#94086):** `LinkTargetFactory` meldet unbekannte Typen als
       `link.invalid`, auch wenn ein Checker für den Typ registriert ist.
 - [ ] Ziel per Rootline prüfen (`extendToSubpages`, #106675/#101367).
@@ -299,8 +306,20 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
   `orderField`/`orderDirection`, stabile Nebensortierung für die Pagination.
 - Pagination in SQL (`LIMIT/OFFSET`, 50 pro Seite), `page` nur in der URL; Partial nach
   Vorbild EXT:redirects (`Partials/Pagination`), ohne Seiten-Eingabefeld (bräuchte JS).
-- Prüfen bleibt vorerst synchron. Ziel: Queue-Service (Task 8) + Browser-Batches
-  (AJAX-Route ruft denselben Service mit ~5 s Budget, Fortschrittsbalken).
+- Prüfen im Modul (umgesetzt 2026-10-11): **Browser-Batches pro Seite**. JS holt die
+  Seiten des Bereichs (`ajax linkvalidator2_check_start`), dann pro Seite
+  `linkvalidator2_check_page` → `PageCheckService::checkPage()` mit 5 s Budget; nicht
+  fertig → dieselbe Seite erneut (bereits im Lauf geprüfte Datensätze werden über
+  `record_status.last_checked >= runStartedAt` übersprungen, URLs aus dem Lauf über
+  `$freshSince` wiederverwendet). Seiten nacheinander, nicht parallel (fremde Server).
+  Fortschrittsbalken über den Filtern, Abbrechen; am Ende Notification mit Kurzinfo
+  (Seiten, kaputte Links, davon neu = `first_detected >= runStartedAt`; Warnung bei neuen)
+  und Neuladen des Reports. Kein Modal (verworfen).
+  Layout (2026-10-11): Ebenen **getrennt** – Button-Gruppe im DocHeader „Ebenen ▾ | Links
+  prüfen“ setzt nur den Prüfbereich (kein Reload, vorbelegt mit den Report-Ebenen);
+  Ebenen im Filterformular für die Anzeige. Revidiert „gleicher Bereich für Prüfen und
+  Anzeigen“ von oben. Checkbox „Externe prüfen“
+  entfällt – extern wird immer geprüft, Frisches kommt aus dem Cache.
 - Verifikation ohne BE-Login: `Notes/render-module.php` rendert das Modul als Admin
   (`ddev exec "TYPO3_PATH_ROOT=/var/www/html TYPO3_PATH_APP=/var/www/html php
   typo3conf/ext/linkvalidator2/Notes/render-module.php 'id=1287&depth=999&linkType=page'"`).

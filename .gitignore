@@ -4,3 +4,4 @@
 /composer.lock
 /typo3temp/
 /var/
+.phpunit.cache/

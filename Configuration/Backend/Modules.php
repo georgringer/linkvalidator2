@@ -22,7 +22,6 @@ return [
         ],
         'moduleData' => [
             'depth' => 0,
-            'checkExternal' => 0,
             'status' => '',
             'linkType' => '',
             'table' => '',

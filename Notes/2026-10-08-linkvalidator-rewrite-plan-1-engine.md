@@ -1919,7 +1919,7 @@ Aus der Analyse der offenen Forge-Issues (`Resources/Private/Issues/`, 2026-10-1
 Klein und unabhängig voneinander, je ein Commit; nach dem Fix die Issue-Datei nach
 `done/` (bzw. Status anpassen), Index und README-Spalte *Forge* nachziehen.
 
-- [ ] **#97937 `&nbsp;` in Text-URLs** – `LinkExtractor::extractPlainUrls()`: `&nbsp;`/`&#160;`
+- [x] **#97937 `&nbsp;` in Text-URLs** – `LinkExtractor::extractPlainUrls()`: `&nbsp;`/`&#160;`
       vor dem Parsen in Leerzeichen umsetzen. Smoke: HTML aus dem Issue → 6 URLs, keine
       endet auf `&nbsp`.
 - [ ] **#94086 eigene LinkHandler** – `LinkTargetFactory::createFromResolved()` `default`:
@@ -1928,7 +1928,7 @@ Klein und unabhängig voneinander, je ein Commit; nach dem Fix die Issue-Datei n
 - [ ] **#106675/#101367 Rootline** – `PageChecker`: Vorfahren mit `extendToSubpages`
       (hidden, endtime) prüfen, Fehlertypen `page.hiddenByParent`/`page.expiredByParent`
       mit `parentPage`, Labels in `messages.xlf`. Smoke: neue Seiten unter 1287 im Seed.
-- [ ] **#89426 Abgleich beim Prüfen einer Seite** – nach `findOnPage()` alle
+- [x] **#89426 Abgleich beim Prüfen einer Seite** (gelöschte Seite selbst bleibt offen) – nach `findOnPage()` alle
       `broken_link`/`record_status`-Zeilen dieser `pid`, deren Datensatz nicht gefunden
       wurde, löschen. Smoke: Repro aus der Spec („Bekannter Bug“).
 

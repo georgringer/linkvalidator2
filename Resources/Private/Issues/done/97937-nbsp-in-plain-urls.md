@@ -3,7 +3,7 @@
 - Forge: https://forge.typo3.org/issues/97937 (Bug, Under Review, angelegt 2022-07-14)
 - Gerrit: https://review.typo3.org/c/Packages/TYPO3.CMS/+/75200 (abandoned)
 - Verwandt: #85006, #98120, #98328, #99909
-- **Status linkvalidator2:** ❌ offen (reproduziert)
+- **Status linkvalidator2:** ✅ gelöst (2026-10-11)
 
 ## Problem
 
@@ -37,7 +37,11 @@ Fix in `extractPlainUrls()` (nicht im Core-Parser, damit Softref-Index unberühr
 Die HTML-Links (Fehler 2) betreffen linkvalidator2 nicht: `<a href>` werden über
 `HtmlParser` gelesen, der URL-Parser überspringt URLs nach `"`/`=`.
 
-## Test (Task 9)
+## Lösung
 
-Unit-Test für `LinkExtractor` mit genau diesem HTML: erwartet 6 URLs, keine endet auf
-`&nbsp`.
+`LinkExtractor::extractPlainUrls()` ersetzt vor dem Parsen `&nbsp;`, `&#160;`, `&#xA0;`
+und U+00A0 durch ein Leerzeichen – die URL endet dort. Der Core-Parser bleibt unberührt
+(Softref-Index).
+
+Test: `LinkExtractorTest::plainTextUrlEndsAtNonBreakingSpace` (HTML aus dem Issue plus
+die anderen Schreibweisen).
