@@ -40,6 +40,11 @@ final readonly class CheckResult
         return new self(CheckStatus::Unknown, $errorType, $details);
     }
 
+    public static function info(string $errorType, array $details = []): self
+    {
+        return new self(CheckStatus::Info, $errorType, $details);
+    }
+
     public function isOk(): bool
     {
         return $this->status === CheckStatus::Ok;

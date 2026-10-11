@@ -20,6 +20,7 @@ namespace TYPO3\CMS\Linkvalidator2\Tests\Functional\Target;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Linkvalidator2\Service\CheckedLink;
 use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
+use TYPO3\CMS\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 /**
@@ -27,6 +28,8 @@ use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
  */
 final class CustomLinkHandlerTest extends FunctionalTestCase
 {
+    use SiteConfigurationTrait;
+
     protected array $testExtensionsToLoad = [
         'typo3/cms-linkvalidator2',
         __DIR__ . '/../Fixtures/Extensions/test_link_handler',
@@ -41,6 +44,7 @@ final class CustomLinkHandlerTest extends FunctionalTestCase
     {
         parent::setUp();
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/pages.csv');
+        $this->writeSiteConfiguration();
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/tt_content_custom_link_handler.csv');
         foreach ($this->get(RecordCheckService::class)->checkRecord('tt_content', 30) as $checkedLink) {
             /** @var CheckedLink $checkedLink */

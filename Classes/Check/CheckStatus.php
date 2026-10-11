@@ -22,4 +22,6 @@ enum CheckStatus: string
     case Ok = 'ok';
     case Broken = 'broken';
     case Unknown = 'unknown';
+    /** Reachable, but with a restriction an editor should know about */
+    case Info = 'info';
 }

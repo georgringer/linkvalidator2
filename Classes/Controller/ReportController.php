@@ -19,6 +19,7 @@ namespace TYPO3\CMS\Linkvalidator2\Controller;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Backend\Attribute\AsController;
+use TYPO3\CMS\Backend\Routing\PreviewUriBuilder;
 use TYPO3\CMS\Backend\Routing\UriBuilder;
 use TYPO3\CMS\Backend\Template\Components\ButtonBar;
 use TYPO3\CMS\Backend\Template\Components\ComponentFactory;
@@ -29,11 +30,14 @@ use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\Exception\SiteNotFoundException;
 use TYPO3\CMS\Core\Imaging\IconFactory;
 use TYPO3\CMS\Core\Imaging\IconSize;
+use TYPO3\CMS\Core\LinkHandling\LinkService;
 use TYPO3\CMS\Core\Localization\LanguageService;
 use TYPO3\CMS\Core\Page\PageRenderer;
+use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
 use TYPO3\CMS\Core\Site\SiteFinder;
 use TYPO3\CMS\Core\Type\Bitmask\Permission;
+use TYPO3\CMS\Core\Utility\MathUtility;
 use TYPO3\CMS\Linkvalidator2\Report\ReportFilter;
 use TYPO3\CMS\Linkvalidator2\Report\ReportOrdering;
 use TYPO3\CMS\Linkvalidator2\Repository\BrokenLinkRepository;
@@ -55,6 +59,7 @@ final readonly class ReportController
         private PageRenderer $pageRenderer,
         private ComponentFactory $componentFactory,
         private IconFactory $iconFactory,
+        private LinkService $linkService,
         private BrokenLinkRepository $brokenLinkRepository,
         private TcaSchemaFactory $tcaSchemaFactory,
         private SiteFinder $siteFinder,
@@ -106,6 +111,65 @@ final readonly class ReportController
             'brokenLinks' => $this->getBrokenLinks($pageIds, $filter, $ordering, $pagination, $moduleUrl),
         ]);
         return $view->renderResponse('Backend/Report');
+    }
+
+    /**
+     * Where the link target can be looked at: external URLs themselves, pages in the frontend preview
+     * (hidden pages included for backend users), existing files by their public URL.
+     */
+    private function getTargetUrl(string $link, int $language): ?string
+    {
+        try {
+            $resolved = $this->linkService->resolve($link);
+        } catch (\Throwable) {
+            return null;
+        }
+        $type = (string)($resolved['type'] ?? '');
+        if ($type === LinkService::TYPE_URL) {
+            $url = (string)($resolved['url'] ?? '');
+            return in_array(strtolower((string)parse_url($url, PHP_URL_SCHEME)), ['http', 'https'], true) ? $url : null;
+        }
+        if ($type === LinkService::TYPE_PAGE && MathUtility::canBeInterpretedAsInteger($resolved['pageuid'] ?? null)) {
+            $pageUid = (int)$resolved['pageuid'];
+            if (BackendUtility::getRecord('pages', $pageUid) === null) {
+                return null;
+            }
+            $uri = PreviewUriBuilder::create($pageUid)
+                ->withLanguage(max(0, $language))
+                ->withSection((string)($resolved['fragment'] ?? ''))
+                ->buildUri();
+            return $uri !== null ? (string)$uri : null;
+        }
+        if ($type === LinkService::TYPE_FILE && ($resolved['file'] ?? null) instanceof File && !$resolved['file']->isMissing()) {
+            return $resolved['file']->getPublicUrl();
+        }
+        return null;
+    }
+
+    /**
+     * Arguments of the error labels: 1. HTTP status, code, date or parent page title, 2. a hint that a
+     * notice comes from a parent page.
+     *
+     * @param array<int, string> $pageTitles
+     * @return array{0: string, 1: string}
+     */
+    private function getMessageArguments(string $errorType, array $details, array &$pageTitles): array
+    {
+        $parentTitle = '';
+        if (isset($details['parentPage'])) {
+            $parentPage = (int)$details['parentPage'];
+            $parentTitle = $pageTitles[$parentPage] ??= BackendUtility::getRecordTitle('pages', BackendUtility::getRecord('pages', $parentPage) ?? ['uid' => $parentPage]);
+        }
+        $first = match ($errorType) {
+            'page.hiddenByParent', 'page.expiredByParent' => $parentTitle,
+            'page.notYetVisible' => date('d.m.Y H:i', (int)($details['starttime'] ?? 0)),
+            'page.visibleUntil' => date('d.m.Y H:i', (int)($details['endtime'] ?? 0)),
+            default => (string)($details['httpStatus'] ?? $details['code'] ?? ''),
+        };
+        $byParent = $parentTitle !== '' && in_array($errorType, ['page.accessRestricted', 'page.notYetVisible', 'page.visibleUntil'], true)
+            ? sprintf($this->getLanguageService()->sL('linkvalidator2.messages:error.byParentPage'), $parentTitle)
+            : '';
+        return [$first, $byParent];
     }
 
     /**
@@ -179,6 +243,13 @@ final readonly class ReportController
             $pageTitles[$pid] ??= BackendUtility::getRecordTitle('pages', BackendUtility::getRecord('pages', $pid) ?? ['uid' => $pid]);
             $row['pageTitle'] = $pageTitles[$pid];
             $row['details'] = (array)json_decode((string)$row['error_details'], true);
+            $row['messageArguments'] = $this->getMessageArguments((string)$row['error_type'], $row['details'], $pageTitles);
+            $row['targetUrl'] = $this->getTargetUrl((string)$row['link_string'], (int)$row['language']);
+            $row['statusClass'] = match ((string)$row['status']) {
+                'info' => 'badge-info',
+                'unknown' => 'badge-warning',
+                default => 'badge-danger',
+            };
             $row['recordTitle'] = $record !== [] ? BackendUtility::getRecordTitle($table, $record) : $table . ':' . $uid;
             $row['editUrl'] = (string)$this->uriBuilder->buildUriFromRoute('record_edit', [
                 'edit' => [$table => [$uid => 'edit']],

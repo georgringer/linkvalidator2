@@ -19,12 +19,16 @@ namespace TYPO3\CMS\Linkvalidator2\Tests\Functional\Controller;
 
 use PHPUnit\Framework\Attributes\Test;
 use Psr\Http\Message\ResponseInterface;
+use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Linkvalidator2\Controller\CheckController;
+use TYPO3\CMS\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 final class CheckControllerTest extends FunctionalTestCase
 {
+    use SiteConfigurationTrait;
+
     protected array $testExtensionsToLoad = ['typo3/cms-linkvalidator2'];
 
     protected function setUp(): void
@@ -32,6 +36,7 @@ final class CheckControllerTest extends FunctionalTestCase
         parent::setUp();
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/be_users.csv');
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/pages.csv');
+        $this->writeSiteConfiguration();
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/tt_content.csv');
     }
 
@@ -83,12 +88,12 @@ final class CheckControllerTest extends FunctionalTestCase
         $this->setUpBackendUser(1);
 
         $response = $this->get(CheckController::class)->pageAction(
-            (new ServerRequest('https://typo3-testing.local/', 'POST'))->withParsedBody(['pageId' => 1, 'runStartedAt' => time()])
+            (new ServerRequest('https://typo3-testing.local/', 'POST'))->withParsedBody(['pageId' => 1, 'runStartedAt' => $this->now()])
         );
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame(
-            ['done' => true, 'recordCount' => 6, 'checkedCount' => 6, 'brokenLinkCount' => 8, 'newBrokenLinkCount' => 8],
+            ['done' => true, 'recordCount' => 6, 'checkedCount' => 6, 'brokenLinkCount' => 8, 'newBrokenLinkCount' => 8, 'noticeCount' => 0],
             $this->decode($response)
         );
     }
@@ -99,7 +104,7 @@ final class CheckControllerTest extends FunctionalTestCase
         $this->setUpBackendUser(2);
 
         $response = $this->get(CheckController::class)->pageAction(
-            (new ServerRequest('https://typo3-testing.local/', 'POST'))->withParsedBody(['pageId' => 1, 'runStartedAt' => time()])
+            (new ServerRequest('https://typo3-testing.local/', 'POST'))->withParsedBody(['pageId' => 1, 'runStartedAt' => $this->now()])
         );
 
         self::assertSame(403, $response->getStatusCode());
@@ -122,5 +127,13 @@ final class CheckControllerTest extends FunctionalTestCase
     private function decode(ResponseInterface $response): array
     {
         return json_decode((string)$response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * The clock the checks store their times with
+     */
+    private function now(): int
+    {
+        return (int)$this->get(Context::class)->getPropertyFromAspect('date', 'timestamp');
     }
 }

@@ -18,15 +18,19 @@ declare(strict_types=1);
 namespace TYPO3\CMS\Linkvalidator2\Tests\Functional\Service;
 
 use PHPUnit\Framework\Attributes\Test;
+use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\LinkHandling\LinkService;
 use TYPO3\CMS\Linkvalidator2\Check\CheckResult;
 use TYPO3\CMS\Linkvalidator2\Repository\TargetRepository;
 use TYPO3\CMS\Linkvalidator2\Service\PageCheckService;
 use TYPO3\CMS\Linkvalidator2\Target\LinkTarget;
+use TYPO3\CMS\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 final class PageCheckServiceTest extends FunctionalTestCase
 {
+    use SiteConfigurationTrait;
+
     private const BROKEN_LINK_TABLE = 'tx_linkvalidator2_broken_link';
 
     protected array $testExtensionsToLoad = ['typo3/cms-linkvalidator2'];
@@ -43,13 +47,14 @@ final class PageCheckServiceTest extends FunctionalTestCase
     {
         parent::setUp();
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/pages.csv');
+        $this->writeSiteConfiguration();
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/tt_content.csv');
     }
 
     #[Test]
     public function pageIsCheckedCompletelyWithoutTimeBudget(): void
     {
-        $result = $this->get(PageCheckService::class)->checkPage(1, time());
+        $result = $this->get(PageCheckService::class)->checkPage(1, $this->now());
 
         self::assertTrue($result->done);
         // pages:1 and tt_content 10–14
@@ -63,7 +68,7 @@ final class PageCheckServiceTest extends FunctionalTestCase
     public function exceededTimeBudgetIsContinuedByTheNextCall(): void
     {
         $subject = $this->get(PageCheckService::class);
-        $runStartedAt = time();
+        $runStartedAt = $this->now();
 
         $calls = 0;
         do {
@@ -82,9 +87,9 @@ final class PageCheckServiceTest extends FunctionalTestCase
     public function recordsCheckedBeforeTheRunAreCheckedAgain(): void
     {
         $subject = $this->get(PageCheckService::class);
-        $subject->checkPage(1, time());
+        $subject->checkPage(1, $this->now());
 
-        $result = $subject->checkPage(1, time() + 1);
+        $result = $subject->checkPage(1, $this->now() + 1);
 
         self::assertSame(6, $result->checkedCount);
     }
@@ -93,7 +98,7 @@ final class PageCheckServiceTest extends FunctionalTestCase
     public function brokenLinksFoundForTheFirstTimeAreCountedAsNew(): void
     {
         $subject = $this->get(PageCheckService::class);
-        self::assertSame(8, $subject->checkPage(1, time())->newBrokenLinkCount);
+        self::assertSame(8, $subject->checkPage(1, $this->now())->newBrokenLinkCount);
         // Pretend the first run happened a day ago
         $this->getConnectionPool()->getConnectionForTable(self::BROKEN_LINK_TABLE)
             ->executeStatement('UPDATE ' . self::BROKEN_LINK_TABLE . ' SET first_detected = first_detected - 86400');
@@ -105,20 +110,32 @@ final class PageCheckServiceTest extends FunctionalTestCase
             ['uid' => 13]
         );
 
-        $result = $subject->checkPage(1, time());
+        $result = $subject->checkPage(1, $this->now());
 
         self::assertSame(9, $result->brokenLinkCount);
         self::assertSame(1, $result->newBrokenLinkCount);
     }
 
     #[Test]
+    public function noticesAreCountedSeparately(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/tt_content_notice.csv');
+
+        $result = $this->get(PageCheckService::class)->checkPage(2, $this->now());
+
+        self::assertSame(1, $result->brokenLinkCount);
+        self::assertSame(1, $result->newBrokenLinkCount);
+        self::assertSame(1, $result->noticeCount);
+    }
+
+    #[Test]
     public function staleResultsOfThePageAreRemoved(): void
     {
         $subject = $this->get(PageCheckService::class);
-        $subject->checkPage(1, time());
+        $subject->checkPage(1, $this->now());
         $this->getConnectionPool()->getConnectionForTable('tt_content')->update('tt_content', ['deleted' => 1], ['uid' => 10]);
 
-        $result = $subject->checkPage(1, time() + 1);
+        $result = $subject->checkPage(1, $this->now() + 1);
 
         self::assertSame(1, $result->brokenLinkCount);
     }
@@ -130,7 +147,7 @@ final class PageCheckServiceTest extends FunctionalTestCase
     public function externalResultStoredDuringTheRunIsReused(): void
     {
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/tt_content_external.csv');
-        $runStartedAt = time();
+        $runStartedAt = $this->now();
         $url = 'https://lv2-test.invalid/gone';
         $this->get(TargetRepository::class)->store(
             new LinkTarget(LinkService::TYPE_URL, 'url:' . $url, ['type' => LinkService::TYPE_URL, 'url' => $url]),
@@ -145,5 +162,13 @@ final class PageCheckServiceTest extends FunctionalTestCase
             ->fetchOne();
         // Requesting the URL would have reported the .invalid host as unknown
         self::assertSame('url.notFound', $errorType);
+    }
+
+    /**
+     * The clock the checks store their times with
+     */
+    private function now(): int
+    {
+        return (int)$this->get(Context::class)->getPropertyFromAspect('date', 'timestamp');
     }
 }

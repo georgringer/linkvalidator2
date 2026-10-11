@@ -1,0 +1,22 @@
+"pages"
+,"uid","pid","title","doktype","is_siteroot","hidden","deleted","starttime","endtime","fe_group","extendToSubpages"
+,1,0,"Root",1,1,0,0,0,0,"",0
+,2,1,"Visible",1,0,0,0,0,0,"",0
+,3,1,"Hidden",1,0,1,0,0,0,"",0
+,4,1,"Deleted",1,0,0,1,0,0,"",0
+,5,1,"Expired",1,0,0,0,0,1,"",0
+,6,1,"Folder",254,0,0,0,0,0,"",0
+,11,1,"Restricted",1,0,0,0,0,0,"1",0
+,12,1,"Starts in the future",1,0,0,0,4102444800,0,"",0
+,13,1,"Visible until",1,0,0,0,0,4102444800,"",0
+,14,1,"Hidden with subpages",1,0,1,0,0,0,"",1
+,15,14,"Child of hidden with subpages",1,0,0,0,0,0,"",0
+,16,1,"Expired with subpages",1,0,0,0,0,1,"",1
+,17,16,"Child of expired with subpages",1,0,0,0,0,0,"",0
+,18,1,"Restricted with subpages",1,0,0,0,0,0,"1",1
+,19,18,"Child of restricted with subpages",1,0,0,0,0,0,"",0
+,20,1,"Starts in the future with subpages",1,0,0,0,4102444800,0,"",1
+,21,20,"Child of future with subpages",1,0,0,0,0,0,"",0
+,22,1,"Hidden without subpages",1,0,1,0,0,0,"",0
+,23,22,"Child of hidden without subpages",1,0,0,0,0,0,"",0
+,24,1,"Shortcut to deleted page",4,0,0,0,0,0,"",0

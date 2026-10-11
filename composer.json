@@ -7,7 +7,8 @@
 	],
 	"require": {
 		"typo3/cms-backend": "15.0.*@dev",
-		"typo3/cms-core": "15.0.*@dev"
+		"typo3/cms-core": "15.0.*@dev",
+		"typo3/cms-frontend": "15.0.*@dev"
 	},
 	"require-dev": {
 		"typo3/testing-framework": "dev-main"

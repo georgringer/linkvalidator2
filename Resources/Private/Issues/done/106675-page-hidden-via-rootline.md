@@ -2,7 +2,7 @@
 
 - Forge: https://forge.typo3.org/issues/106675 (Bug, New, angelegt 2025-05-11)
 - Verwandt: #101367 (Duplikat)
-- **Status linkvalidator2:** ❌ offen
+- **Status linkvalidator2:** ✅ gelöst (2026-10-11)
 
 ## Problem
 
@@ -34,3 +34,18 @@ zusammen bauen.
 
 Functional: Seite hidden+extendToSubpages mit sichtbarer Unterseite, Link auf
 Unterseite → broken; ohne extendToSubpages → ok; abgelaufene Elternseite analog.
+
+## Lösung (2026-10-11)
+
+Ziel-Seiten werden über die Seitenauflösung des Frontends geprüft
+(`FrontendPageResolver` → `PageInformationFactory::create()`, anonym, ohne Rendern, ohne
+`errorHandling` der Site; Spike in den Notes). Die Rootline mit `extendToSubpages` kommt
+damit genau wie im Frontend. Für den Fehlertyp schaut `PageChecker` bei einem Fehlschlag auf
+Seite und Rootline: `page.hiddenByParent` / `page.expiredByParent` mit `parentPage`.
+
+Abweichend vom Issue: `fe_group` und `starttime` (auch über die Elternseite) sind **nicht
+kaputt**, sondern ein **Hinweis** (`page.accessRestricted`, `page.notYetVisible`), ebenso
+eine künftige Stoppzeit (`page.visibleUntil`). Hinweise zählen nicht als kaputt, im Report
+stehen sie mit eigenem Badge und sind per Status filterbar.
+
+Tests: `Tests/Functional/Check/PageCheckerTest.php`.

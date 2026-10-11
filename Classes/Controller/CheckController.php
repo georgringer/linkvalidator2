@@ -22,6 +22,7 @@ use TYPO3\CMS\Backend\Attribute\AsController;
 use TYPO3\CMS\Backend\Module\ModuleProvider;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
+use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Http\JsonResponse;
 use TYPO3\CMS\Core\Type\Bitmask\Permission;
 use TYPO3\CMS\Linkvalidator2\Service\PageCheckService;
@@ -45,6 +46,7 @@ final readonly class CheckController
         private ModuleProvider $moduleProvider,
         private PageRecordFinder $pageRecordFinder,
         private PageCheckService $pageCheckService,
+        private Context $context,
     ) {}
 
     public function startAction(ServerRequestInterface $request): ResponseInterface
@@ -62,7 +64,8 @@ final readonly class CheckController
         }
         return new JsonResponse([
             'pageIds' => $this->pageRecordFinder->findPageIds($pageUid, $depth),
-            'runStartedAt' => time(),
+            // Same clock as the check times stored by the checks
+            'runStartedAt' => (int)$this->context->getPropertyFromAspect('date', 'timestamp'),
         ]);
     }
 
@@ -87,6 +90,7 @@ final readonly class CheckController
             'checkedCount' => $result->checkedCount,
             'brokenLinkCount' => $result->brokenLinkCount,
             'newBrokenLinkCount' => $result->newBrokenLinkCount,
+            'noticeCount' => $result->noticeCount,
         ]);
     }
 

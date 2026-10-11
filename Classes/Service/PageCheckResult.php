@@ -28,5 +28,7 @@ final readonly class PageCheckResult
         public int $brokenLinkCount,
         /** Of these, the ones first detected in this run */
         public int $newBrokenLinkCount,
+        /** Notices stored for the page: reachable targets with a restriction, not counted as broken */
+        public int $noticeCount,
     ) {}
 }

@@ -16,6 +16,8 @@ declare(strict_types=1);
  */
 namespace TYPO3\CMS\Linkvalidator2\Service;
 
+use TYPO3\CMS\Linkvalidator2\Check\CheckStatus;
+use TYPO3\CMS\Linkvalidator2\Report\ReportFilter;
 use TYPO3\CMS\Linkvalidator2\Repository\BrokenLinkRepository;
 use TYPO3\CMS\Linkvalidator2\Repository\RecordStatusRepository;
 
@@ -61,8 +63,9 @@ final readonly class PageCheckService
             $done,
             count($records),
             $checkedCount,
-            $this->brokenLinkRepository->countByPids([$pageUid]),
+            $this->brokenLinkRepository->countBrokenByPid($pageUid),
             $this->brokenLinkRepository->countDetectedSince($pageUid, $runStartedAt),
+            $this->brokenLinkRepository->countByPids([$pageUid], new ReportFilter(CheckStatus::Info->value)),
         );
     }
 }

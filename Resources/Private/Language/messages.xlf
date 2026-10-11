@@ -34,7 +34,7 @@
         <source>Links checked</source>
       </trans-unit>
       <trans-unit id="check.doneMessage">
-        <source>%1$d pages checked, %2$d broken links, %3$d of them new.</source>
+        <source>%1$d pages checked, %2$d broken links, %3$d of them new. %4$d notices.</source>
       </trans-unit>
       <trans-unit id="check.cancelled">
         <source>Checking stopped after %1$d of %2$d pages.</source>
@@ -74,6 +74,33 @@
       </trans-unit>
       <trans-unit id="error.page.noFrontend">
         <source>Page type has no frontend output</source>
+      </trans-unit>
+      <trans-unit id="error.page.hiddenByParent">
+        <source>Page is hidden by its parent page "%1$s", which extends to subpages</source>
+      </trans-unit>
+      <trans-unit id="error.page.expiredByParent">
+        <source>Page has expired with its parent page "%1$s", which extends to subpages</source>
+      </trans-unit>
+      <trans-unit id="error.page.targetNotReachable">
+        <source>Shortcut or link page whose target is not reachable</source>
+      </trans-unit>
+      <trans-unit id="error.page.notReachable">
+        <source>Page is not delivered by the frontend (code %1$s)</source>
+      </trans-unit>
+      <trans-unit id="error.page.noSite">
+        <source>Page does not belong to a site</source>
+      </trans-unit>
+      <trans-unit id="error.page.accessRestricted">
+        <source>Linked page is only visible to logged-in website users (access restriction)%2$s</source>
+      </trans-unit>
+      <trans-unit id="error.page.notYetVisible">
+        <source>Linked page is not online yet, it is published on %1$s (start time)%2$s</source>
+      </trans-unit>
+      <trans-unit id="error.page.visibleUntil">
+        <source>Linked page goes offline on %1$s (stop time)%2$s</source>
+      </trans-unit>
+      <trans-unit id="error.byParentPage">
+        <source>, set on the parent page "%s" for its subpages</source>
       </trans-unit>
       <trans-unit id="error.record.missing">
         <source>Record does not exist</source>
@@ -152,6 +179,9 @@
       </trans-unit>
       <trans-unit id="status.unknown">
         <source>Cannot be checked</source>
+      </trans-unit>
+      <trans-unit id="status.info">
+        <source>Notice</source>
       </trans-unit>
       <trans-unit id="linkType.page">
         <source>Page</source>

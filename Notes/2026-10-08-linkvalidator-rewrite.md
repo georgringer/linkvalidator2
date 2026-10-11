@@ -165,13 +165,89 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
   (Sysfolder, Papierkorb, Spacer), Anker #cNNN fehlt/andere Seite.
 - Seite broken auch über die Rootline: Vorfahr mit `extendToSubpages` hidden/abgelaufen
   (#106675, #101367) → eigene Fehlertypen mit `parentPage`. Rootline pro Lauf cachen.
-- Seite ok: starttime Zukunft, fe_group, andere Site (auch über die Rootline).
+- Seite ok: andere Site. **Hinweis** (Status `info`, entschieden 2026-10-11, umgesetzt):
+  fe_group (`page.accessRestricted`), starttime Zukunft (`page.notYetVisible`), künftige
+  Stoppzeit (`page.visibleUntil`) – jeweils auch über Elternseite mit extendToSubpages
+  (`parentPage`). Use Case: Ziel nach dem Verlinken eingeschränkt. Hinweise zählen nicht
+  als kaputt (Fortschritt, Notification, `broken_count`); Report zeigt standardmäßig alle
+  Status mit Badge, Filter nach kaputt / nicht prüfbar / Hinweis.
+- **Umgesetzt 2026-10-11:** Ziel-Seiten über `FrontendPageResolver`
+  (`PageInformationFactory`, Stufe 2 unten); `PageChecker` bestimmt nur noch den Grund.
+  Code 1705656657 (Site ohne TypoScript) gilt als erreichbar (Setup, kein Link-Problem).
+  Seite ohne Site → `page.noSite`. Laufstart (`runStartedAt`) kommt aus dem Context-Datum
+  (gleiche Uhr wie `last_checked`/`first_detected`), nicht aus `time()`.
+- Offen: Quelle über die Seite (Inhalt auf unsichtbarer Seite) – Achtung, nur für
+  `pages`/`tt_content` anwenden (Datensätze in Sysfoldern werden über Plugins gezeigt), und
+  bei `pages` als Quelle nicht die eigene Shortcut-/Link-Auflösung werten.
 - `t3://page?uid=current#c…` (#100933): Seite aus der Quelle, Anker prüfen (Schritt 8).
 - Record: gelöscht/hidden/abgelaufen → broken.
 - Datei: sys_file fehlt oder missing=1 → broken; Storage offline → unknown.
 - **Sprachregel (v1, eigener späterer Commit)**: Ziel in Sprache der Quelle unter
   Beachtung von fallbackType/Fallback-Kette der Site erreichbar? strict/free ohne
   Übersetzung → broken; versteckte Übersetzung → broken.
+
+### Frontend-Wahrheit statt nachbauen (Notiz 2026-10-11, vor Rootline/Sprachregel klären)
+- Links **finden** bleibt wie es ist (Schema + Extraktion). Offen ist, ob sich
+  **Erreichbarkeit/Sichtbarkeit** (Rootline/`extendToSubpages`, Sprache strict/fallback,
+  Shortcuts, Mountpoints, Zugriff, Workspaces) zuverlässig rein im Backend nachbauen lässt
+  – Tendenz: nicht selbst rechnen.
+- Drei Stufen:
+  1. **Eigene DB-Logik** (heute `PageChecker`, `RecordCheckService::isVisible()`): schnell,
+     überall nutzbar (CLI, RTE, DataHandler), aber Nachbau, deckt nur Bekanntes ab.
+  2. **`PageInformationFactory::create()`** – Frontend-Entscheidung ohne Rendern, wie
+     EXT:redirects `RedirectService::bootFrontendController()` (Request mit `site`,
+     `language`, `routing` = `PageArguments`, `frontend.cache.instruction`; Context
+     `frontend.preview`). Wirft `PageInformationCreationFailedException` mit Response +
+     Code (Seite versteckt, Rootline `checkRootlineForIncludeSection`, Sprache nicht
+     verfügbar/strict, Shortcut ohne Ziel, …) → auf Fehlertypen abbilden. `@internal`, für
+     einen Core-Sysext vertretbar (redirects nutzt es). Achtung: setzt/ändert den
+     Context-Language-Aspect (`@todo` in der Klasse) → Context isolieren/zurücksetzen.
+     Kosten pro Ziel-Seite+Sprache messen, pro Lauf cachen.
+  3. **HTTP-Request ans Frontend** wie cs_seo `FrontendPageService`
+     (https://github.com/clickstorm/cs_seo/blob/main/Classes/Service/FrontendPageService.php:
+     `PreviewUriBuilder` → `RequestFactory`, eigener Header, Basic Auth der BE-Session
+     weiterreichen). Volle Wahrheit inkl. gerendertem HTML (Anker `#c123`), aber teuer,
+     Seiteneffekte, 500er von Plugins = falscher Alarm, Basis-URL/Auth auf Staging. Nur als
+     optionaler Checker (Extension registriert Checker für `page`), nicht Standard.
+- **Spike Stufe 2 (2026-10-11, `Notes/spike-page-information-factory.php`, DDEV, Site
+  `main`):** trägt.
+  - Läuft im CLI ohne Frontend-Request (Request mit `site`, `language`, `routing`,
+    `normalizedParams`). Kosten ~1 ms pro Seite+Sprache (erster Aufruf ~20 ms).
+  - Ergebnisse (Code der `PageInformationCreationFailedException` / Status):
+
+    | Fall | Ergebnis |
+    |---|---|
+    | sichtbar, Shortcut → sichtbar, Kind einer versteckten Seite *ohne* extend | OK |
+    | versteckt / gelöscht / fehlt | 1674144383 / 404 (nicht unterscheidbar) |
+    | abgelaufen, **starttime Zukunft** | 1533931330 / 404 |
+    | Sysfolder, Spacer | 1533931343 / 404 |
+    | Shortcut → gelöscht | 1705335065 / 404 |
+    | Seitentyp Link → versteckte Seite | 1705335066 / 404 |
+    | Kind von versteckt/abgelaufen/**fe_group** + extendToSubpages | 1705337296 / 403 (Grund nicht unterscheidbar) |
+    | fe_group an der Seite selbst | 1705325336 / 403 |
+    | nicht übersetzt, strict | 1533931402 / 404 |
+    | nicht übersetzt, fallback | OK (Inhalt aus Fallback) |
+
+  - **Fallstricke:** (1) Mit eingeloggtem BE-User (Modul-AJAX) zählen versteckte Seiten als
+    sichtbar, und ohne `frontend.preview`-Aspekt kracht es → für die Prüfung
+    `backend.user` anonym + `visibility` default setzen, danach wiederherstellen; damit
+    identisch zum CLI. (2) Setzt den Context-Language-Aspekt und lässt ihn stehen →
+    sichern/wiederherstellen. (3) Bei Fehlern läuft `ErrorController` → mit
+    `errorHandling` der Site (PageContent-Handler) evtl. HTTP-Abruf der 404-Seite pro
+    Fehler; nicht gemessen (Site `main` hat keins) → Site für die Prüfung ohne
+    `errorHandling` erzeugen. (4) Privater Service, im Spike per Reflection geholt; im Code
+    per DI.
+  - **Bewertung:** Als *Entscheidung* „für Besucher erreichbar ja/nein“ ideal – deckt
+    Rootline/extendToSubpages, Sprache strict/fallback, Shortcuts (auch Modi „erste
+    Unterseite“, #92542), Link-Seiten, Events von Extensions ab. Für die *Begründung*
+    reicht der Code nicht (versteckt vs. gelöscht, versteckt vs. fe_group über Elternseite)
+    → bei Fehlschlag eigener günstiger DB-Blick (Seite/Rootline) für den Fehlertyp.
+  - **Zu entscheiden:** fe_group (Seite oder via Elternseite) → laut Spec ok, Frontend 403
+    → als ok werten. starttime Zukunft → Frontend 404, Spec ok → ok lassen oder Warnung
+    „noch nicht sichtbar“ (TODO existiert).
+  - Quelle: dieselbe Abfrage für Seite+Sprache des Datensatzes beantwortet „Seite für
+    Besucher sichtbar“ (versteckte Elternseite, nicht übersetzt in strict). Ob ein
+    einzelner Inhalt gerendert wird (verstecktes Original, #94195) deckt sie **nicht** ab.
 
 ### Sprachregel: auch die Quelle (Notiz, Schritt 7)
 - Beobachtet auf Seite 1210: Seite ohne Übersetzung, aber übersetzte Inhaltselemente
@@ -288,7 +364,7 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 - [x] **Bug Plain-URLs (#97937):** `&nbsp;` beendet die URL jetzt (2026-10-11, mit Test).
 - [x] **Bug eigene LinkHandler (#94086):** gelöst 2026-10-11, Doku-Notizen in
       `Documentation/todo.md`.
-- [ ] Ziel per Rootline prüfen (`extendToSubpages`, #106675/#101367).
+- [x] Ziel per Rootline prüfen (`extendToSubpages`, #106675/#101367) – über Frontend-Auflösung.
 - [ ] Fehlerdetails (`error_details.message`) im Modul anzeigen (#101935).
 - Analyse aller offenen Forge-Issues: `Resources/Private/Issues/`.
 - [ ] Shortcut-Seiten mit `shortcut_mode` ≠ NONE prüfen (erste/zufällige Unterseite ohne

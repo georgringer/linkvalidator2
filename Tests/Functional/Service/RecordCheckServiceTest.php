@@ -18,11 +18,16 @@ declare(strict_types=1);
 namespace TYPO3\CMS\Linkvalidator2\Tests\Functional\Service;
 
 use PHPUnit\Framework\Attributes\Test;
+use TYPO3\CMS\Linkvalidator2\Report\ReportFilter;
+use TYPO3\CMS\Linkvalidator2\Repository\BrokenLinkRepository;
 use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
+use TYPO3\CMS\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 final class RecordCheckServiceTest extends FunctionalTestCase
 {
+    use SiteConfigurationTrait;
+
     private const BROKEN_LINK_TABLE = 'tx_linkvalidator2_broken_link';
     private const STATUS_TABLE = 'tx_linkvalidator2_record_status';
 
@@ -32,6 +37,7 @@ final class RecordCheckServiceTest extends FunctionalTestCase
     {
         parent::setUp();
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/pages.csv');
+        $this->writeSiteConfiguration();
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/tt_content.csv');
     }
 
@@ -51,6 +57,36 @@ final class RecordCheckServiceTest extends FunctionalTestCase
         self::assertCount(2, $checkedLinks);
         self::assertSame(0, $this->countRows(self::BROKEN_LINK_TABLE));
         self::assertSame(0, $this->getStatus('tt_content', 13)['broken_count']);
+    }
+
+    #[Test]
+    public function restrictedTargetIsStoredAsNoticeButNotCountedAsBroken(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/tt_content_notice.csv');
+
+        $this->get(RecordCheckService::class)->checkRecord('tt_content', 15);
+
+        $rows = $this->getConnectionPool()->getConnectionForTable(self::BROKEN_LINK_TABLE)
+            ->select(['status', 'error_type'], self::BROKEN_LINK_TABLE, ['record_uid' => 15], [], ['status' => 'ASC'])
+            ->fetchAllAssociative();
+        self::assertSame(
+            [['status' => 'broken', 'error_type' => 'page.hidden'], ['status' => 'info', 'error_type' => 'page.accessRestricted']],
+            $rows
+        );
+        self::assertSame(1, $this->getStatus('tt_content', 15)['broken_count']);
+    }
+
+    #[Test]
+    public function reportListsNoticesUnlessFilteredByStatus(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/tt_content_notice.csv');
+        $this->get(RecordCheckService::class)->checkRecord('tt_content', 15);
+        $repository = $this->get(BrokenLinkRepository::class);
+
+        self::assertSame(2, $repository->countByPids([2]));
+        self::assertSame(1, $repository->countByPids([2], new ReportFilter('info')));
+        self::assertSame(1, $repository->countByPids([2], new ReportFilter('broken')));
+        self::assertSame(1, $repository->countBrokenByPid(2));
     }
 
     #[Test]

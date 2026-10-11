@@ -27,6 +27,8 @@ use TYPO3\CMS\Linkvalidator2\Report\ReportOrdering;
 final readonly class BrokenLinkRepository
 {
     private const TABLE = 'tx_linkvalidator2_broken_link';
+    /** Notices (status "info") are stored as well, but are no broken links */
+    private const BROKEN_STATUSES = ['broken', 'unknown'];
 
     public function __construct(
         private ConnectionPool $connectionPool,
@@ -186,6 +188,20 @@ final readonly class BrokenLinkRepository
             ->delete(self::TABLE, ['table_name' => $table, 'record_uid' => $recordUid]);
     }
 
+    public function countBrokenByPid(int $pid): int
+    {
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+        return (int)$queryBuilder
+            ->count('uid')
+            ->from(self::TABLE)
+            ->where(
+                $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter($pid, Connection::PARAM_INT)),
+                $queryBuilder->expr()->in('status', $queryBuilder->createNamedParameter(self::BROKEN_STATUSES, Connection::PARAM_STR_ARRAY))
+            )
+            ->executeQuery()
+            ->fetchOne();
+    }
+
     public function countDetectedSince(int $pid, int $since): int
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
@@ -194,7 +210,8 @@ final readonly class BrokenLinkRepository
             ->from(self::TABLE)
             ->where(
                 $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter($pid, Connection::PARAM_INT)),
-                $queryBuilder->expr()->gte('first_detected', $queryBuilder->createNamedParameter($since, Connection::PARAM_INT))
+                $queryBuilder->expr()->gte('first_detected', $queryBuilder->createNamedParameter($since, Connection::PARAM_INT)),
+                $queryBuilder->expr()->in('status', $queryBuilder->createNamedParameter(self::BROKEN_STATUSES, Connection::PARAM_STR_ARRAY))
             )
             ->executeQuery()
             ->fetchOne();

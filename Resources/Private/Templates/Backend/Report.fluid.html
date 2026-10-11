@@ -81,9 +81,15 @@
                                         </td>
                                         <td>{brokenLink.field}</td>
                                         <td>{brokenLink.link_text}</td>
-                                        <td><code>{brokenLink.link_string}</code></td>
                                         <td>
-                                            <f:translate key="linkvalidator2.messages:error.{brokenLink.error_type}" arguments="{0: brokenLink.details.httpStatus}" default="{brokenLink.error_type}" />
+                                            <f:if condition="{brokenLink.targetUrl}">
+                                                <f:then><a href="{brokenLink.targetUrl}" target="_blank" rel="noopener noreferrer"><code>{brokenLink.link_string}</code></a></f:then>
+                                                <f:else><code>{brokenLink.link_string}</code></f:else>
+                                            </f:if>
+                                        </td>
+                                        <td>
+                                            <span class="badge {brokenLink.statusClass}"><f:translate key="linkvalidator2.messages:status.{brokenLink.status}" /></span>
+                                            <f:translate key="linkvalidator2.messages:error.{brokenLink.error_type}" arguments="{brokenLink.messageArguments}" default="{brokenLink.error_type}" />
                                         </td>
                                         <td><f:format.date format="d.m.Y H:i">{brokenLink.first_detected}</f:format.date></td>
                                     </tr>

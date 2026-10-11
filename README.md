@@ -73,7 +73,10 @@ solved ones in `done/`.
 | Workspaces | ❌ live only | 🟡 live only, `doNotCheckLinksOnWorkspace` | ❌ live only, column prepared | 📋 later | |
 | **Checking internal targets** | | | | | |
 | Page missing / deleted / hidden | ✅ | ✅ | ✅ | | |
-| Page hidden / expired via a parent with `extendToSubpages` | ❌ | ❓ | ❌ | 📋 rootline in `PageChecker` | #106675, #101367 |
+| Shortcut / link page whose target is not reachable | ❌ | ❓ | ✅ `page.targetNotReachable` (frontend resolution) | | #92542 |
+| Page hidden / expired via a parent with `extendToSubpages` | ❌ | ❓ | ✅ decided by the frontend's page resolution (`PageInformationFactory`, without rendering) | | #106675, #101367 |
+| Restricted or scheduled target (fe_group, start time, future stop time, also via parent) | ❌ | ❓ | ✅ reported as notice, not as broken; listed with a badge, status filter | | #106675 |
+| Status "notice" for reachable targets with restrictions | ❌ | ❓ | ✅ own status next to broken / cannot be checked, not counted as broken | 📋 more notices (redirects, language fallback) | |
 | Page expired (endtime) | ❌ | ❌ | ✅ | | |
 | Page without frontend (folder, spacer) | ❌ | ❌ | ✅ | | |
 | Content anchor `#c123` | ✅ | ✅ | ❌ | 📋 step 8 | |
@@ -112,6 +115,7 @@ solved ones in `done/`.
 | Paginate | ❌ | ✅ | ✅ 50 per page, in SQL | | #89454 |
 | Sort | ❌ | ✅ | ✅ by every column | | #96447 |
 | Edit record from the report | ✅ | ✅ | ✅ | | |
+| Open the link target from the report | ❓ | ❓ | ✅ new tab: external URL, page in the frontend preview (hidden/scheduled pages included), file by its public URL | | |
 | Recheck a single URL | ❌ | ✅ | ❌ | 💭 | #96447 |
 | "Broken since" | ❌ | ❌ | ✅ | | |
 | Which records were checked | ❌ | ❌ | ❌ only a count | 📋 module step | |

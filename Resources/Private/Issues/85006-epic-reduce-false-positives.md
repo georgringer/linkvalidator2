@@ -20,7 +20,9 @@ wirklich kaputt, nicht editierbar, irrelevant oder veraltet.
 | Veraltete Ergebnisse (gefixt, gelöscht) | 🟡 Abgleich beim Prüfen einer Seite ✅ (#89426), gelöschte Seite, #105911, DataHandler Schritt 4 📋 |
 | Ausschluss von URLs | 📋 Schritt 5 (#85127, #92822) |
 | `&nbsp;` in Text-URLs | ✅ #97937 |
-| Versteckte/unsichtbare Quelle | 🟡 eigener Datensatz ✅, Seite/Original/Sprache 📋 Schritt 7 (#94195, #106675) |
+| Versteckte/unsichtbare Quelle | 🟡 eigener Datensatz ✅, Seite/Original/Sprache 📋 Schritt 7 (#94195) |
+| Ziel über Elternseite unsichtbar | ✅ Frontend-Seitenauflösung (#106675) |
+| Zugriffsbeschränkte/geplante Ziele | ✅ als Hinweis statt kaputt |
 | Eigene LinkHandler | ✅ #94086 |
 
 ## Zu tun

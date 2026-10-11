@@ -10,6 +10,11 @@ forgotten.
   the filter form what is listed. Progress bar, cancel, summary with new broken links.
 - Status "unknown" (external URL could not be checked reliably: 401/403/429/5xx, TLS,
   timeout) is not "broken".
+- Status "notice": the target is reachable but restricted – only for logged-in users
+  (fe_group), visible from a start time, visible until a stop time, also when set on a
+  parent page with "extend to subpages". Typical case: the target page was changed after
+  linking it. Notices are listed with their own badge and can be filtered by status;
+  they are not counted as broken links.
 - Links in hidden or expired records are never reported.
 
 ## For integrators
@@ -63,6 +68,22 @@ final readonly class ProductLinkChecker implements LinkCheckerInterface
   registered checker for a type wins.
 - Test: `Tests/Functional/Target/CustomLinkHandlerTest.php` with the fixture extension
   `Tests/Functional/Fixtures/Extensions/test_link_handler`.
+
+### How page links are checked
+
+Whether a visitor gets a page is decided by the frontend's own page resolution
+(`PageInformationFactory`, as for a request, but without rendering): hidden pages and
+rootline, page types, shortcuts, languages and access – including listeners of its events
+(`AfterPageWithRootLineIsResolvedEvent`, …), so extensions changing page access are
+respected. The page must belong to a site.
+
+### Check pages through the frontend (idea)
+
+The page checker decides from the database (or the frontend's page resolution without
+rendering, see Notes "Frontend-Wahrheit"). Whoever needs the rendered result – e.g. anchors
+`#c123` that only exist in the HTML – can register a checker for the type `page` that
+requests the frontend over HTTP, like cs_seo's `FrontendPageService` (`PreviewUriBuilder`,
+`RequestFactory`, forwarding basic auth). Document as an example once decided.
 
 ### Open for extensibility
 

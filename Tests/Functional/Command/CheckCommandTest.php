@@ -20,10 +20,13 @@ namespace TYPO3\CMS\Linkvalidator2\Tests\Functional\Command;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Tester\CommandTester;
 use TYPO3\CMS\Linkvalidator2\Command\CheckCommand;
+use TYPO3\CMS\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 final class CheckCommandTest extends FunctionalTestCase
 {
+    use SiteConfigurationTrait;
+
     private const BROKEN_LINK_TABLE = 'tx_linkvalidator2_broken_link';
     private const STATUS_TABLE = 'tx_linkvalidator2_record_status';
 
@@ -33,6 +36,7 @@ final class CheckCommandTest extends FunctionalTestCase
     {
         parent::setUp();
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/pages.csv');
+        $this->writeSiteConfiguration();
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/tt_content.csv');
     }
 

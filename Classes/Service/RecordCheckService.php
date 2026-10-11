@@ -23,6 +23,7 @@ use TYPO3\CMS\Core\Schema\TcaSchema;
 use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
 use TYPO3\CMS\Linkvalidator2\Check\CacheableLinkCheckerInterface;
 use TYPO3\CMS\Linkvalidator2\Check\CheckerRegistry;
+use TYPO3\CMS\Linkvalidator2\Check\CheckStatus;
 use TYPO3\CMS\Linkvalidator2\Extraction\LinkExtractor;
 use TYPO3\CMS\Linkvalidator2\Repository\BrokenLinkRepository;
 use TYPO3\CMS\Linkvalidator2\Repository\RecordStatusRepository;
@@ -106,7 +107,9 @@ final readonly class RecordCheckService
             }
         }
         $this->brokenLinkRepository->replaceForRecord($table, $uid, $brokenLinks, $now);
-        $this->recordStatusRepository->markChecked($table, $uid, $pid, $language, count($brokenLinks), $now);
+        // Notices are stored for the report, but the record is not broken because of them
+        $brokenCount = count(array_filter($brokenLinks, static fn(array $brokenLink): bool => $brokenLink['result']->status !== CheckStatus::Info));
+        $this->recordStatusRepository->markChecked($table, $uid, $pid, $language, $brokenCount, $now);
         return $checkedLinks;
     }
 

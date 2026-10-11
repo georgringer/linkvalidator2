@@ -55,6 +55,7 @@ class CheckLinks {
       let checkedPages = 0;
       let brokenLinks = 0;
       let newBrokenLinks = 0;
+      let notices = 0;
       while (checkedPages < pageIds.length && !this.cancelled) {
         let result;
         do {
@@ -67,6 +68,7 @@ class CheckLinks {
         checkedPages++;
         brokenLinks += result.brokenLinkCount;
         newBrokenLinks += result.newBrokenLinkCount;
+        notices += result.noticeCount;
         if (!this.cancelled) {
           this.update(checkedPages, pageIds.length, this.format(this.labels.labelProgress, checkedPages, pageIds.length, brokenLinks, newBrokenLinks));
         }
@@ -74,7 +76,7 @@ class CheckLinks {
       if (this.cancelled) {
         Notification.info(this.labels.labelDone, this.format(this.labels.labelCancelled, checkedPages, pageIds.length));
       } else {
-        const message = this.format(this.labels.labelDoneMessage, checkedPages, brokenLinks, newBrokenLinks);
+        const message = this.format(this.labels.labelDoneMessage, checkedPages, brokenLinks, newBrokenLinks, notices);
         if (newBrokenLinks > 0) {
           Notification.warning(this.labels.labelDone, message);
         } else {

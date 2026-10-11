@@ -17,13 +17,11 @@ Source: https://forge.typo3.org/projects/typo3cms-core/issues?set_filter=1&f[]=s
 | [#110615](110615-context-dependent-execution.md) | Disable the link validator in certain contexts, or run it only in certain contexts | 📋 offen (Mail-Report, Ausführung) |
 | [#107983](107983-workspace-users.md) | Make Link Validator (linkvalidator) accessible for Preview-Workspace users | 📋 offen (Berechtigungen, Workspaces) |
 | [#106677](106677-mail-report-clickable-urls.md) | Improve Linkvalidator broken URL output in E-Mail Report | 📋 offen (Mail-Report, später) |
-| [#106675](106675-page-hidden-via-rootline.md) | Checking links to pages does not check if page is hidden via rootline (e.g. if child of hidden=1 and extendToSubpages=1) | ❌ offen |
 | [#106487](106487-mail-report-template.md) | Improve linkvalidator report mail template | 📋 offen (Mail-Report, später) |
 | [#105911](105911-hide-results-for-hidden-records.md) | Linkvalidator should hide results for hidden records | 🟡 teilweise |
 | [#105413](105413-permissions-page-attributes.md) | Linkvalidator BE-Module wrong permissions for invalid links in page attributes | 🟡 Ursache im Datenmodell gelöst, Berechtigungen 📋 offen |
 | [#104004](104004-authmode-permissions.md) | Incorrect handling of authMode in EditableRestriction in linkvalidator | 📋 offen (Berechtigungen) |
 | [#101935](101935-curl-error-codes.md) | Better handling of curl error codes in linkvalidator | 🟡 teilweise |
-| [#101367](101367-page-child-of-hidden-extend-to-subpages.md) | page link to not hidden child of hidden page with extendToSubpages is not considered broken (linkvalidator) | ❌ offen |
 | [#100933](100933-current-page-missing-anchor.md) | Checking internal links to current page with missing anchor is not reported as broken link | 📋 offen (Schritt 8: Anker) |
 | [#96447](96447-concept-and-open-decisions.md) | Linkvalidator concept & open decisions | 🟡 größtenteils durch den Neubau beantwortet |
 | [#94195](94195-translation-of-hidden-original.md) | Translated (connected mode) content will still get checked by linkvalidator if original content is hidden | 📋 offen (Schritt 7: Sprachregel) |
@@ -39,6 +37,8 @@ Source: https://forge.typo3.org/projects/typo3cms-core/issues?set_filter=1&f[]=s
 
 | Issue | Subject | Status linkvalidator2 |
 |---|---|---|
+| [#106675](done/106675-page-hidden-via-rootline.md) | Checking links to pages does not check if page is hidden via rootline (e.g. if child of hidden=1 and extendToSubpages=1) | ✅ gelöst (2026-10-11) |
+| [#101367](done/101367-page-child-of-hidden-extend-to-subpages.md) | page link to not hidden child of hidden page with extendToSubpages is not considered broken (linkvalidator) | ✅ gelöst (2026-10-11) |
 | [#94086](done/94086-custom-linkhandler.md) | Softref for custom linkhandler | ✅ gelöst (2026-10-11) |
 | [#97937](done/97937-nbsp-in-plain-urls.md) | Linkvalidator: Links and &nbsp; in tt_content.bodytext cause problems in UrlSoftReferenceParser | ✅ gelöst (2026-10-11) |
 | [#105873](done/105873-store-page-id-not-pid.md) | Should always store page id in tx_linkvalidator_broken_links not pid | ✅ gelöst (Datenmodell) |

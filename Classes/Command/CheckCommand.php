@@ -23,6 +23,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Linkvalidator2\Service\PageCheckService;
 use TYPO3\CMS\Linkvalidator2\Service\PageRecordFinder;
 use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
@@ -34,6 +35,7 @@ final class CheckCommand extends Command
         private readonly RecordCheckService $recordCheckService,
         private readonly PageRecordFinder $pageRecordFinder,
         private readonly PageCheckService $pageCheckService,
+        private readonly Context $context,
     ) {
         parent::__construct();
     }
@@ -72,7 +74,8 @@ final class CheckCommand extends Command
         $pageUid = (int)$input->getOption('page');
         if ($pageUid > 0) {
             $pageIds = $this->pageRecordFinder->findPageIds($pageUid, (int)$input->getOption('depth'));
-            $runStartedAt = time();
+            // Same clock as the check times stored by the checks
+            $runStartedAt = (int)$this->context->getPropertyFromAspect('date', 'timestamp');
             $recordCount = 0;
             $broken = 0;
             foreach ($pageIds as $pageId) {
