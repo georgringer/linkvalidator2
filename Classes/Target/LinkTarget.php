@@ -31,9 +31,9 @@ final readonly class LinkTarget
         public array $resolved = [],
     ) {}
 
-    public static function invalid(string $link, string $reason): self
+    public static function invalid(string $link, string $reason, string $errorType = 'link.invalid'): self
     {
-        return new self(self::TYPE_INVALID, self::TYPE_INVALID . ':' . $link, ['reason' => $reason]);
+        return new self(self::TYPE_INVALID, self::TYPE_INVALID . ':' . $errorType . ':' . $link, ['reason' => $reason, 'errorType' => $errorType]);
     }
 
     public function getHash(): string

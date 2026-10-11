@@ -59,6 +59,7 @@
                                             </a>
                                         </th>
                                     </f:for>
+                                    <th><span class="visually-hidden"><f:translate key="linkvalidator2.messages:report.column.actions" /></span></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -82,6 +83,27 @@
                                             <f:translate key="linkvalidator2.messages:error.{brokenLink.error_type}" arguments="{brokenLink.messageArguments}" default="{brokenLink.error_type}" />
                                         </td>
                                         <td><f:format.date format="d.m.Y H:i">{brokenLink.first_detected}</f:format.date></td>
+                                        <td class="col-control">
+                                            <f:if condition="{brokenLink.ignoreOptions}">
+                                                <div class="btn-group dropdown">
+                                                    <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="{f:translate(key: 'linkvalidator2.messages:report.ignore')}">
+                                                        <core:icon identifier="actions-ban" />
+                                                        <span class="visually-hidden"><f:translate key="linkvalidator2.messages:report.ignore" /></span>
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end">
+                                                        <f:for each="{brokenLink.ignoreOptions}" as="option">
+                                                            <li>
+                                                                <button type="button" class="dropdown-item"
+                                                                    data-linkvalidator2-ignore="{option.type}"
+                                                                    data-pid="{pageUid}"
+                                                                    data-value="{option.value}"
+                                                                >{option.label}</button>
+                                                            </li>
+                                                        </f:for>
+                                                    </ul>
+                                                </div>
+                                            </f:if>
+                                        </td>
                                     </tr>
                                 </f:for>
                             </tbody>

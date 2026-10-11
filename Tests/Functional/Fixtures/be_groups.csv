@@ -1,0 +1,4 @@
+"be_groups"
+,"uid","pid","title","tables_select","tables_modify","non_exclude_fields","allowed_languages","explicit_allowdeny"
+,1,0,"Editors","pages,tt_content","pages,tt_content","tt_content:header_link,pages:link","0","tt_content:CType:text"
+,2,0,"Content editors","tt_content","tt_content","","","tt_content:CType:text"

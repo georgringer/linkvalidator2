@@ -1,0 +1,6 @@
+"pages"
+,"uid","pid","title","doktype","is_siteroot","hidden","deleted","endtime","shortcut","shortcut_mode","link","sys_language_uid","l10n_parent","fe_group"
+,12,1,"Link to itself",3,0,0,0,0,0,0,"t3://page?uid=current",0,0,""
+"tt_content"
+,"uid","pid","CType","header","header_link","bodytext","hidden","deleted","endtime","sys_language_uid","l18n_parent"
+,17,2,"text","Current page","t3://page?uid=current","<p><a href=""t3://page?uid=current"">top</a> <a href=""t3://page?uid=current#c999999"">anchor</a></p>",0,0,0,0,0

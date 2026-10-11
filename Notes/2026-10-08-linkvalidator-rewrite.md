@@ -26,13 +26,13 @@
 
 ## Bau-Reihenfolge
 
-(Stand 2026-10-11: 1, 2, 3 umgesetzt; 4 DataHandler umgesetzt, `Hook/DataHandlerHook`; Queue-Command
+(Stand 2026-10-11: 1, 2, 3 umgesetzt; 5 Ausschlüsse umgesetzt (siehe „Ausschlüsse“); 4 DataHandler umgesetzt, `Hook/DataHandlerHook`; Queue-Command
 (Task 8) umgesetzt: `RecordQueue` – nie geprüft (LEFT JOIN) → fällig (0) → älter als `--interval`,
 Keyset-Cursor, Lock `linkvalidator2-queue`, Waisen-Cleanup zu Beginn; 2.000 Datensätze ~10 s ohne extern.)
 1. Engine (Tabellen, Schema-Extraktion + Opt-out, Softref → LinkService → Checker,
    CheckResult, Status-Queue, Command; Checker page/record/file)
 2. Externe Links  3. Modul (admin-only)  4. DataHandler  5. Ziel-Ausschlüsse
-6. Site Settings  7. Sprachregel  8. Anker
+6. Site Settings  7. Sprachregel  ~~8. Anker~~ (entfällt, Entscheidung 2026-10-11)
 
 Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-11):
 - vor Schritt 4, Bugfixes (Plan 1, Task 8d): #97937 `&nbsp;`, #94086 eigene LinkHandler,
@@ -40,10 +40,10 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 - Queue/Batches (Task 8 + Browser-Batches): #89266, #89287 (Crawl-Delay, Retry-After)
 - 2 Extern Rest: #96525 Eskalation, #101935 Fehlerdetails im Modul
 - 4 DataHandler: #105911, #89426
-- 5 Ausschlüsse: #92822, #85127
+- 5 Ausschlüsse ✅: #92822, #85127
 - 6 Site Settings + Mail-Report: #110615, #106487, #106677
 - 7 Sprachregel: #94195 (+ Quelle unter versteckter Seite)
-- 8 Anker: #100933 (`uid=current#c…`)
+- ~~8 Anker~~: #100933 durch Entscheidung erledigt – Anker werden nicht geprüft
 - Berechtigungen: #105413, #104004, danach #107983 (Workspace-User)
 - Teilweise offen ohne Schritt: #92542 Shortcut-Modi
 
@@ -101,12 +101,37 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 - **Kein Page TSconfig** mehr → Breaking-RST.
 
 ## Ausschlüsse
-- Ziel-Ausschlüsse als Datensätze `tx_linkvalidator_exclusion` (TCA): exakte URL
-  oder Domain inkl. Subdomains, Grund. Scope global. Anlegen aus dem Report.
-  Kein eigenes Modul, Tab im Modul. Recht: Custom Permission oder Admin.
-- Kein Regex/Präfix (Redakteure). Zu entscheiden (#85127): zusätzlich Domain-Ausschluss
-  in der Extension-Konfiguration für Intranet-/SSO-Systeme (per Deployment statt Datensatz).
-- Ausschluss greift vor der Prüfung (kein HTTP); beim Anlegen vorhandene Treffer entfernen.
+**Umgesetzt 2026-10-11** (#92822, #85127), Entscheidungen gegenüber dem ersten Plan:
+- Datensätze `tx_linkvalidator2_exclusion` liegen **auf einer Seite** und gelten für deren
+  Teilbaum (Rootline der Quelle), auf Root-Ebene (pid 0) überall. Damit dürfen Redakteure
+  sie anlegen (Tabellenrecht + Inhalt bearbeiten auf der Seite) und schalten nur ihren
+  Bereich stumm. Statt „global + Custom Permission“.
+- Generisch: Feld `type` (TCA-Types) + `ExclusionMatcherInterface` je Typ (getaggt).
+  Typen: `url` („URL oder Domain“: alles, was damit beginnt – `example.org` = Domain inkl.
+  Subdomains, `example.org/blog` = alles darunter; Schema und Anker egal) und `page` (Links
+  auf eine Seite). Domain und URL bewusst zusammengelegt, weil Redakteure den Unterschied
+  nicht einhalten; „alle Links“ verworfen (betrifft die Quelle, nicht das Ziel – wenn
+  nötig als Seiteneigenschaft/Site Setting). Felder `value` bzw. `target_page`.
+- Bloomfilter wie bei Redirects (Gerrit 96538) geprüft und verworfen: wenige Einträge,
+  Präfix-/Subdomain-Match statt exakter Mitgliedschaft, kein Frontend-Hot-Path.
+- hidden/starttime/endtime gelten; nicht übersetzbar, nicht versioniert.
+- TCA-Fallback-Typ `1`: Datensätze eines nicht mehr vorhandenen Typs (z. B. Extension
+  entfernt) lassen sich öffnen, umstellen oder löschen; ohne Matcher wirken sie nicht.
+- Ausschluss greift vor der Prüfung (kein HTTP), ausgeschlossene Links werden nicht
+  gespeichert (kein Status „ausgeschlossen“). Ziel-Cache bleibt unberührt.
+- DataHandler-Hook: neuer/geänderter Ausschluss → Datensätze mit Ergebnissen im Teilbaum
+  sofort aus dem Cache neu prüfen; gelöscht/versteckt/verschoben/geändert → Teilbaum
+  fällig (Queue), weil bisher ausgeschlossene Links nie geprüft wurden.
+- Modul: Ansicht „Ausschlüsse“ als Route `linkvalidator2_report.exclusions`, Toggle
+  rechts im DocHeader (kein eigenes Modul). `f:be.tableList` mit Levels + Auswahl, darunter
+  die geerbten Ausschlüsse der Rootline.
+- Report: „Ignorieren“-Dropdown pro Zeile (URL / Domain / Zielseite), AJAX
+  `linkvalidator2_exclusion_create` über den DataHandler, gespeichert auf der Seite des
+  Datensatzes.
+- Bewusst nicht: Regex (eigener Matcher möglich), `excludedDomains` in der
+  Extension-Konfiguration (später Site Setting, Schritt 6).
+- Offen: „Vorkommen akzeptieren“ (einzelner Link in einem Datensatz) als weiterer Typ;
+  „für die ganze Site ignorieren“ im Report; Grund beim Ignorieren abfragen.
 
 ## Workspaces
 - v1 nur Live. Spalte `workspace` (immer 0) in record_status + link von Anfang an.
@@ -166,7 +191,11 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 
 ## Interne Links
 - Seite broken: fehlt/gelöscht, hidden, endtime abgelaufen, Doktyp ohne FE
-  (Sysfolder, Papierkorb, Spacer), Anker #cNNN fehlt/andere Seite.
+  (Sysfolder, Papierkorb, Spacer).
+- **Anker werden nicht geprüft** (entschieden 2026-10-11, #100933): ein Fragment kann jede
+  `id` sein (Template, Plugin, JS, RTE); `#c<uid>` = Inhaltselement ist eine zu einfache
+  Annahme. Geprüft wird die Zielseite, das Fragment ignoriert. Gerendertes HTML nur über
+  einen eigenen `page`-Checker (Frontend-Request).
 - Seite broken auch über die Rootline: Vorfahr mit `extendToSubpages` hidden/abgelaufen
   (#106675, #101367) → eigene Fehlertypen mit `parentPage`. Rootline pro Lauf cachen.
 - Seite ok: andere Site. **Hinweis** (Status `info`, entschieden 2026-10-11, umgesetzt):
@@ -183,7 +212,11 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 - Offen: Quelle über die Seite (Inhalt auf unsichtbarer Seite) – Achtung, nur für
   `pages`/`tt_content` anwenden (Datensätze in Sysfoldern werden über Plugins gezeigt), und
   bei `pages` als Quelle nicht die eigene Shortcut-/Link-Auflösung werten.
-- `t3://page?uid=current#c…` (#100933): Seite aus der Quelle, Anker prüfen (Schritt 8).
+- `t3://page?uid=current` (+ `#…`, #100933): aus Inhalten valide und übersprungen, solange
+  der Core `current` kennt (`PageLinkHandler::resolveHandlerData()`, `PageLinkBuilder`).
+  Link-Seite (`pages.link`) mit `current` → broken `page.linksToItself` (der
+  `PageLinkBuilder` wirft 1784639469). **Todo:** Entfernt/deprecated der Core `current`,
+  muss `LinkTargetFactory::createPageTarget()` solche Links als kaputt melden.
 - Record: gelöscht/hidden/abgelaufen → broken.
 - Datei: sys_file fehlt oder missing=1 → broken; Storage offline → unknown.
 - **Sprachregel (v1, eigener späterer Commit)**: Ziel in Sprache der Quelle unter
@@ -309,7 +342,7 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 - **Nur CLI-Command** `linkvalidator:check` (`--time-limit`, `--limit`, `--site`,
   `--[no-]external`); Scheduler über „Execute console commands“. Kein eigener Task.
 
-## Berechtigungen (Konzept entschieden, Umsetzung später)
+## Berechtigungen (umgesetzt 2026-10-11)
 - Report zeigt nur, was der User **reparieren** kann: Seiten-Bearbeitungsrecht
   (Inhalt), tables_modify, allowed_languages, non_exclude_fields. Admin: alles.
 - Filterung in SQL (Paginierung korrekt), Feldrechte via `field IN (…)` pro Tabelle.
@@ -324,10 +357,10 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
   erlaubte Sprachen an, `brokenLinkCount` der AJAX-Prüfung ebenso gefiltert. Ein Redakteur,
   der prüft, prüft alle Sprachen mit (kein Leck, er sieht nur seine). Sprachauswahl beim
   Prüfen erst bei Performance-Bedarf, dann über den aktiven Sprachfilter.
-  Offen: Sprache `-1` – Tendenz sichtbar mit Recht auf Standardsprache, gegen
-  `BackendUserAuthentication::checkLanguageAccess()` prüfen.
+  Sprache `-1`: immer sichtbar, wie `checkLanguageAccess()`.
 - „Ziel ausnehmen“: Custom Permission.
-- **HARTE BEDINGUNG:** bis zur Umsetzung Modul-Access `admin` (sonst Info-Leck).
+- Modul-Access `user` seit der Umsetzung (vorher `admin`, Info-Leck). `authMode`-Werte nur aus
+  `items`, nicht aus itemsProcFunc.
 
 ## TODO später
 - [ ] Vorkommen akzeptieren (Flag auf Link-Zeile, taucht bei Fehleränderung/
@@ -351,7 +384,7 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 - [ ] Dashboard-Widget, Badges im Seitenbaum.
 - [ ] FlexForms (Auto-Discovery über FlexFormFieldType, Pfad z. B.
       `pi_flexform:sDEF/settings.detailPid`).
-- [ ] Berechtigungen umsetzen (siehe oben), danach Modul für Redakteure öffnen.
+- [x] Berechtigungen umsetzt, Modul für Redakteure offen (2026-10-11, `ReportPermissions`).
 - [ ] Mail-Report: Delta seit letztem Report (neu kaputt + Summe + Link ins Modul),
       keine Mail ohne Änderung, pro Site (Site Settings), periodisch entkoppelt vom
       Prüflauf, `last_report_sent` pro Site, Fluid-Mail. Site-Titel im Betreff,

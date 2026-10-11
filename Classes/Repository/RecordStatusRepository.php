@@ -88,6 +88,23 @@ final readonly class RecordStatusRepository
     }
 
     /**
+     * The queue checks these records next
+     *
+     * @param list<int>|null $pids null for all pages
+     */
+    public function markDueByPids(?array $pids): void
+    {
+        foreach ($pids === null ? [null] : array_chunk($pids, 1000) as $chunk) {
+            $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+            $queryBuilder->update(self::TABLE)->set('last_checked', 0);
+            if ($chunk !== null) {
+                $queryBuilder->where($queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter($chunk, Connection::PARAM_INT_ARRAY)));
+            }
+            $queryBuilder->executeStatement();
+        }
+    }
+
+    /**
      * @param list<int> $pids
      */
     public function removeByPids(array $pids): void

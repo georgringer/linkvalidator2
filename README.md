@@ -30,7 +30,7 @@ bin/typo3 linkvalidator2:check --page=1287 --depth=1
 bin/typo3 linkvalidator2:check --time-limit=300 --interval=24
 ```
 
-Backend: *Link Management → Check Links (new)* (admins only for now), select a page,
+Backend: *Link Management → Check Links (new)* (editors see what they may fix), select a page,
 choose the levels and press *Check*.
 
 Configuration (extension configuration): `excludedFields` – comma-separated
@@ -81,8 +81,8 @@ solved ones in `done/`.
 | Status "notice" for reachable targets with restrictions | ❌ | ❓ | ✅ own status next to broken / cannot be checked, not counted as broken | 📋 more notices (redirects, language fallback) | |
 | Page expired (endtime) | ❌ | ❌ | ✅ | | |
 | Page without frontend (folder, spacer) | ❌ | ❌ | ✅ | | |
-| Content anchor `#c123` | ✅ | ✅ | ❌ | 📋 step 8 | |
-| Anchor on the current page (`t3://page?uid=current#c123`) | ❌ softref parser skips it | ❓ | ❌ skipped | 📋 step 8: resolve `current` from the source | #100933 |
+| Content anchor `#c123` | ✅ assumes `#c<uid>` is a content element | ✅ | ❌ by decision: the target page is checked, the fragment ignored – an anchor can be any id (template, plugin, JS); register an own `page` checker to check the rendered HTML | | #100933 |
+| Link to the current page (`t3://page?uid=current`, also with anchor) | ❌ softref parser skips it | ❓ | ✅ valid from content (anchors are not checked); a link page pointing to itself is broken `page.linksToItself` | 📋 revisit if the core drops `current` | #100933 |
 | Target not available in the language of the source | ❌ | ❌ | ❌ | 📋 step 7 (site fallback chain) | |
 | Record links (`t3://record`) | ✅ | ✅ | ✅ missing / hidden / expired, table via `TCEMAIN.linkHandler` (fallback: identifier = table) | | |
 | Files / folders | ✅ files | ✅ files | ✅ files and folders, offline storage = unknown | | |
@@ -97,7 +97,10 @@ solved ones in `done/`.
 | Polite crawling: crawl delay per domain, `Retry-After` | ❌ | ✅ crawl delay | ❌ | 📋 later | #89287 |
 | `robots.txt` | ❌ | ❌ | ❌ | 💭 single HEAD requests, not a crawler | #89287 |
 | **Exclusions** | | | | | |
-| Exclude link targets (URL / domain) | ❌ | ✅ records + own module | ❌ | 📋 step 5: records, tab in module, custom permission | #85127, #92822 |
+| Exclude link targets (URL / domain / page) | ❌ | ✅ records + own module | ✅ records `tx_linkvalidator2_exclusion` on a page, apply to its subtree (root level: everywhere); types "URL or domain" (everything starting with it, incl. subdomains, scheme and anchor ignored) and page; excluded links are not checked (no HTTP request) and not stored | 📋 regex only as own matcher | #85127, #92822 |
+| "Ignore" from the report | ❌ | ❓ | ✅ per result: URL, its domain or the target page, stored on the page of the record through the DataHandler (permissions apply), results disappear right away | 📋 "accept this occurrence" (single link) | #92822 |
+| List of exclusions | ❌ | ✅ own module | ✅ view in the module (toggle in the doc header): record list with levels, selection, edit/hide/delete, plus the exclusions inherited from pages above | | #92822 |
+| Custom exclusion types | ❌ | ❌ | ✅ `ExclusionMatcherInterface` (tagged automatically) + TCA type | | |
 | Accept a single occurrence | ❌ | ❌ | ❌ | 📋 later | |
 | **Running checks** | | | | | |
 | Scheduler | ✅ own scheduler task | ✅ schedulable command | ✅ queue command via "Execute console commands", lock against overlapping runs | | |
@@ -121,9 +124,9 @@ solved ones in `done/`.
 | Recheck a single URL | ❌ | ✅ | ❌ | 💭 | #96447 |
 | "Broken since" | ❌ | ❌ | ✅ | | |
 | Which records were checked | ❌ | ❌ | ❌ only a count | 📋 module step | |
-| Access for editors | ✅ filtered by permissions | ✅ | ❌ admins only | 📋 only what the user may fix (pages, tables, languages, fields) | #105413 |
-| Links in page properties below a page without edit permission | ❌ hidden: stored pid is the parent page | ❓ | ✅ data model: `pid` of a page is the page itself | 📋 with permissions: collect the tree first, then filter | #105413, #105873 |
-| `authMode` restrictions | 🟡 type field only, empty list = no restriction | ❓ | ❌ admins only | 📋 with permissions: every `select` field with `authMode` | #104004 |
+| Access for editors | ✅ filtered by permissions | ✅ | ✅ only what the user may fix: page/content edit permission, tables, exclude fields, authMode, languages (SQL, pagination correct) | | #105413, #104004 |
+| Links in page properties below a page without edit permission | ❌ hidden: stored pid is the parent page | ❓ | ✅ `pid` of a page is the page itself, edit permission checked on it | | #105413, #105873 |
+| `authMode` restrictions | 🟡 type field only, empty list = no restriction | ❓ | ✅ every `select` field with `authMode` (values from `items`) | | #104004 |
 | Workspace users | ❌ live users only | ❓ | ❌ `workspaces => live` | 📋 module in workspaces, hint "results show the live state" | #107983 |
 | **Visibility elsewhere** | | | | | |
 | Markers in the rich text editor | 🟡 page missing/hidden, file, known external | 🟡 similar | 🟡 same checkers as the report, external from cache; record links with a mapped identifier wrongly marked (no page in the event) | 📋 fix | |

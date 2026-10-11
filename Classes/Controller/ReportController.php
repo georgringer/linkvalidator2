@@ -38,8 +38,11 @@ use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
 use TYPO3\CMS\Core\Site\SiteFinder;
 use TYPO3\CMS\Core\Type\Bitmask\Permission;
 use TYPO3\CMS\Core\Utility\MathUtility;
+use TYPO3\CMS\Linkvalidator2\Exclusion\ExclusionRepository;
 use TYPO3\CMS\Linkvalidator2\Report\ReportFilter;
 use TYPO3\CMS\Linkvalidator2\Report\ReportOrdering;
+use TYPO3\CMS\Linkvalidator2\Report\ReportPermissions;
+use TYPO3\CMS\Linkvalidator2\Report\ReportPermissionsFactory;
 use TYPO3\CMS\Linkvalidator2\Repository\BrokenLinkRepository;
 use TYPO3\CMS\Linkvalidator2\Service\PageRecordFinder;
 
@@ -60,6 +63,7 @@ final readonly class ReportController
         private ComponentFactory $componentFactory,
         private IconFactory $iconFactory,
         private LinkService $linkService,
+        private ReportPermissionsFactory $reportPermissionsFactory,
         private BrokenLinkRepository $brokenLinkRepository,
         private TcaSchemaFactory $tcaSchemaFactory,
         private SiteFinder $siteFinder,
@@ -76,22 +80,35 @@ final readonly class ReportController
             $view->getDocHeaderComponent()->setPageBreadcrumb($pageRecord);
         }
         $view->setTitle($this->getLanguageService()->sL('linkvalidator2.module:title'));
+        $view->makeDocHeaderModuleMenu(['id' => $pageUid]);
+        $view->addButtonToButtonBar(
+            $this->componentFactory->createLinkButton()
+                ->setHref((string)$this->uriBuilder->buildUriFromRoute('linkvalidator2_report.exclusions', ['id' => $pageUid]))
+                ->setTitle($this->getLanguageService()->sL('linkvalidator2.messages:exclusions.show'))
+                ->setShowLabelText(true)
+                ->setIcon($this->iconFactory->getIcon('actions-ban', IconSize::SMALL)),
+            ButtonBar::BUTTON_POSITION_RIGHT,
+            1
+        );
 
         $depth = (int)$request->getAttribute('moduleData')->get('depth', 0);
         if (!in_array($depth, self::DEPTH_OPTIONS, true)) {
             $depth = 0;
         }
         $pageIds = $pageRecord !== [] ? $this->pageRecordFinder->findPageIds($pageUid, $depth) : [];
+        // Only what the user may fix; null for admins
+        $permissions = $this->reportPermissionsFactory->createForUser($this->getBackendUser());
         $filter = ReportFilter::fromModuleData($request->getAttribute('moduleData'));
         $ordering = ReportOrdering::fromModuleData($request->getAttribute('moduleData'));
         $pagination = $this->getPagination(
-            $this->brokenLinkRepository->countByPids($pageIds, $filter),
+            $this->brokenLinkRepository->countByPids($pageIds, $filter, $permissions),
             (int)($request->getQueryParams()['page'] ?? 1)
         );
 
         if ($pageRecord !== []) {
             $this->addDocHeaderButtons($view, $pageUid, $depth);
             $this->pageRenderer->loadJavaScriptModule('@typo3/linkvalidator2/check-links.js');
+            $this->pageRenderer->loadJavaScriptModule('@typo3/linkvalidator2/ignore-link.js');
         }
 
         $view->assignMultiple([
@@ -101,14 +118,14 @@ final readonly class ReportController
             'depth' => $depth,
             'depthOptions' => $this->getDepthOptions(),
             'filter' => $filter,
-            'filterOptions' => $this->getFilterOptions($pageIds, $pageUid, $filter),
+            'filterOptions' => $this->getFilterOptions($pageIds, $pageUid, $filter, $permissions),
             'resetFilterUrl' => (string)$this->uriBuilder->buildUriFromRoute(
                 'linkvalidator2_report',
                 ['id' => $pageUid, ...array_fill_keys(ReportFilter::PROPERTIES, '')]
             ),
             'pagination' => $pagination,
             'columns' => $this->getColumns($pageUid, $ordering),
-            'brokenLinks' => $this->getBrokenLinks($pageIds, $filter, $ordering, $pagination, $moduleUrl),
+            'brokenLinks' => $this->getBrokenLinks($pageIds, $filter, $ordering, $pagination, $moduleUrl, $permissions),
         ]);
         return $view->renderResponse('Backend/Report');
     }
@@ -230,11 +247,12 @@ final readonly class ReportController
      * @param array{startRecord: int} $pagination
      * @return list<array<string, mixed>>
      */
-    private function getBrokenLinks(array $pageIds, ReportFilter $filter, ReportOrdering $ordering, array $pagination, string $returnUrl): array
+    private function getBrokenLinks(array $pageIds, ReportFilter $filter, ReportOrdering $ordering, array $pagination, string $returnUrl, ?ReportPermissions $permissions): array
     {
         $result = [];
+        $mayIgnore = $this->getBackendUser()->check('tables_modify', ExclusionRepository::TABLE);
         $pageTitles = [];
-        $rows = $this->brokenLinkRepository->findByPids($pageIds, $filter, $ordering, self::ITEMS_PER_PAGE, $pagination['startRecord'] - 1);
+        $rows = $this->brokenLinkRepository->findByPids($pageIds, $filter, $ordering, self::ITEMS_PER_PAGE, $pagination['startRecord'] - 1, $permissions);
         foreach ($rows as $row) {
             $table = (string)$row['table_name'];
             $uid = (int)$row['record_uid'];
@@ -251,6 +269,7 @@ final readonly class ReportController
                 default => 'badge-danger',
             };
             $row['recordTitle'] = $record !== [] ? BackendUtility::getRecordTitle($table, $record) : $table . ':' . $uid;
+            $row['ignoreOptions'] = $mayIgnore ? $this->getIgnoreOptions($row) : [];
             $row['editUrl'] = (string)$this->uriBuilder->buildUriFromRoute('record_edit', [
                 'edit' => [$table => [$uid => 'edit']],
                 'returnUrl' => $returnUrl,
@@ -258,6 +277,33 @@ final readonly class ReportController
             $result[] = $row;
         }
         return $result;
+    }
+
+    /**
+     * Exclusions that can be created from a result, stored on the page selected in the report
+     *
+     * @return list<array{type: string, value: string, label: string}>
+     */
+    private function getIgnoreOptions(array $row): array
+    {
+        $languageService = $this->getLanguageService();
+        $linkType = (string)$row['link_type'];
+        if ($linkType === LinkService::TYPE_URL) {
+            $url = explode('#', (string)$row['link_string'], 2)[0];
+            $options = [['type' => 'url', 'value' => $url, 'label' => $languageService->sL('linkvalidator2.messages:report.ignore.url')]];
+            $host = (string)parse_url($url, PHP_URL_HOST);
+            if ($host !== '') {
+                $options[] = ['type' => 'url', 'value' => $host, 'label' => sprintf($languageService->sL('linkvalidator2.messages:report.ignore.domain'), $host)];
+            }
+            return $options;
+        }
+        if ($linkType === LinkService::TYPE_PAGE) {
+            $pageUid = (int)explode('#', substr((string)$row['identifier'], 5), 2)[0];
+            if ($pageUid > 0) {
+                return [['type' => 'page', 'value' => (string)$pageUid, 'label' => $languageService->sL('linkvalidator2.messages:report.ignore.page')]];
+            }
+        }
+        return [];
     }
 
     /**
@@ -309,10 +355,10 @@ final readonly class ReportController
      * @param list<int> $pageIds
      * @return array<string, list<array{value: string, label: string, selected: bool}>>
      */
-    private function getFilterOptions(array $pageIds, int $pageUid, ReportFilter $filter): array
+    private function getFilterOptions(array $pageIds, int $pageUid, ReportFilter $filter, ?ReportPermissions $permissions): array
     {
         $languageService = $this->getLanguageService();
-        $values = $this->brokenLinkRepository->findFilterValues($pageIds);
+        $values = $this->brokenLinkRepository->findFilterValues($pageIds, $permissions);
         $labels = [];
         foreach ($values['status'] as $status) {
             $labels['status'][$status] = $languageService->sL('linkvalidator2.messages:status.' . $status) ?: $status;

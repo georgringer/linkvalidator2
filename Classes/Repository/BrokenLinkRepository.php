@@ -23,6 +23,7 @@ use TYPO3\CMS\Linkvalidator2\Check\CheckResult;
 use TYPO3\CMS\Linkvalidator2\Extraction\LinkCandidate;
 use TYPO3\CMS\Linkvalidator2\Report\ReportFilter;
 use TYPO3\CMS\Linkvalidator2\Report\ReportOrdering;
+use TYPO3\CMS\Linkvalidator2\Report\ReportPermissions;
 
 final readonly class BrokenLinkRepository
 {
@@ -75,12 +76,13 @@ final readonly class BrokenLinkRepository
         ReportFilter $filter = new ReportFilter(),
         ReportOrdering $ordering = new ReportOrdering(),
         int $limit = 0,
-        int $offset = 0
+        int $offset = 0,
+        ?ReportPermissions $permissions = null,
     ): array {
         if ($pids === []) {
             return [];
         }
-        $queryBuilder = $this->createFilteredQueryBuilder($pids, $filter)->select('b.*', 't.link_type');
+        $queryBuilder = $this->createFilteredQueryBuilder($pids, $filter, $permissions)->select('b.*', 't.link_type', 't.identifier');
         foreach ($ordering->getColumns() as $column) {
             $queryBuilder->addOrderBy('b.' . $column, $ordering->getDirection());
         }
@@ -97,12 +99,12 @@ final readonly class BrokenLinkRepository
     /**
      * @param list<int> $pids
      */
-    public function countByPids(array $pids, ReportFilter $filter = new ReportFilter()): int
+    public function countByPids(array $pids, ReportFilter $filter = new ReportFilter(), ?ReportPermissions $permissions = null): int
     {
         if ($pids === []) {
             return 0;
         }
-        return (int)$this->createFilteredQueryBuilder($pids, $filter)
+        return (int)$this->createFilteredQueryBuilder($pids, $filter, $permissions)
             ->count('b.uid')
             ->executeQuery()
             ->fetchOne();
@@ -114,13 +116,13 @@ final readonly class BrokenLinkRepository
      * @param list<int> $pids
      * @return array{status: list<string>, linkType: list<string>, table: list<string>, language: list<int>}
      */
-    public function findFilterValues(array $pids): array
+    public function findFilterValues(array $pids, ?ReportPermissions $permissions = null): array
     {
         $values = ['status' => [], 'linkType' => [], 'table' => [], 'language' => []];
         if ($pids === []) {
             return $values;
         }
-        $rows = $this->createQueryBuilderForPids($pids)
+        $rows = $this->createQueryBuilderForPids($pids, $permissions)
             ->select('b.status', 't.link_type', 'b.table_name', 'b.language')
             ->distinct()
             ->executeQuery()
@@ -142,9 +144,9 @@ final readonly class BrokenLinkRepository
     /**
      * @param list<int> $pids
      */
-    private function createFilteredQueryBuilder(array $pids, ReportFilter $filter): QueryBuilder
+    private function createFilteredQueryBuilder(array $pids, ReportFilter $filter, ?ReportPermissions $permissions): QueryBuilder
     {
-        $queryBuilder = $this->createQueryBuilderForPids($pids);
+        $queryBuilder = $this->createQueryBuilderForPids($pids, $permissions);
         if ($filter->status !== '') {
             $queryBuilder->andWhere($queryBuilder->expr()->eq('b.status', $queryBuilder->createNamedParameter($filter->status)));
         }
@@ -170,16 +172,66 @@ final readonly class BrokenLinkRepository
     /**
      * @param list<int> $pids
      */
-    private function createQueryBuilderForPids(array $pids): QueryBuilder
+    /**
+     * @param list<int> $pids
+     */
+    private function createQueryBuilderForPids(array $pids, ?ReportPermissions $permissions = null): QueryBuilder
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
-        return $queryBuilder
+        $queryBuilder
             ->from(self::TABLE, 'b')
             ->leftJoin('b', TargetRepository::TABLE, 't', $queryBuilder->expr()->eq('t.uid', $queryBuilder->quoteIdentifier('b.target')))
             ->where(
                 $queryBuilder->expr()->in('b.pid', $queryBuilder->createNamedParameter($pids, Connection::PARAM_INT_ARRAY)),
                 $queryBuilder->expr()->eq('b.workspace', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT))
             );
+        if ($permissions !== null) {
+            $this->applyPermissions($queryBuilder, $permissions);
+        }
+        return $queryBuilder;
+    }
+
+    /**
+     * Only rows the user may fix. The page permission clauses refer to the table "pages", which is
+     * joined under its own name.
+     */
+    private function applyPermissions(QueryBuilder $queryBuilder, ReportPermissions $permissions): void
+    {
+        if ($permissions->tables === []) {
+            $queryBuilder->andWhere('1 = 0');
+            return;
+        }
+        $expr = $queryBuilder->expr();
+        $queryBuilder->join('b', 'pages', 'pages', $expr->eq('pages.uid', $queryBuilder->quoteIdentifier('b.pid')));
+        $pagesTable = $queryBuilder->createNamedParameter('pages');
+        $queryBuilder->andWhere($expr->or(
+            $expr->and($expr->eq('b.table_name', $pagesTable), $permissions->pageEditClause),
+            $expr->and($expr->neq('b.table_name', $pagesTable), $permissions->contentEditClause),
+        ));
+        if ($permissions->languages !== null) {
+            // -1 ("all languages") is editable with any language permission, like in the core
+            $queryBuilder->andWhere($expr->in(
+                'b.language',
+                $queryBuilder->createNamedParameter([...$permissions->languages, -1], Connection::PARAM_INT_ARRAY)
+            ));
+        }
+        $tableConstraints = [];
+        foreach ($permissions->tables as $table => ['fields' => $fields, 'authMode' => $authMode]) {
+            $constraints = [
+                $expr->eq('b.table_name', $queryBuilder->createNamedParameter($table)),
+                $expr->in('b.field', $queryBuilder->createNamedParameter($fields, Connection::PARAM_STR_ARRAY)),
+            ];
+            foreach ($authMode as $field => $values) {
+                $records = $this->connectionPool->getQueryBuilderForTable($table);
+                $records->getRestrictions()->removeAll();
+                $records->select('uid')->from($table)->where(
+                    $records->expr()->in($field, $queryBuilder->createNamedParameter($values, Connection::PARAM_STR_ARRAY))
+                );
+                $constraints[] = $expr->in('b.record_uid', $records->getSQL());
+            }
+            $tableConstraints[] = $expr->and(...$constraints);
+        }
+        $queryBuilder->andWhere($expr->or(...$tableConstraints));
     }
 
     public function removeForRecord(string $table, int $recordUid): void
@@ -188,30 +240,24 @@ final readonly class BrokenLinkRepository
             ->delete(self::TABLE, ['table_name' => $table, 'record_uid' => $recordUid]);
     }
 
-    public function countBrokenByPid(int $pid): int
+    public function countBrokenByPid(int $pid, ?ReportPermissions $permissions = null): int
     {
-        $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+        $queryBuilder = $this->createQueryBuilderForPids([$pid], $permissions);
         return (int)$queryBuilder
-            ->count('uid')
-            ->from(self::TABLE)
-            ->where(
-                $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter($pid, Connection::PARAM_INT)),
-                $queryBuilder->expr()->in('status', $queryBuilder->createNamedParameter(self::BROKEN_STATUSES, Connection::PARAM_STR_ARRAY))
-            )
+            ->count('b.uid')
+            ->andWhere($queryBuilder->expr()->in('b.status', $queryBuilder->createNamedParameter(self::BROKEN_STATUSES, Connection::PARAM_STR_ARRAY)))
             ->executeQuery()
             ->fetchOne();
     }
 
-    public function countDetectedSince(int $pid, int $since): int
+    public function countDetectedSince(int $pid, int $since, ?ReportPermissions $permissions = null): int
     {
-        $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+        $queryBuilder = $this->createQueryBuilderForPids([$pid], $permissions);
         return (int)$queryBuilder
-            ->count('uid')
-            ->from(self::TABLE)
-            ->where(
-                $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter($pid, Connection::PARAM_INT)),
-                $queryBuilder->expr()->gte('first_detected', $queryBuilder->createNamedParameter($since, Connection::PARAM_INT)),
-                $queryBuilder->expr()->in('status', $queryBuilder->createNamedParameter(self::BROKEN_STATUSES, Connection::PARAM_STR_ARRAY))
+            ->count('b.uid')
+            ->andWhere(
+                $queryBuilder->expr()->gte('b.first_detected', $queryBuilder->createNamedParameter($since, Connection::PARAM_INT)),
+                $queryBuilder->expr()->in('b.status', $queryBuilder->createNamedParameter(self::BROKEN_STATUSES, Connection::PARAM_STR_ARRAY))
             )
             ->executeQuery()
             ->fetchOne();
@@ -226,6 +272,26 @@ final readonly class BrokenLinkRepository
             ->select(['table_name', 'record_uid'], self::TABLE, ['pid' => $pid])
             ->fetchAllAssociative();
         return array_map(static fn(array $row): array => ['table' => (string)$row['table_name'], 'uid' => (int)$row['record_uid']], $rows);
+    }
+
+    /**
+     * @param list<int>|null $pids null for all pages
+     * @return list<array{table: string, uid: int}>
+     */
+    public function findRecordsByPids(?array $pids): array
+    {
+        $records = [];
+        foreach ($pids === null ? [null] : array_chunk($pids, 1000) as $chunk) {
+            $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+            $queryBuilder->select('table_name', 'record_uid')->from(self::TABLE)->groupBy('table_name', 'record_uid');
+            if ($chunk !== null) {
+                $queryBuilder->where($queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter($chunk, Connection::PARAM_INT_ARRAY)));
+            }
+            foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row) {
+                $records[] = ['table' => (string)$row['table_name'], 'uid' => (int)$row['record_uid']];
+            }
+        }
+        return $records;
     }
 
     /**

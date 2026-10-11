@@ -22,7 +22,7 @@ Punkt:
 | Wann prüfen (Scheduler, beim Speichern, asynchron) | 🟡 CLI ✅; DataHandler (Schritt 4) und Browser-Batches 📋 |
 | Drosselung extern | 📋 Crawl-Delay, Retry-After (#89287) |
 | Link-Target-Cache | ✅ (#92700) |
-| Ausschlussliste | 📋 Schritt 5 (#85127, #92822) |
+| Ausschlussliste | ✅ Datensätze pro Teilbaum, Ignorieren im Report (#85127, #92822) |
 | Falsch-Positive | 🟡 unknown-Status ✅, Rest siehe #85006 |
 | Nicht gerenderte Inhalte (bodytext bei Plugins, pages.url bei doktype≠3) | ✅ nur Felder des Record-Types (`CheckableFieldResolver`) |
 | l18n_cfg, versteckte Grid-Container, Übersetzung mit verstecktem Original | 📋 Sprachregel Schritt 7 (#94195); Grid-Container ❌ nicht geplant |

@@ -54,12 +54,12 @@ final class PageCheckerTest extends FunctionalTestCase
         yield 'folder' => [6, 'broken', 'page.noFrontend', []];
         yield 'shortcut to deleted page' => [24, 'broken', 'page.targetNotReachable', []];
         yield 'restricted to frontend groups' => [11, 'info', 'page.accessRestricted', ['fe_group' => '1']];
-        yield 'starts in the future' => [12, 'info', 'page.notYetVisible', ['starttime' => 4102444800]];
-        yield 'visible until' => [13, 'info', 'page.visibleUntil', ['endtime' => 4102444800]];
+        yield 'starts in the future' => [12, 'info', 'page.notYetVisible', ['starttime' => 2145916800]];
+        yield 'visible until' => [13, 'info', 'page.visibleUntil', ['endtime' => 2145916800]];
         yield 'child of hidden with subpages' => [15, 'broken', 'page.hiddenByParent', ['parentPage' => 14]];
         yield 'child of expired with subpages' => [17, 'broken', 'page.expiredByParent', ['parentPage' => 16]];
         yield 'child of restricted with subpages' => [19, 'info', 'page.accessRestricted', ['fe_group' => '1', 'parentPage' => 18]];
-        yield 'child of future with subpages' => [21, 'info', 'page.notYetVisible', ['starttime' => 4102444800, 'parentPage' => 20]];
+        yield 'child of future with subpages' => [21, 'info', 'page.notYetVisible', ['starttime' => 2145916800, 'parentPage' => 20]];
         yield 'child of hidden without subpages' => [23, 'ok', '', []];
     }
 

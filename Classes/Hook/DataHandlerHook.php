@@ -20,6 +20,8 @@ use Psr\Log\LoggerInterface;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\DataHandling\DataHandler;
 use TYPO3\CMS\Core\Utility\MathUtility;
+use TYPO3\CMS\Linkvalidator2\Exclusion\ExclusionChangeProcessor;
+use TYPO3\CMS\Linkvalidator2\Exclusion\ExclusionRepository;
 use TYPO3\CMS\Linkvalidator2\Extraction\CheckableFieldResolver;
 use TYPO3\CMS\Linkvalidator2\Service\PageRecordFinder;
 use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
@@ -29,6 +31,7 @@ use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
  * once the DataHandler is done (internal targets immediately, external ones from the cache,
  * records with external links not checked yet become due), deleted records and pages lose
  * their results. Only the live workspace is checked; publishing counts as a change.
+ * Changed exclusions are applied to the results of their subtree.
  *
  * Never lets checking break saving: failures are logged.
  *
@@ -44,10 +47,17 @@ final class DataHandlerHook
     /** @var array<string, true>|null */
     private ?array $checkableTables = null;
 
+    /** @var array<int, true> Pages with exclusions that apply now */
+    private array $addedExclusionPids = [];
+
+    /** @var array<int, true> Pages with exclusions that may no longer apply */
+    private array $removedExclusionPids = [];
+
     public function __construct(
         private readonly RecordCheckService $recordCheckService,
         private readonly PageRecordFinder $pageRecordFinder,
         private readonly CheckableFieldResolver $checkableFieldResolver,
+        private readonly ExclusionChangeProcessor $exclusionChangeProcessor,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -57,6 +67,11 @@ final class DataHandlerHook
             return;
         }
         $uid = MathUtility::canBeInterpretedAsInteger($id) ? (int)$id : (int)($dataHandler->substNEWwithIDs[$id] ?? 0);
+        if ($table === ExclusionRepository::TABLE) {
+            // Any change may narrow an exclusion
+            $this->rememberExclusion($uid, $status === 'new' ? 'added' : 'changed');
+            return;
+        }
         $this->remember($table, $uid);
     }
 
@@ -65,9 +80,24 @@ final class DataHandlerHook
         $this->checkRemembered();
     }
 
+    public function processCmdmap_preProcess(string $command, string $table, int|string $id, mixed $value, DataHandler $dataHandler): void
+    {
+        if ($table === ExclusionRepository::TABLE && in_array($command, ['delete', 'move'], true)) {
+            $this->rememberExclusion((int)$id, 'removed');
+        }
+    }
+
     public function processCmdmap_postProcess(string $command, string $table, int|string $id, mixed $value, DataHandler $dataHandler): void
     {
         $uid = (int)$id;
+        if ($table === ExclusionRepository::TABLE) {
+            match ($command) {
+                'move', 'undelete' => $this->rememberExclusion($uid, 'added'),
+                'copy' => $this->rememberExclusion((int)($dataHandler->copyMappingArray_merged[$table][$uid] ?? 0), 'added'),
+                default => null,
+            };
+            return;
+        }
         if ($command === 'version') {
             $this->remember($table, $uid);
             return;
@@ -95,8 +125,27 @@ final class DataHandlerHook
         }
     }
 
+    /**
+     * @param 'added'|'removed'|'changed' $change
+     */
+    private function rememberExclusion(int $uid, string $change): void
+    {
+        $row = $uid > 0 ? BackendUtility::getRecord(ExclusionRepository::TABLE, $uid, 'pid', '', false) : null;
+        if ($row === null) {
+            return;
+        }
+        $pid = (int)$row['pid'];
+        if ($change !== 'removed') {
+            $this->addedExclusionPids[$pid] = true;
+        }
+        if ($change !== 'added') {
+            $this->removedExclusionPids[$pid] = true;
+        }
+    }
+
     private function checkRemembered(): void
     {
+        $this->processRememberedExclusions();
         $records = $this->records;
         $this->records = [];
         foreach ($records as ['table' => $table, 'uid' => $uid]) {
@@ -105,6 +154,22 @@ final class DataHandlerHook
             } catch (\Throwable $e) {
                 $this->logger->warning('Checking links of {table}:{uid} after saving failed: {message}', ['table' => $table, 'uid' => $uid, 'message' => $e->getMessage(), 'exception' => $e]);
             }
+        }
+    }
+
+    private function processRememberedExclusions(): void
+    {
+        $added = array_keys($this->addedExclusionPids);
+        $removed = array_keys($this->removedExclusionPids);
+        $this->addedExclusionPids = [];
+        $this->removedExclusionPids = [];
+        if ($added === [] && $removed === []) {
+            return;
+        }
+        try {
+            $this->exclusionChangeProcessor->process($added, $removed);
+        } catch (\Throwable $e) {
+            $this->logger->warning('Applying changed link check exclusions failed: {message}', ['message' => $e->getMessage(), 'exception' => $e]);
         }
     }
 

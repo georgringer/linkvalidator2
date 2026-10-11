@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="en" datatype="plaintext" original="EXT:linkvalidator2/Resources/Private/Language/locallang_db.xlf" date="2026-10-11T00:00:00Z" product-name="linkvalidator2">
+    <header/>
+    <body>
+      <trans-unit id="exclusion">
+        <source>Link check exclusion</source>
+      </trans-unit>
+      <trans-unit id="exclusion.type">
+        <source>Exclude</source>
+      </trans-unit>
+      <trans-unit id="exclusion.type.description">
+        <source>Applies to links in records on this page and its subpages; on the root level to all pages.</source>
+      </trans-unit>
+      <trans-unit id="exclusion.type.url">
+        <source>Links to a URL or domain</source>
+      </trans-unit>
+      <trans-unit id="exclusion.type.page">
+        <source>Links to a page</source>
+      </trans-unit>
+      <trans-unit id="exclusion.value">
+        <source>Target</source>
+      </trans-unit>
+      <trans-unit id="exclusion.url">
+        <source>URL or domain</source>
+      </trans-unit>
+      <trans-unit id="exclusion.url.description">
+        <source>All links starting with it are excluded: "example.org" excludes the domain including subdomains, "example.org/blog" everything below /blog. Scheme (http/https) and anchor (#…) do not matter.</source>
+      </trans-unit>
+      <trans-unit id="exclusion.target_page">
+        <source>Page</source>
+      </trans-unit>
+      <trans-unit id="exclusion.reason">
+        <source>Reason</source>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

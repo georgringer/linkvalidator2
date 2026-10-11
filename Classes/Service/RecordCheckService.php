@@ -28,6 +28,8 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Linkvalidator2\Check\CacheableLinkCheckerInterface;
 use TYPO3\CMS\Linkvalidator2\Check\CheckerRegistry;
 use TYPO3\CMS\Linkvalidator2\Check\CheckStatus;
+use TYPO3\CMS\Linkvalidator2\Exclusion\ExclusionMatcher;
+use TYPO3\CMS\Linkvalidator2\Exclusion\ExclusionRepository;
 use TYPO3\CMS\Linkvalidator2\Extraction\LinkExtractor;
 use TYPO3\CMS\Linkvalidator2\Repository\BrokenLinkRepository;
 use TYPO3\CMS\Linkvalidator2\Repository\RecordStatusRepository;
@@ -46,6 +48,8 @@ final readonly class RecordCheckService
         private RecordStatusRepository $recordStatusRepository,
         private Context $context,
         private ConnectionPool $connectionPool,
+        private ExclusionRepository $exclusionRepository,
+        private ExclusionMatcher $exclusionMatcher,
     ) {}
 
     /**
@@ -79,10 +83,11 @@ final readonly class RecordCheckService
         $brokenLinks = [];
         $skippedUnchecked = false;
         $seen = [];
+        $exclusions = $this->exclusionRepository->findForPid($pid);
         foreach ($this->linkExtractor->extract($table, $row, $pid, $language) as $candidate) {
             $target = $this->linkTargetFactory->create($candidate);
             $checker = $target !== null ? $this->checkerRegistry->getChecker($target->type) : null;
-            if ($target === null || $checker === null) {
+            if ($target === null || $checker === null || $this->exclusionMatcher->isExcluded($exclusions, $target)) {
                 continue;
             }
             // @todo Deduplicated per field only: the same target in two fields of a record yields

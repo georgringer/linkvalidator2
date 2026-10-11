@@ -33,7 +33,7 @@ final readonly class LinkTargetFactory
 
     /**
      * Returns null for links that are not checked: email, telephone,
-     * in-page anchors, unknown schemes and links to the current page.
+     * in-page anchors, unknown schemes and links from content to its own page.
      */
     public function create(LinkCandidate $candidate): ?LinkTarget
     {
@@ -74,7 +74,10 @@ final readonly class LinkTargetFactory
     {
         $pageUid = $resolved['pageuid'] ?? null;
         if ($pageUid === 'current') {
-            return null;
+            // A link page pointing to itself cannot be linked by the frontend
+            return $candidate->table === 'pages'
+                ? LinkTarget::invalid($candidate->link, 'Page links to itself', 'page.linksToItself')
+                : null;
         }
         if (!MathUtility::canBeInterpretedAsInteger($pageUid) || (int)$pageUid <= 0) {
             return LinkTarget::invalid($candidate->link, 'Page link without valid uid');

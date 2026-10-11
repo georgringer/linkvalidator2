@@ -3,7 +3,7 @@
 - Forge: https://forge.typo3.org/issues/105413 (Bug, Under Review, angelegt 2024-10-23)
 - Gerrit: https://review.typo3.org/c/Packages/TYPO3.CMS/+/87610 (offen)
 - Verwandt: #105873, #104004
-- **Status linkvalidator2:** 🟡 Ursache im Datenmodell gelöst, Berechtigungen 📋 offen
+- **Status linkvalidator2:** ✅ gelöst (2026-10-11)
 
 ## Problem
 
@@ -32,3 +32,19 @@ selbst, für Inhalte `CONTENT_EDIT` an der Seite – unterschiedliche Bits je
 
 Functional als Redakteur: Elternseite ohne Recht, Unterseite mit Recht und kaputtem
 `pages.url` → wird angezeigt; Inhalt auf Seite ohne Recht → nicht angezeigt.
+
+## Lösung (2026-10-11)
+
+`Report/ReportPermissionsFactory` baut aus dem Backend-User (Admin: keine Einschränkung)
+`ReportPermissions`; `BrokenLinkRepository` wendet sie in SQL an (Liste, Anzahl/Pagination,
+Filteroptionen, Zahlen der AJAX-Prüfung):
+- Seiten-Felder: `PAGE_EDIT` an der Seite selbst (pid = Seite), Inhalte: `CONTENT_EDIT` an
+  ihrer Seite – Join auf `pages` mit `getPagePermsClause()`; der Seitenbaum wird nicht beim
+  Abstieg beschnitten, gefiltert wird pro Zeile.
+- `tables_modify`, Exclude-Felder nur mit `non_exclude_fields`.
+- `authMode` für **jedes** `select`-Feld mit `authMode` (nicht nur das Type-Feld), per
+  Unterabfrage auf die Quelltabelle; leere Werte erlaubt wie in `checkAuthMode()`; Werte
+  aus `items` (itemsProcFunc-Werte sind nicht abgedeckt).
+- Sprachen: `allowed_languages`, `-1` immer erlaubt (wie `checkLanguageAccess()`).
+Modul `access: user`. Tests: `Tests/Functional/Report/ReportPermissionsTest.php`
+(SQLite, MariaDB, Postgres). Testuser in DDEV: `lv2_styleguide_basic`, `lv2_styleguide_rte`.

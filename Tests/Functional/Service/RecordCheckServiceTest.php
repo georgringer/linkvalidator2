@@ -203,6 +203,30 @@ final class RecordCheckServiceTest extends FunctionalTestCase
         self::assertTrue($checkedLinks[0]->result->isOk());
     }
 
+    #[Test]
+    public function linkToTheCurrentPageInContentIsValid(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/current_page.csv');
+
+        $this->get(RecordCheckService::class)->checkRecord('tt_content', 17);
+
+        self::assertSame(0, $this->countRows(self::BROKEN_LINK_TABLE));
+        self::assertSame(0, $this->getStatus('tt_content', 17)['broken_count']);
+    }
+
+    #[Test]
+    public function linkPageLinkingToItselfIsBroken(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/current_page.csv');
+
+        $checkedLinks = $this->get(RecordCheckService::class)->checkRecord('pages', 12);
+
+        self::assertCount(1, $checkedLinks);
+        self::assertSame('link', $checkedLinks[0]->candidate->field);
+        self::assertSame('page.linksToItself', $checkedLinks[0]->result->errorType);
+        self::assertSame(1, $this->getStatus('pages', 12)['broken_count']);
+    }
+
     private function countRows(string $table): int
     {
         return $this->getConnectionPool()->getConnectionForTable($table)->count('*', $table, []);

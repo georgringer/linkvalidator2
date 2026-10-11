@@ -30,6 +30,6 @@ final readonly class InvalidLinkChecker implements LinkCheckerInterface
 
     public function check(LinkTarget $target, LinkCandidate $source): CheckResult
     {
-        return CheckResult::broken('link.invalid', ['reason' => (string)($target->resolved['reason'] ?? '')]);
+        return CheckResult::broken((string)($target->resolved['errorType'] ?? 'link.invalid'), ['reason' => (string)($target->resolved['reason'] ?? '')]);
     }
 }

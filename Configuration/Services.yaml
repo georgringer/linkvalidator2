@@ -11,6 +11,10 @@ services:
     arguments:
       $checkers: !tagged_iterator linkvalidator2.checker
 
+  TYPO3\CMS\Linkvalidator2\Exclusion\ExclusionMatcher:
+    arguments:
+      $matchers: !tagged_iterator linkvalidator2.exclusion_matcher
+
   # Instantiated by the DataHandler through GeneralUtility::makeInstance()
   TYPO3\CMS\Linkvalidator2\Hook\DataHandlerHook:
     public: true

@@ -1,6 +1,7 @@
 <?php
 
 use TYPO3\CMS\Linkvalidator2\Controller\CheckController;
+use TYPO3\CMS\Linkvalidator2\Controller\ExclusionController;
 
 /**
  * Definitions for AJAX routes provided by EXT:linkvalidator2
@@ -15,5 +16,10 @@ return [
         'path' => '/linkvalidator2/check/page',
         'methods' => ['POST'],
         'target' => CheckController::class . '::pageAction',
+    ],
+    'linkvalidator2_exclusion_create' => [
+        'path' => '/linkvalidator2/exclusion/create',
+        'methods' => ['POST'],
+        'target' => ExclusionController::class . '::createAction',
     ],
 ];

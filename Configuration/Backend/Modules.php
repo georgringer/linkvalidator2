@@ -1,5 +1,6 @@
 <?php
 
+use TYPO3\CMS\Linkvalidator2\Controller\ExclusionController;
 use TYPO3\CMS\Linkvalidator2\Controller\ReportController;
 
 /**
@@ -9,7 +10,7 @@ return [
     'linkvalidator2_report' => [
         'parent' => 'link_management',
         'position' => ['after' => 'linkvalidator_checklinks'],
-        'access' => 'admin',
+        'access' => 'user',
         'workspaces' => 'live',
         'path' => '/module/link-management/linkvalidator2',
         'navigationComponent' => '@typo3/backend/tree/page-tree-element',
@@ -18,6 +19,9 @@ return [
         'routes' => [
             '_default' => [
                 'target' => ReportController::class,
+            ],
+            'exclusions' => [
+                'target' => ExclusionController::class,
             ],
         ],
         'moduleData' => [
@@ -29,6 +33,7 @@ return [
             'search' => '',
             'orderField' => 'page',
             'orderDirection' => 'asc',
+            'exclusionDepth' => 999,
         ],
     ],
 ];

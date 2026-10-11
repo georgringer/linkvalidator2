@@ -1,0 +1,67 @@
+<html
+    xmlns:core="http://typo3.org/ns/TYPO3/CMS/Core/ViewHelpers"
+    xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+    data-namespace-typo3-fluid="true"
+>
+
+<f:layout name="Module" />
+
+<f:section name="Content">
+    <f:if condition="{hasAccess}">
+        <f:then>
+            <h1>
+                <f:if condition="{pageTitle}">
+                    <f:then><f:translate key="linkvalidator2.messages:exclusions.headlineWithPageTitle" arguments="{0: pageTitle}" /></f:then>
+                    <f:else><f:translate key="linkvalidator2.messages:exclusions.title" /></f:else>
+                </f:if>
+            </h1>
+            <p><f:translate key="linkvalidator2.messages:exclusions.intro" /></p>
+            <f:be.tableList
+                tableName="{table}"
+                fieldList="{0: 'type', 1: 'reason'}"
+                storagePid="{pageUid}"
+                levels="{depth}"
+                sortField="type"
+                enableControlPanels="true"
+                clickTitleMode="edit"
+            />
+            <f:if condition="{inherited}">
+                <h2 class="h3 mt-4"><f:translate key="linkvalidator2.messages:exclusions.inherited" /></h2>
+                <div class="table-fit">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th><f:translate key="linkvalidator2.db:exclusion" /></th>
+                                <th><f:translate key="linkvalidator2.db:exclusion.type" /></th>
+                                <th><f:translate key="linkvalidator2.messages:exclusions.storedOn" /></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <f:for each="{inherited}" as="exclusion">
+                                <tr>
+                                    <td>
+                                        <core:iconForRecord table="{table}" row="{exclusion}" />
+                                        <a href="{exclusion.editUrl}">{exclusion.title}</a>
+                                    </td>
+                                    <td>{exclusion.type}</td>
+                                    <td>
+                                        <f:if condition="{exclusion.pid}">
+                                            <f:then>{exclusion.pageTitle} <small>[{exclusion.pid}]</small></f:then>
+                                            <f:else><f:translate key="linkvalidator2.messages:exclusions.rootLevel" /></f:else>
+                                        </f:if>
+                                    </td>
+                                </tr>
+                            </f:for>
+                        </tbody>
+                    </table>
+                </div>
+            </f:if>
+        </f:then>
+        <f:else>
+            <h1><f:translate key="linkvalidator2.messages:exclusions.title" /></h1>
+            <p><f:translate key="linkvalidator2.messages:report.selectPage" /></p>
+        </f:else>
+    </f:if>
+</f:section>
+
+</html>

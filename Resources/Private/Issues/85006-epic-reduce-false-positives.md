@@ -16,9 +16,9 @@ wirklich kaputt, nicht editierbar, irrelevant oder veraltet.
 | Externe Prüfung schlägt fehl (Fehlalarm) | 🟡 unknown-Status für alles Unsichere ✅; Eskalation, Crawl-Delay 📋 |
 | 401/403 (Login) | ✅ unknown |
 | Felder, die für den Typ nicht gerendert werden (bodytext bei Plugins) | ✅ nur Felder des Record-Types |
-| Keine Rechte zum Bearbeiten | 📋 Berechtigungen (#105413, #104004), bis dahin admin-only |
+| Keine Rechte zum Bearbeiten | ✅ Report zeigt nur, was der User reparieren darf (#105413, #104004) |
 | Veraltete Ergebnisse (gefixt, gelöscht) | ✅ Abgleich beim Prüfen einer Seite + DataHandler-Hook (#89426, #105911) |
-| Ausschluss von URLs | 📋 Schritt 5 (#85127, #92822) |
+| Ausschluss von URLs | ✅ Ausschlüsse pro Teilbaum (#85127, #92822) |
 | `&nbsp;` in Text-URLs | ✅ #97937 |
 | Versteckte/unsichtbare Quelle | 🟡 eigener Datensatz ✅, Seite/Original/Sprache 📋 Schritt 7 (#94195) |
 | Ziel über Elternseite unsichtbar | ✅ Frontend-Seitenauflösung (#106675) |

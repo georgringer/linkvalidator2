@@ -63,6 +63,9 @@
       <trans-unit id="error.link.invalid">
         <source>The link cannot be resolved</source>
       </trans-unit>
+      <trans-unit id="error.page.linksToItself">
+        <source>Page links to itself</source>
+      </trans-unit>
       <trans-unit id="error.page.missing">
         <source>Page does not exist</source>
       </trans-unit>
@@ -233,6 +236,57 @@
       </trans-unit>
       <trans-unit id="error.url.requestFailed">
         <source>Request failed</source>
+      </trans-unit>
+      <trans-unit id="report.column.actions">
+        <source>Actions</source>
+      </trans-unit>
+      <trans-unit id="report.ignore">
+        <source>Ignore</source>
+      </trans-unit>
+      <trans-unit id="report.ignore.url">
+        <source>Ignore this URL (and what starts with it) on this page and its subpages</source>
+      </trans-unit>
+      <trans-unit id="report.ignore.domain">
+        <source>Ignore the domain %s on this page and its subpages</source>
+      </trans-unit>
+      <trans-unit id="report.ignore.page">
+        <source>Ignore links to this page on this page and its subpages</source>
+      </trans-unit>
+      <trans-unit id="ignore.done">
+        <source>Exclusion created</source>
+      </trans-unit>
+      <trans-unit id="ignore.storedOn">
+        <source>Stored on {page}, applies to it and its subpages.</source>
+      </trans-unit>
+      <trans-unit id="ignore.failed">
+        <source>The exclusion could not be created</source>
+      </trans-unit>
+      <trans-unit id="exclusions.title">
+        <source>Link check exclusions</source>
+      </trans-unit>
+      <trans-unit id="exclusions.show">
+        <source>Exclusions</source>
+      </trans-unit>
+      <trans-unit id="exclusions.backToReport">
+        <source>Back to report</source>
+      </trans-unit>
+      <trans-unit id="exclusions.headlineWithPageTitle">
+        <source>Link check exclusions for "%1$s"</source>
+      </trans-unit>
+      <trans-unit id="exclusions.intro">
+        <source>Exclusions apply to links in records on the page they are stored on and on its subpages. Excluded links are neither checked nor reported.</source>
+      </trans-unit>
+      <trans-unit id="exclusions.inherited">
+        <source>Also applying here (from pages above)</source>
+      </trans-unit>
+      <trans-unit id="exclusions.storedOn">
+        <source>Stored on</source>
+      </trans-unit>
+      <trans-unit id="exclusions.rootLevel">
+        <source>Root level (all pages)</source>
+      </trans-unit>
+      <trans-unit id="exclusions.new">
+        <source>New exclusion</source>
       </trans-unit>
       <trans-unit id="error.url.unsupportedScheme">
         <source>Only http and https URLs can be checked</source>

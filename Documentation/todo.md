@@ -16,8 +16,22 @@ forgotten.
   linking it. Notices are listed with their own badge and can be filtered by status;
   they are not counted as broken links.
 - Links in hidden or expired records are never reported.
+- Anchors (`#…`) are not checked, only the page they point to. A link to a removed
+  content element (`#c123`) is therefore not reported (unlike the old linkvalidator).
+- A link page (doktype "Link") pointing to the current page links to itself and is
+  reported as broken.
+- Exclusions: "Ignore" on a result excludes its URL, its domain or its target page for the
+  page of the record and its subpages; the result disappears. The view "Exclusions"
+  (button in the doc header) lists them with levels, to edit, hide or delete them, and
+  shows the ones inherited from pages above. Hiding or deleting one makes the links
+  checked again by the next background run.
 
 ## For integrators
+
+- Editors get the module through the backend group (module "Check Links"). They see only
+  broken links they may fix: edit permission on the page (page fields) or on its content
+  (other records), tables to modify, exclude fields, authMode values and languages. Every
+  editor may start a check; all records are checked, the report stays filtered.
 
 - Saving in the backend checks the saved records right away: internal links immediately,
   external URLs from the cache. Records with external URLs not checked yet become due for
@@ -36,7 +50,21 @@ forgotten.
 - `robots.txt` is not respected on purpose: single HEAD requests to linked URLs, not a
   crawler (Forge #89287).
 
+- Exclusions are records on a page and apply to its subtree, on the root level to all
+  pages (admins only). Types: "URL or domain" – everything starting with the value is
+  excluded: `example.org` the domain incl. subdomains, `example.org/blog` everything below
+  it; scheme and anchor do not matter – and "page" (links to one page). Editors need "tables_modify" for
+  `tx_linkvalidator2_exclusion` and content edit permission on the page. They can have a
+  start and stop time.
+
 ## For developers
+
+### Add an exclusion type
+
+Implement `ExclusionMatcherInterface` (`getType()` = value of the field `type`,
+`matches(Exclusion, LinkTarget)`); it is tagged automatically. Add the item to the field
+`type` and a TCA type with its fields to `tx_linkvalidator2_exclusion`, e.g. a regular
+expression. The scope (page and subpages) is handled for every type.
 
 ### Check a custom link type (Forge #94086)
 
@@ -89,9 +117,10 @@ respected. The page must belong to a site.
 ### Check pages through the frontend (idea)
 
 The page checker decides from the database (or the frontend's page resolution without
-rendering, see Notes "Frontend-Wahrheit"). Whoever needs the rendered result – e.g. anchors
-`#c123` that only exist in the HTML – can register a checker for the type `page` that
-requests the frontend over HTTP, like cs_seo's `FrontendPageService` (`PreviewUriBuilder`,
+rendering, see Notes "Frontend-Wahrheit"). Anchors (`#…`) are not checked: a fragment can be
+any id of the rendered page, the target page is checked and the fragment ignored. Whoever
+needs the rendered result – e.g. anchors that only exist in the HTML – can register a
+checker for the type `page` that requests the frontend over HTTP, like cs_seo's `FrontendPageService` (`PreviewUriBuilder`,
 `RequestFactory`, forwarding basic auth). Document as an example once decided.
 
 ### Labels in JavaScript

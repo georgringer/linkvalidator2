@@ -25,6 +25,10 @@ use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Http\JsonResponse;
 use TYPO3\CMS\Core\Type\Bitmask\Permission;
+use TYPO3\CMS\Linkvalidator2\Check\CheckStatus;
+use TYPO3\CMS\Linkvalidator2\Report\ReportFilter;
+use TYPO3\CMS\Linkvalidator2\Report\ReportPermissionsFactory;
+use TYPO3\CMS\Linkvalidator2\Repository\BrokenLinkRepository;
 use TYPO3\CMS\Linkvalidator2\Service\PageCheckService;
 use TYPO3\CMS\Linkvalidator2\Service\PageRecordFinder;
 
@@ -47,6 +51,8 @@ final readonly class CheckController
         private PageRecordFinder $pageRecordFinder,
         private PageCheckService $pageCheckService,
         private Context $context,
+        private ReportPermissionsFactory $reportPermissionsFactory,
+        private BrokenLinkRepository $brokenLinkRepository,
     ) {}
 
     public function startAction(ServerRequestInterface $request): ResponseInterface
@@ -84,13 +90,15 @@ final readonly class CheckController
             return $this->error('Page not found', 404);
         }
         $result = $this->pageCheckService->checkPage($pageId, $runStartedAt, self::TIME_BUDGET);
+        // All records are checked, but counted is only what the user sees in the report
+        $permissions = $this->reportPermissionsFactory->createForUser($this->getBackendUser());
         return new JsonResponse([
             'done' => $result->done,
             'recordCount' => $result->recordCount,
             'checkedCount' => $result->checkedCount,
-            'brokenLinkCount' => $result->brokenLinkCount,
-            'newBrokenLinkCount' => $result->newBrokenLinkCount,
-            'noticeCount' => $result->noticeCount,
+            'brokenLinkCount' => $permissions === null ? $result->brokenLinkCount : $this->brokenLinkRepository->countBrokenByPid($pageId, $permissions),
+            'newBrokenLinkCount' => $permissions === null ? $result->newBrokenLinkCount : $this->brokenLinkRepository->countDetectedSince($pageId, $runStartedAt, $permissions),
+            'noticeCount' => $permissions === null ? $result->noticeCount : $this->brokenLinkRepository->countByPids([$pageId], new ReportFilter(CheckStatus::Info->value), $permissions),
         ]);
     }
 
