@@ -47,13 +47,18 @@ forgotten.
   (saved with external URLs not checked yet), then records checked longer ago than
   `--interval` hours (default 24). `--limit` caps the number of records. Overlapping runs
   are prevented by a lock. Results of deleted pages are cleaned up at the start.
+- Staging with a database synced from live: do not set up the scheduler cron there, or
+  send mails to a catcher (`MAIL.transport` per environment, e.g. Mailpit or `null`).
+  Mail report recipients can come from an environment variable (`%env()%` in site
+  settings). No own switch (Forge #110615).
 - `robots.txt` is not respected on purpose: single HEAD requests to linked URLs, not a
   crawler (Forge #89287).
 
 - Exclusions are records on a page and apply to its subtree, on the root level to all
   pages (admins only). Types: "URL or domain" – everything starting with the value is
   excluded: `example.org` the domain incl. subdomains, `example.org/blog` everything below
-  it; scheme and anchor do not matter – and "page" (links to one page). Editors need "tables_modify" for
+  it; scheme and anchor do not matter –, "page" (links to one page) and "all links"
+  (turns checking off for the subtree, e.g. an archive). Editors need "tables_modify" for
   `tx_linkvalidator2_exclusion` and content edit permission on the page. They can have a
   start and stop time.
 

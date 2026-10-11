@@ -14,7 +14,6 @@ Source: https://forge.typo3.org/projects/typo3cms-core/issues?set_filter=1&f[]=s
 
 | Issue | Subject | Status linkvalidator2 |
 |---|---|---|
-| [#110615](110615-context-dependent-execution.md) | Disable the link validator in certain contexts, or run it only in certain contexts | 📋 offen (Mail-Report, Ausführung) |
 | [#107983](107983-workspace-users.md) | Make Link Validator (linkvalidator) accessible for Preview-Workspace users | 📋 offen (Workspaces; Berechtigungen ✅) |
 | [#106677](106677-mail-report-clickable-urls.md) | Improve Linkvalidator broken URL output in E-Mail Report | 📋 offen (Mail-Report, später) |
 | [#106487](106487-mail-report-template.md) | Improve linkvalidator report mail template | 📋 offen (Mail-Report, später) |

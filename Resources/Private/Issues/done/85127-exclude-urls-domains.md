@@ -30,7 +30,7 @@ Bedarf.
 
 - Datensätze `tx_linkvalidator2_exclusion` auf einer Seite, gültig für deren Teilbaum (Root-
   Ebene: überall) – statt global; so dürfen auch Redakteure ausschließen, nur in ihrem
-  Bereich. Typen: „URL oder Domain“ (alles, was damit beginnt, inkl. Subdomains) und Zielseite. Regex
+  Bereich. Typen: „URL oder Domain“ (alles, was damit beginnt, inkl. Subdomains), Zielseite und „alle Links“ (Teilbaum). Regex
   bewusst nicht, aber über einen eigenen `ExclusionMatcherInterface` nachrüstbar.
 - Greift vor der Prüfung (kein HTTP-Request), Ergebnisse verschwinden beim Anlegen sofort
   (DataHandler-Hook), beim Entfernen werden die Datensätze des Teilbaums fällig.
@@ -38,5 +38,6 @@ Bedarf.
   (Liste mit Levels, Auswahl, geerbte Ausschlüsse).
 - Tests: `Tests/Unit/Exclusion/ExclusionMatcherTest`, `Tests/Functional/Exclusion/*`,
   `Tests/Functional/Controller/ExclusionControllerTest`.
-- Offen, nicht Teil des Issues: „Vorkommen akzeptieren“ (einzelner Link),
-  `excludedDomains` per Deployment (später Site Setting).
+- Offen, nicht Teil des Issues: „Vorkommen akzeptieren“ (einzelner Link).
+- Siteweit per Deployment (Intranet/SSO): als Site Setting `linkvalidator2.excludedUrls`
+  geplant (eigener Punkt, Notes „Ausschlüsse“).

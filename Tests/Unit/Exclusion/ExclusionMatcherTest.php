@@ -22,6 +22,7 @@ use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Core\LinkHandling\LinkService;
 use TYPO3\CMS\Linkvalidator2\Exclusion\Exclusion;
 use TYPO3\CMS\Linkvalidator2\Exclusion\ExclusionMatcher;
+use TYPO3\CMS\Linkvalidator2\Exclusion\Matcher\AllExclusionMatcher;
 use TYPO3\CMS\Linkvalidator2\Exclusion\Matcher\PageExclusionMatcher;
 use TYPO3\CMS\Linkvalidator2\Exclusion\Matcher\UrlExclusionMatcher;
 use TYPO3\CMS\Linkvalidator2\Target\LinkTarget;
@@ -54,6 +55,8 @@ final class ExclusionMatcherTest extends UnitTestCase
         yield 'page' => [['type' => 'page', 'target_page' => '3'], $page, true];
         yield 'other page' => [['type' => 'page', 'target_page' => '4'], $page, false];
         yield 'page does not exclude urls' => [['type' => 'page', 'target_page' => '3'], $url('https://example.org/'), false];
+        yield 'all links: page' => [['type' => 'all'], $page, true];
+        yield 'all links: url' => [['type' => 'all'], $url('https://example.org/'), true];
         yield 'unknown type' => [['type' => 'unknown'], $page, false];
     }
 
@@ -64,6 +67,7 @@ final class ExclusionMatcherTest extends UnitTestCase
         $subject = new ExclusionMatcher([
             new UrlExclusionMatcher(),
             new PageExclusionMatcher(),
+            new AllExclusionMatcher(),
         ]);
 
         self::assertSame($expected, $subject->isExcluded([Exclusion::fromRow(['uid' => 1, 'pid' => 0, ...$row])], $target));

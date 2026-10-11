@@ -97,14 +97,14 @@ solved ones in `done/`.
 | Polite crawling: crawl delay per domain, `Retry-After` | ❌ | ✅ crawl delay | ❌ | 📋 later | #89287 |
 | `robots.txt` | ❌ | ❌ | ❌ | 💭 single HEAD requests, not a crawler | #89287 |
 | **Exclusions** | | | | | |
-| Exclude link targets (URL / domain / page) | ❌ | ✅ records + own module | ✅ records `tx_linkvalidator2_exclusion` on a page, apply to its subtree (root level: everywhere); types "URL or domain" (everything starting with it, incl. subdomains, scheme and anchor ignored) and page; excluded links are not checked (no HTTP request) and not stored | 📋 regex only as own matcher | #85127, #92822 |
+| Exclude link targets (URL / domain / page) | ❌ | ✅ records + own module | ✅ records `tx_linkvalidator2_exclusion` on a page, apply to its subtree (root level: everywhere); types "URL or domain" (everything starting with it, incl. subdomains, scheme and anchor ignored), page and "all links" (no check in the subtree, e.g. an archive); excluded links are not checked (no HTTP request) and not stored | 📋 site-wide exclusions as site setting (deployed with the project); regex only as own matcher | #85127, #92822 |
 | "Ignore" from the report | ❌ | ❓ | ✅ per result: URL, its domain or the target page, stored on the page of the record through the DataHandler (permissions apply), results disappear right away | 📋 "accept this occurrence" (single link) | #92822 |
 | List of exclusions | ❌ | ✅ own module | ✅ view in the module (toggle in the doc header): record list with levels, selection, edit/hide/delete, plus the exclusions inherited from pages above | | #92822 |
 | Custom exclusion types | ❌ | ❌ | ✅ `ExclusionMatcherInterface` (tagged automatically) + TCA type | | |
 | Accept a single occurrence | ❌ | ❌ | ❌ | 📋 later | |
 | **Running checks** | | | | | |
 | Scheduler | ✅ own scheduler task | ✅ schedulable command | ✅ queue command via "Execute console commands", lock against overlapping runs | | |
-| Disable on staging (survives DB sync) | ❌ task lives in the DB | ❓ | ❌ | 📋 mail report per site: recipients via `%env()%`, global switch in extension configuration | #110615 |
+| Disable on staging (survives DB sync) | ❌ task lives in the DB | ❓ | ➖ not linkvalidator-specific: mail transport per environment (Mailpit, `null`) or no scheduler cron on staging; mail report recipients via `%env()%` in site settings | 📋 document | #110615 (closed) |
 | CLI command | ❌ | ✅ `brofix:checklinks` | ✅ `--record`, `--page`, `--depth`, `--no-external`; without them the queue: never checked, due, older than `--interval` (24 h), with `--limit` / `--time-limit` | 📋 `--site` | |
 | Link types to check | 🟡 TSconfig `linktypes`, report shows stale results of the other types | ✅ | ✅ always all links of a record, results replaced per record; link type is a report filter | | #92586 |
 | Interactive check of large trees without timeouts | ❌ synchronous | ❓ not verified | ✅ browser checks page by page via AJAX (5 s budget per request, a page continues in the next request), progress bar, cancel, summary notification with new broken links | | #89266 |

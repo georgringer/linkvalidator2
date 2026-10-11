@@ -41,7 +41,7 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 - 2 Extern Rest: #96525 Eskalation, ~~#101935 Fehlerdetails im Modul~~ ✅
 - 4 DataHandler: #105911, #89426
 - 5 Ausschlüsse ✅: #92822, #85127
-- 6 Site Settings + Mail-Report: #110615, #106487, #106677
+- 6 Site Settings + Mail-Report: #106487, #106677 (#110615 verworfen: Staging-Mails über Mail-Transport/Cron der Umgebung lösen, kein eigener Schalter)
 - 7 Sprachregel: #94195 (+ Quelle unter versteckter Seite)
 - ~~8 Anker~~: #100933 durch Entscheidung erledigt – Anker werden nicht geprüft
 - Berechtigungen: #105413, #104004, danach #107983 (Workspace-User)
@@ -109,9 +109,9 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 - Generisch: Feld `type` (TCA-Types) + `ExclusionMatcherInterface` je Typ (getaggt).
   Typen: `url` („URL oder Domain“: alles, was damit beginnt – `example.org` = Domain inkl.
   Subdomains, `example.org/blog` = alles darunter; Schema und Anker egal) und `page` (Links
-  auf eine Seite). Domain und URL bewusst zusammengelegt, weil Redakteure den Unterschied
-  nicht einhalten; „alle Links“ verworfen (betrifft die Quelle, nicht das Ziel – wenn
-  nötig als Seiteneigenschaft/Site Setting). Felder `value` bzw. `target_page`.
+  auf eine Seite) und `all` (nichts prüfen im Teilbaum, z. B. Archiv). Domain und URL
+  bewusst zusammengelegt, weil Redakteure den Unterschied nicht einhalten. Felder
+  `value` bzw. `target_page`.
 - Bloomfilter wie bei Redirects (Gerrit 96538) geprüft und verworfen: wenige Einträge,
   Präfix-/Subdomain-Match statt exakter Mitgliedschaft, kein Frontend-Hot-Path.
 - hidden/starttime/endtime gelten; nicht übersetzbar, nicht versioniert.
@@ -130,8 +130,14 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
   Datensatzes.
 - Bewusst nicht: Regex (eigener Matcher möglich), `excludedDomains` in der
   Extension-Konfiguration (später Site Setting, Schritt 6).
-- Offen: „Vorkommen akzeptieren“ (einzelner Link in einem Datensatz) als weiterer Typ;
-  „für die ganze Site ignorieren“ im Report; Grund beim Ignorieren abfragen.
+- Offen: „Vorkommen akzeptieren“ (einzelner Link in einem Datensatz) als weiterer Typ.
+- Verworfen: „für die ganze Site ignorieren“ als Button (siteweit → Site Settings, s. u.),
+  Grund beim Ignorieren abfragen (Feld im Formular reicht).
+- **Site Settings (eigener Punkt, offen):** `linkvalidator2.excludedUrls` – Liste mit
+  derselben Regel wie Typ `url`, für die ganze Site, deployt mit dem Projekt, `%env()%`
+  möglich (Intranet/SSO, #85127). Für Integratoren; Datensätze bleiben für Redakteure
+  (Teilbaum). `ExclusionRepository::findForPid()` hängt sie als virtuelle Ausschlüsse an,
+  Ausschlussansicht zeigt sie unter „Also applying here“ mit Herkunft „Site settings“.
 
 ## Workspaces
 - v1 nur Live. Spalte `workspace` (immer 0) in record_status + link von Anfang an.
@@ -396,7 +402,7 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
       volle klickbare Ziel-URL, Links zum Bearbeiten/ins Modul mit absoluter
       Backend-URL (Basis aus Site bzw. Site Setting, CLI kennt keinen Host;
       #106487, #106677). Auf Staging abschaltbar ohne DB: Empfänger per `%env()%` in
-      Site Settings + globaler Schalter in der Extension-Konfiguration (#110615).
+      Site Settings (kein eigener Schalter, #110615 verworfen).
 - [ ] Sichtbarkeit der Quelle über die Seite: `RecordCheckService::isVisible()` prüft nur
       den Datensatz selbst. Inhalte auf versteckter/abgelaufener Seite oder unter
       `extend_to_subpages` werden gemeldet, obwohl unsichtbar → mit Sprachregel (Schritt 7)

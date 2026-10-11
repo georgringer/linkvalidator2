@@ -37,6 +37,12 @@ final readonly class ExclusionLabel
             $parameters['title'] = ($page !== null ? $page['title'] . ' ' : '') . '[' . $pageUid . ']';
             return;
         }
+        if ($type === 'all') {
+            $reason = trim((string)($row['reason'] ?? ''));
+            $title = $GLOBALS['LANG']->sL('linkvalidator2.db:exclusion.title.all');
+            $parameters['title'] = $reason !== '' ? $title . ': ' . $reason : $title;
+            return;
+        }
         $parameters['title'] = (string)($row['value'] ?? '') ?: (string)($row['reason'] ?? '');
     }
 }

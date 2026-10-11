@@ -43,6 +43,9 @@ return [
         'page' => [
             'showitem' => '--div--;core.form.tabs:general, type, target_page, reason, --div--;core.form.tabs:access, --palette--;;visibility',
         ],
+        'all' => [
+            'showitem' => '--div--;core.form.tabs:general, type, reason, --div--;core.form.tabs:access, --palette--;;visibility',
+        ],
         // Fallback for types no longer available, e.g. of a removed extension: change or delete
         '1' => [
             'showitem' => '--div--;core.form.tabs:general, type, reason, --div--;core.form.tabs:access, --palette--;;visibility',
@@ -64,6 +67,7 @@ return [
                 'items' => [
                     ['label' => 'linkvalidator2.db:exclusion.type.url', 'value' => 'url', 'icon' => 'actions-ban'],
                     ['label' => 'linkvalidator2.db:exclusion.type.page', 'value' => 'page', 'icon' => 'actions-ban'],
+                    ['label' => 'linkvalidator2.db:exclusion.type.all', 'value' => 'all', 'icon' => 'actions-ban'],
                 ],
                 'default' => 'url',
             ],

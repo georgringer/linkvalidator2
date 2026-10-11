@@ -111,6 +111,20 @@ final class ExclusionTest extends FunctionalTestCase
         self::assertContains('page:3', $this->getReportedTargets(10));
     }
 
+    /**
+     * E.g. an archive whose links are not maintained any more
+     */
+    #[Test]
+    public function excludingAllLinksTurnsOffCheckingForTheSubtree(): void
+    {
+        $this->addExclusion(1, ['type' => 'all']);
+
+        $checkedLinks = $this->get(RecordCheckService::class)->checkRecord('tt_content', 15);
+
+        self::assertSame([], $checkedLinks);
+        self::assertSame([], $this->getReportedTargets(15));
+    }
+
     #[Test]
     public function excludedExternalUrlsAreNotRequested(): void
     {
@@ -144,6 +158,8 @@ final class ExclusionTest extends FunctionalTestCase
         yield 'page' => [['type' => 'page', 'target_page' => 2], 'Visible [2]'];
         yield 'deleted page' => [['type' => 'page', 'target_page' => 4], '[4]'];
         yield 'missing page' => [['type' => 'page', 'target_page' => 999], '[999]'];
+        yield 'all links' => [['type' => 'all'], 'All links'];
+        yield 'all links with reason' => [['type' => 'all', 'reason' => 'Archive'], 'All links: Archive'];
     }
 
     /**

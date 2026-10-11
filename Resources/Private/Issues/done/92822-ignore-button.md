@@ -32,7 +32,7 @@ ausblenden.
 
 - Datensätze `tx_linkvalidator2_exclusion` auf einer Seite, gültig für deren Teilbaum (Root-
   Ebene: überall) – statt global; so dürfen auch Redakteure ausschließen, nur in ihrem
-  Bereich. Typen: „URL oder Domain“ (alles, was damit beginnt, inkl. Subdomains) und Zielseite. Regex
+  Bereich. Typen: „URL oder Domain“ (alles, was damit beginnt, inkl. Subdomains), Zielseite und „alle Links“ (Teilbaum). Regex
   bewusst nicht, aber über einen eigenen `ExclusionMatcherInterface` nachrüstbar.
 - Greift vor der Prüfung (kein HTTP-Request), Ergebnisse verschwinden beim Anlegen sofort
   (DataHandler-Hook), beim Entfernen werden die Datensätze des Teilbaums fällig.

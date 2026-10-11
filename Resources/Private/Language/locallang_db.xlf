@@ -21,6 +21,12 @@
       <trans-unit id="exclusion.value">
         <source>Target</source>
       </trans-unit>
+      <trans-unit id="exclusion.type.all">
+        <source>All links (no check on this page and its subpages)</source>
+      </trans-unit>
+      <trans-unit id="exclusion.title.all">
+        <source>All links</source>
+      </trans-unit>
       <trans-unit id="exclusion.url">
         <source>URL or domain</source>
       </trans-unit>
