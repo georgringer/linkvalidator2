@@ -1,0 +1,23 @@
+{
+	"name": "typo3tests/linkvalidator2-test-link-handler",
+	"type": "typo3-cms-extension",
+	"description": "Registers custom link handlers and a checker for one of them",
+	"license": "GPL-2.0-or-later",
+	"require": {
+		"typo3/cms-core": "*"
+	},
+	"autoload": {
+		"psr-4": {
+			"TYPO3Tests\\TestLinkHandler\\": "Classes/"
+		}
+	},
+	"extra": {
+		"typo3/cms": {
+			"extension-key": "test_link_handler",
+			"version": "1.0.0",
+			"Package": {
+				"providesPackages": {}
+			}
+		}
+	}
+}

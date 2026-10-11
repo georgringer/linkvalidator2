@@ -1922,7 +1922,7 @@ Klein und unabhängig voneinander, je ein Commit; nach dem Fix die Issue-Datei n
 - [x] **#97937 `&nbsp;` in Text-URLs** – `LinkExtractor::extractPlainUrls()`: `&nbsp;`/`&#160;`
       vor dem Parsen in Leerzeichen umsetzen. Smoke: HTML aus dem Issue → 6 URLs, keine
       endet auf `&nbsp`.
-- [ ] **#94086 eigene LinkHandler** – `LinkTargetFactory::createFromResolved()` `default`:
+- [x] **#94086 eigene LinkHandler** – `LinkTargetFactory::createFromResolved()` `default`:
       Typ mit Checker (`CheckerRegistry`) → generisches `LinkTarget`; Typ eines registrierten
       Handlers ohne Checker → `null`; sonst `link.invalid`.
 - [ ] **#106675/#101367 Rootline** – `PageChecker`: Vorfahren mit `extendToSubpages`

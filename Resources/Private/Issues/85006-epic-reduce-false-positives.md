@@ -21,7 +21,7 @@ wirklich kaputt, nicht editierbar, irrelevant oder veraltet.
 | Ausschluss von URLs | 📋 Schritt 5 (#85127, #92822) |
 | `&nbsp;` in Text-URLs | ✅ #97937 |
 | Versteckte/unsichtbare Quelle | 🟡 eigener Datensatz ✅, Seite/Original/Sprache 📋 Schritt 7 (#94195, #106675) |
-| Eigene LinkHandler | ❌ als invalid gemeldet, #94086 |
+| Eigene LinkHandler | ✅ #94086 |
 
 ## Zu tun
 

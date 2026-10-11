@@ -2,7 +2,7 @@
 
 - Forge: https://forge.typo3.org/issues/94086 (Feature, Needs Feedback, angelegt 2021-05-07)
 - Verwandt: #96110, #102468, #103403, #107186
-- **Status linkvalidator2:** ❌ offen (Regression gegenüber alt möglich)
+- **Status linkvalidator2:** ✅ gelöst (2026-10-11)
 
 ## Problem
 
@@ -37,3 +37,16 @@ Doku (RST/Developer): „Eigenen Linktyp prüfen“ mit Beispiel-Checker.
 
 Fixture-Extension mit eigenem LinkHandler: ohne Checker → nicht gemeldet; mit Checker
 → dessen Ergebnis.
+
+## Lösung (2026-10-11)
+
+- `LinkTargetFactory::createCustomTarget()`: Typ eines in `SYS.linkHandler` registrierten
+  Handlers → `LinkTarget(<type>, '<type>:<link>')`; `RecordCheckService` prüft ihn mit dem
+  Checker des Typs oder überspringt ihn ohne Checker. Nur nicht registrierte/nicht
+  auflösbare `t3://`-Links bleiben `link.invalid`. Gilt auch für die RTE-Markierung.
+- Erweiterbarkeit: Checker-Tag per `registerForAutoconfiguration()` in
+  `Configuration/Services.php` – vorher `_instanceof` in `Services.yaml`, das nur für
+  Klassen dieser Datei gilt; Checker anderer Extensions wären nie registriert worden.
+- Tests: `CustomLinkHandlerTest` mit Fixture-Extension `test_link_handler` (Handler mit
+  und ohne Checker, unbekannter Handler).
+- Doku für Entwickler vorgemerkt: `Documentation/todo.md`, „Check a custom link type“.

@@ -27,7 +27,6 @@ Source: https://forge.typo3.org/projects/typo3cms-core/issues?set_filter=1&f[]=s
 | [#100933](100933-current-page-missing-anchor.md) | Checking internal links to current page with missing anchor is not reported as broken link | 📋 offen (Schritt 8: Anker) |
 | [#96447](96447-concept-and-open-decisions.md) | Linkvalidator concept & open decisions | 🟡 größtenteils durch den Neubau beantwortet |
 | [#94195](94195-translation-of-hidden-original.md) | Translated (connected mode) content will still get checked by linkvalidator if original content is hidden | 📋 offen (Schritt 7: Sprachregel) |
-| [#94086](94086-custom-linkhandler.md) | Softref for custom linkhandler | ❌ offen (Regression gegenüber alt möglich) |
 | [#92822](92822-ignore-button.md) | Ignore button for link targets | 📋 offen (Schritt 5: Ziel-Ausschlüsse) |
 | [#92542](92542-shortcut-pages.md) | Linkvalidator should check shortcut pages | 🟡 teilweise |
 | [#89426](89426-remove-stale-broken-links.md) | Remove stale broken links in tx_linkvalidator_link | 🟡 teilweise – Datensätze ✅, gelöschte Seite selbst ❌ |
@@ -40,6 +39,7 @@ Source: https://forge.typo3.org/projects/typo3cms-core/issues?set_filter=1&f[]=s
 
 | Issue | Subject | Status linkvalidator2 |
 |---|---|---|
+| [#94086](done/94086-custom-linkhandler.md) | Softref for custom linkhandler | ✅ gelöst (2026-10-11) |
 | [#97937](done/97937-nbsp-in-plain-urls.md) | Linkvalidator: Links and &nbsp; in tt_content.bodytext cause problems in UrlSoftReferenceParser | ✅ gelöst (2026-10-11) |
 | [#105873](done/105873-store-page-id-not-pid.md) | Should always store page id in tx_linkvalidator_broken_links not pid | ✅ gelöst (Datenmodell) |
 | [#103478](done/103478-check-file-fields.md) | Linkvalidator should check fields with type "file" | ✅ erledigt durch Entscheidung (nicht umsetzen) |

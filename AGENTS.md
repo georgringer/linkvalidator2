@@ -19,10 +19,16 @@ Run in containers from the extension root, independent of the core checkout:
 (bug: test first). On the core move the tests go to the core's `runTests.sh`; `Build/`,
 `.Build/` and the `require-dev`/`config` parts of `composer.json` stay behind.
 
+## Documentation notes
+
+`Documentation/todo.md` collects what the documentation must explain (editors,
+integrators, developers). Add to it whenever behaviour or an extension point changes.
+
 ## Not part of the core move
 
-`AGENTS.md`, `CLAUDE.md`, `Notes/`, `Resources/Private/Issues/` and `.superpowers/`
-stay out of the patch series when the extension replaces `typo3/sysext/linkvalidator`.
+`AGENTS.md`, `CLAUDE.md`, `Notes/`, `Resources/Private/Issues/`, `Documentation/todo.md`
+(becomes RST documentation) and `.superpowers/` stay out of the patch series when the
+extension replaces `typo3/sysext/linkvalidator`.
 
 ## Forge issues
 

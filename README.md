@@ -130,7 +130,7 @@ solved ones in `done/`.
 | **Configuration** | | | | | |
 | Where | Page TSconfig + scheduler task field | Page TSconfig + extension configuration | extension configuration | 📋 global (extension configuration) + per site (site settings), no Page TSconfig | #96447 |
 | **Extensibility** | | | | | |
-| Custom link types | ✅ `LinktypeInterface` | ✅ link types | 🟡 tagged checkers per `LinkService` type, but links of a custom link handler are reported as invalid even with a checker | 📋 generic target for types with a checker, skip handler types without one | #94086 |
+| Custom link types | ✅ `LinktypeInterface` | ✅ link types | ✅ checker per `LinkService` type, autoconfigured for every extension; links of a registered link handler without checker are skipped | 📋 labels for custom error types, see `Documentation/todo.md` | #94086 |
 | PSR-14 events | ✅ 2 events | 🟡 | ❌ | 📋 later, only where needed | |
 
 Sources: core `typo3/sysext/linkvalidator` (code and `page.tsconfig` on `main`), brofix

@@ -4,10 +4,6 @@ services:
     autoconfigure: true
     public: false
 
-  _instanceof:
-    TYPO3\CMS\Linkvalidator2\Check\LinkCheckerInterface:
-      tags: ['linkvalidator2.checker']
-
   TYPO3\CMS\Linkvalidator2\:
     resource: '../Classes/*'
 

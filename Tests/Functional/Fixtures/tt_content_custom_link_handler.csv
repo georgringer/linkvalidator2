@@ -1,0 +1,3 @@
+"tt_content"
+,"uid","pid","CType","header","header_link","bodytext","hidden","deleted","endtime","sys_language_uid","l18n_parent"
+,30,1,"text","Custom link handlers","","<p><a href=""t3://checked?id=missing"">missing</a> <a href=""t3://checked?id=1"">ok</a> <a href=""t3://unchecked?id=missing"">no checker</a> <a href=""t3://gibtsnicht?uid=1"">unknown handler</a></p>",0,0,0,0,0

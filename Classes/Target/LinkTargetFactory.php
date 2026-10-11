@@ -66,9 +66,7 @@ final readonly class LinkTargetFactory
             ),
             LinkService::TYPE_URL => $this->createUrlTarget($resolved),
             LinkService::TYPE_EMAIL, LinkService::TYPE_TELEPHONE, LinkService::TYPE_INPAGE => null,
-            // An internal link LinkService cannot resolve, e.g. a record link without identifier,
-            // ends up in the legacy notation converter with an arbitrary type
-            default => $this->createUnresolvableTarget($candidate->link !== '' ? $candidate->link : (string)($resolved['url'] ?? '')),
+            default => $this->createCustomTarget($type, $resolved, $candidate),
         };
     }
 
@@ -107,6 +105,19 @@ final readonly class LinkTargetFactory
         $url = explode('#', (string)($resolved['url'] ?? ''), 2)[0];
         $resolved['url'] = $url;
         return new LinkTarget(LinkService::TYPE_URL, 'url:' . $url, $resolved);
+    }
+
+    /**
+     * A type of a link handler registered by an extension is checked by the checker for that type, or
+     * skipped when there is none. Any other type comes from an internal link LinkService cannot resolve,
+     * e.g. a record link without identifier, which ends up in the legacy notation converter.
+     */
+    private function createCustomTarget(string $type, array $resolved, LinkCandidate $candidate): ?LinkTarget
+    {
+        if (isset($GLOBALS['TYPO3_CONF_VARS']['SYS']['linkHandler'][$type])) {
+            return new LinkTarget($type, $type . ':' . $candidate->link, $resolved);
+        }
+        return $this->createUnresolvableTarget($candidate->link !== '' ? $candidate->link : (string)($resolved['url'] ?? ''));
     }
 
     private function createUnresolvableTarget(string $link): ?LinkTarget

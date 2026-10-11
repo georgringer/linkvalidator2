@@ -286,8 +286,8 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
       obwohl gültig. Seite aus Request/FormEngine-Kontext ermitteln oder unbekannte Tabellen
       im RTE nicht markieren. Reproduzierbar mit `seed-bigtree.php` (Kategorie-Links).
 - [x] **Bug Plain-URLs (#97937):** `&nbsp;` beendet die URL jetzt (2026-10-11, mit Test).
-- [ ] **Bug eigene LinkHandler (#94086):** `LinkTargetFactory` meldet unbekannte Typen als
-      `link.invalid`, auch wenn ein Checker für den Typ registriert ist.
+- [x] **Bug eigene LinkHandler (#94086):** gelöst 2026-10-11, Doku-Notizen in
+      `Documentation/todo.md`.
 - [ ] Ziel per Rootline prüfen (`extendToSubpages`, #106675/#101367).
 - [ ] Fehlerdetails (`error_details.message`) im Modul anzeigen (#101935).
 - Analyse aller offenen Forge-Issues: `Resources/Private/Issues/`.
