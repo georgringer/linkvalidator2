@@ -99,6 +99,9 @@ final readonly class ProductLinkChecker implements LinkCheckerInterface
 - `CheckResult::broken()` / `unknown()` take an error type and details. The module shows
   the label `error.<errorType>` of `messages.xlf`, falling back to the error type – a
   way for extensions to provide their own labels is still missing (see below).
+- The detail `message` (string) is shown below that label, collapsed ("Details"), for every
+  link type – e.g. the cURL message of external URLs. Put the technical cause there, not
+  in the label.
 - Expensive checks (HTTP) implement `CacheableLinkCheckerInterface`: results are stored per
   target and reused for `getCacheLifetime()` seconds, and once per run regardless.
 - A checker registered for a core type (e.g. `url`) replaces the core checker – the last

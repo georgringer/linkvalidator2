@@ -111,7 +111,10 @@ final readonly class ExternalUrlChecker implements CacheableLinkCheckerInterface
     private function classifyConnectionError(NetworkExceptionInterface $e): CheckResult
     {
         $errorNumber = $this->getCurlErrorNumber($e);
-        $details = ['message' => $e->getMessage()];
+        // The number alone is ambiguous (e.g. 60 for a wrong host name or an incomplete
+        // certificate chain), the message tells the cause and is shown in the report
+        $message = (string)preg_replace('# \(see https://curl\.se/[^)]*\)| for \S+$#', '', $e->getMessage());
+        $details = ['message' => $message, 'errno' => $errorNumber];
         return match (true) {
             $errorNumber === self::CURL_ERROR_COULD_NOT_RESOLVE_HOST => CheckResult::broken('url.unknownHost', $details),
             $errorNumber === self::CURL_ERROR_TIMEOUT => CheckResult::unknown('url.timeout', $details + ['seconds' => $this->extensionSettings->getExternalTimeout()]),

@@ -68,6 +68,22 @@ final class ExternalUrlCheckerTest extends UnitTestCase
         $result = $this->createSubject($exception)->check(...$this->createLink());
 
         self::assertSame([$status, $errorType], [$result->status, $result->errorType]);
+        self::assertSame($exception->getMessage(), $result->details['message']);
+        self::assertGreaterThan(0, $result->details['errno']);
+    }
+
+    #[Test]
+    public function messageLeavesOutTheUrlAndTheReferenceToTheCurlDocumentation(): void
+    {
+        $exception = new ConnectException(
+            'cURL error 60: SSL certificate problem: unable to get local issuer certificate (see https://curl.se/libcurl/c/libcurl-errors.html) for https://example.org/',
+            new Request('https://example.org/')
+        );
+
+        self::assertSame(
+            'cURL error 60: SSL certificate problem: unable to get local issuer certificate',
+            $this->createSubject($exception)->check(...$this->createLink())->details['message']
+        );
     }
 
     #[Test]

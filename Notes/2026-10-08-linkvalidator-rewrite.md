@@ -38,7 +38,7 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 - vor Schritt 4, Bugfixes (Plan 1, Task 8d): #97937 `&nbsp;`, #94086 eigene LinkHandler,
   #106675/#101367 Rootline, #89426 Abgleich beim Prüfen einer Seite
 - Queue/Batches (Task 8 + Browser-Batches): #89266, #89287 (Crawl-Delay, Retry-After)
-- 2 Extern Rest: #96525 Eskalation, #101935 Fehlerdetails im Modul
+- 2 Extern Rest: #96525 Eskalation, ~~#101935 Fehlerdetails im Modul~~ ✅
 - 4 DataHandler: #105911, #89426
 - 5 Ausschlüsse ✅: #92822, #85127
 - 6 Site Settings + Mail-Report: #110615, #106487, #106677
@@ -157,8 +157,8 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 - HEAD, Fallback GET (nur Header). 429 + Retry-After respektieren.
   Crawl-Delay pro Domain. Konfigurierbarer User-Agent.
 - Modul: unknown nicht in „kaputt“, eigener Filter „nicht prüfbar“.
-- Fehlerdetails (volle cURL-Meldung) im Modul anzeigen, `errno` + `ssl_verify_result`
-  mitspeichern (#101935).
+- Fehlerdetails (cURL-Meldung) im Modul angezeigt, `errno` gespeichert (#101935 ✅);
+  `ssl_verify_result` verworfen (nur Guzzle 7).
 - `robots.txt`: nicht beachten (einzelne HEAD-Requests, kein Crawler) – in Doku begründen (#89287).
 
 - Plain-Text-URLs (Softref `url`, z. B. `tt_content.bodytext`) mit Schritt 2 extrahieren:
@@ -414,7 +414,7 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 - [x] **Bug eigene LinkHandler (#94086):** gelöst 2026-10-11, Doku-Notizen in
       `Documentation/todo.md`.
 - [x] Ziel per Rootline prüfen (`extendToSubpages`, #106675/#101367) – über Frontend-Auflösung.
-- [ ] Fehlerdetails (`error_details.message`) im Modul anzeigen (#101935).
+- [x] Fehlerdetails (`error_details.message`) im Modul anzeigen, `errno` gespeichert (#101935, 2026-10-11).
 - Analyse aller offenen Forge-Issues: `Resources/Private/Issues/`.
 - [ ] Shortcut-Seiten mit `shortcut_mode` ≠ NONE prüfen (erste/zufällige Unterseite ohne
       sichtbare Unterseite, Elternseite auf Root-Seite).

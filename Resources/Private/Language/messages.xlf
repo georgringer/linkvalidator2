@@ -237,6 +237,9 @@
       <trans-unit id="error.url.requestFailed">
         <source>Request failed</source>
       </trans-unit>
+      <trans-unit id="report.details">
+        <source>Details</source>
+      </trans-unit>
       <trans-unit id="report.column.actions">
         <source>Actions</source>
       </trans-unit>

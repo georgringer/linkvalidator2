@@ -81,6 +81,12 @@
                                         <td>
                                             <span class="badge {brokenLink.statusClass}"><f:translate key="linkvalidator2.messages:status.{brokenLink.status}" /></span>
                                             <f:translate key="linkvalidator2.messages:error.{brokenLink.error_type}" arguments="{brokenLink.messageArguments}" default="{brokenLink.error_type}" />
+                                            <f:if condition="{brokenLink.details.message}">
+                                                <details class="mt-1">
+                                                    <summary class="small text-body-secondary"><f:translate key="linkvalidator2.messages:report.details" /></summary>
+                                                    <small class="text-body-secondary text-break">{brokenLink.details.message}</small>
+                                                </details>
+                                            </f:if>
                                         </td>
                                         <td><f:format.date format="d.m.Y H:i">{brokenLink.first_detected}</f:format.date></td>
                                         <td class="col-control">
