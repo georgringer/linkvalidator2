@@ -169,6 +169,9 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
   erst mit externer Prüfung sinnvoll.
 
 ### Umsetzung Stand 2026-10-08 (Basis, erweiterbar)
+- Guzzle 7 und 8 (Core erlaubt beide): gefangen wird `NetworkExceptionInterface`, cURL-Nummer
+  aus `getHandlerContext()` (7) oder der Meldung „cURL error N“ (8, Timeouts dort als eigene
+  `NetworkTimeoutException`). Vorher Fatal Error unter Guzzle 8 (2026-10-11).
 - `ExternalUrlChecker` (Guzzle über `RequestFactory`): HEAD, GET nur bei 405/501 (gestreamt,
   Body wird nie gelesen), max. 5 Redirects. ok = 2xx; broken = 404 (`url.notFound`),
   410 (`url.gone`), cURL 6 (`url.unknownHost`); unknown = sonstige Status (`url.httpStatus`
@@ -327,8 +330,10 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 - `MarkBrokenRteLinkListener`: nutzt dieselben Checker wie der Report, extern aus dem
   Target-Cache (kein HTTP beim Öffnen). Läuft `before` den alten Listenern, weil
   `markAsCheckedLink()` die Propagation stoppt.
-- Event kennt die Quelle nicht → Sprachregel (Schritt 7) und Record-TSconfig-Tabelle
-  (pid) greifen im RTE nicht; Fallback Identifier = Tabelle.
+- Event kennt die Quelle nicht → Sprachregel (Schritt 7) greift im RTE nicht. Seite für
+  `TCEMAIN.linkHandler` (Record-Identifier → Tabelle) aus dem FormEngine-Request
+  (`edit[table][uid]`, bei `new` die pid bzw. die pid des Datensatzes bei negativer uid);
+  `record.unknownTable` wird im RTE nie markiert (2026-10-11).
 - Beim Speichern normalisiert `TS_links_db()` Links über `LinkService::asString()`
   (fehlende Datei → `href=""`, `t3://page` → `uid=current`).
 

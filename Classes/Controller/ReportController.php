@@ -181,7 +181,7 @@ final readonly class ReportController
             'page.hiddenByParent', 'page.expiredByParent' => $parentTitle,
             'page.notYetVisible' => date('d.m.Y H:i', (int)($details['starttime'] ?? 0)),
             'page.visibleUntil' => date('d.m.Y H:i', (int)($details['endtime'] ?? 0)),
-            default => (string)($details['httpStatus'] ?? $details['code'] ?? ''),
+            default => (string)($details['httpStatus'] ?? $details['code'] ?? $details['seconds'] ?? ''),
         };
         $byParent = $parentTitle !== '' && in_array($errorType, ['page.accessRestricted', 'page.notYetVisible', 'page.visibleUntil'], true)
             ? sprintf($this->getLanguageService()->sL('linkvalidator2.messages:error.byParentPage'), $parentTitle)

@@ -58,7 +58,7 @@
         <source>Problem</source>
       </trans-unit>
       <trans-unit id="report.column.since">
-        <source>Broken since</source>
+        <source>First detected</source>
       </trans-unit>
       <trans-unit id="error.link.invalid">
         <source>The link cannot be resolved</source>
@@ -223,7 +223,7 @@
         <source>Server responded with HTTP %s</source>
       </trans-unit>
       <trans-unit id="error.url.timeout">
-        <source>Server did not respond in time</source>
+        <source>Server did not respond within %s seconds</source>
       </trans-unit>
       <trans-unit id="error.url.tlsError">
         <source>Secure connection failed (TLS)</source>

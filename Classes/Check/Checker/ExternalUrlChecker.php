@@ -16,10 +16,10 @@ declare(strict_types=1);
  */
 namespace TYPO3\CMS\Linkvalidator2\Check\Checker;
 
-use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\RequestOptions;
+use Psr\Http\Client\NetworkExceptionInterface;
 use TYPO3\CMS\Core\Http\RequestFactory;
 use TYPO3\CMS\Core\LinkHandling\LinkService;
 use TYPO3\CMS\Linkvalidator2\Check\CacheableLinkCheckerInterface;
@@ -75,7 +75,7 @@ final readonly class ExternalUrlChecker implements CacheableLinkCheckerInterface
             }
         } catch (TooManyRedirectsException) {
             return CheckResult::unknown('url.tooManyRedirects', ['maxRedirects' => self::MAX_REDIRECTS]);
-        } catch (ConnectException $e) {
+        } catch (NetworkExceptionInterface $e) {
             return $this->classifyConnectionError($e);
         } catch (GuzzleException $e) {
             return CheckResult::unknown('url.requestFailed', ['message' => $e->getMessage()]);
@@ -108,15 +108,27 @@ final readonly class ExternalUrlChecker implements CacheableLinkCheckerInterface
         return CheckResult::unknown('url.httpStatus', ['httpStatus' => $statusCode]);
     }
 
-    private function classifyConnectionError(ConnectException $e): CheckResult
+    private function classifyConnectionError(NetworkExceptionInterface $e): CheckResult
     {
-        $errorNumber = (int)($e->getHandlerContext()['errno'] ?? 0);
+        $errorNumber = $this->getCurlErrorNumber($e);
         $details = ['message' => $e->getMessage()];
         return match (true) {
             $errorNumber === self::CURL_ERROR_COULD_NOT_RESOLVE_HOST => CheckResult::broken('url.unknownHost', $details),
-            $errorNumber === self::CURL_ERROR_TIMEOUT => CheckResult::unknown('url.timeout', $details),
+            $errorNumber === self::CURL_ERROR_TIMEOUT => CheckResult::unknown('url.timeout', $details + ['seconds' => $this->extensionSettings->getExternalTimeout()]),
             in_array($errorNumber, self::CURL_ERRORS_TLS, true) => CheckResult::unknown('url.tlsError', $details),
             default => CheckResult::unknown('url.connectionFailed', $details),
         };
+    }
+
+    /**
+     * Guzzle 7 passes the number as handler context, Guzzle 8 only in the message
+     * ("cURL error 28: …").
+     */
+    private function getCurlErrorNumber(NetworkExceptionInterface $e): int
+    {
+        if (method_exists($e, 'getHandlerContext') && isset($e->getHandlerContext()['errno'])) {
+            return (int)$e->getHandlerContext()['errno'];
+        }
+        return preg_match('/cURL error (\d+)/', $e->getMessage(), $matches) === 1 ? (int)$matches[1] : 0;
     }
 }

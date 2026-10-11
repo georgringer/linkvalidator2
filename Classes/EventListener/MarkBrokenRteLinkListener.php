@@ -16,6 +16,8 @@ declare(strict_types=1);
  */
 namespace TYPO3\CMS\Linkvalidator2\EventListener;
 
+use Psr\Http\Message\ServerRequestInterface;
+use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Attribute\AsEventListener;
 use TYPO3\CMS\Core\Html\Event\BrokenLinkAnalysisEvent;
 use TYPO3\CMS\Core\Localization\LanguageService;
@@ -31,7 +33,9 @@ use TYPO3\CMS\Linkvalidator2\Target\LinkTargetFactory;
 /**
  * Marks broken links when a rich text field is opened in the editor, using the same
  * checkers as the report. External links are not requested here: their last known
- * result is taken from the target cache.
+ * result is taken from the target cache. The event does not tell which record the link
+ * belongs to: the page is taken from the record being edited, for record link identifiers
+ * mapped in Page TSconfig.
  */
 final readonly class MarkBrokenRteLinkListener
 {
@@ -47,12 +51,7 @@ final readonly class MarkBrokenRteLinkListener
     {
         $resolved = $event->getLinkData();
         $resolved['type'] ??= $event->getLinkType();
-        // The event does not tell which record the link belongs to
-        // @todo Without a pid, record links whose identifier is mapped via TCEMAIN.linkHandler
-        //       (e.g. "category" → sys_category) fall back to identifier = table and get marked
-        //       as record.unknownTable although valid. Find the page (request/FormEngine context)
-        //       or do not mark unknown tables here.
-        $source = new LinkCandidate('', 0, 0, 0, '', '', '');
+        $source = new LinkCandidate('', 0, $this->getEditedPageUid(), 0, '', '', '');
         $target = $this->linkTargetFactory->createFromResolved($resolved, $source);
         if ($target === null) {
             return;
@@ -67,9 +66,37 @@ final readonly class MarkBrokenRteLinkListener
             $result = $checker->check($target, $source);
         }
         $event->markAsCheckedLink();
-        if ($result?->status === CheckStatus::Broken) {
+        // Without the right Page TSconfig the identifier is taken as table: not reliable
+        if ($result?->status === CheckStatus::Broken && $result->errorType !== 'record.unknownTable') {
             $event->markAsBrokenLink($this->getReason($result));
         }
+    }
+
+    /**
+     * Page of the record opened in the form engine ("edit[table][uid]=edit", or the page
+     * a new record is created on), 0 if unknown
+     */
+    private function getEditedPageUid(): int
+    {
+        $request = $GLOBALS['TYPO3_REQUEST'] ?? null;
+        if (!$request instanceof ServerRequestInterface) {
+            return 0;
+        }
+        $edit = $request->getQueryParams()['edit'] ?? (array)($request->getParsedBody()['edit'] ?? []);
+        foreach (is_array($edit) ? $edit : [] as $table => $records) {
+            foreach (is_array($records) ? $records : [] as $uid => $command) {
+                $uid = (int)$uid;
+                if ($command === 'new') {
+                    // A negative uid creates the record after that record
+                    return $uid >= 0 ? $uid : (int)(BackendUtility::getRecord((string)$table, -$uid, 'pid')['pid'] ?? 0);
+                }
+                $row = BackendUtility::getRecord((string)$table, $uid, 'pid');
+                if ($row !== null) {
+                    return $table === 'pages' ? $uid : (int)$row['pid'];
+                }
+            }
+        }
+        return 0;
     }
 
     private function getReason(CheckResult $result): string

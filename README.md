@@ -91,7 +91,7 @@ solved ones in `done/`.
 | External checking | 🟡 off by default | ✅ | ✅ CLI and module; each URL requested once per run | | |
 | Cache across runs | ❌ only within one run | ✅ link target cache with expiry | ✅ per target, configurable lifetime (default 7 days), cache-only mode | | #92700 |
 | HEAD with GET fallback, redirects | ✅ | ✅ | ✅ GET on 405/501, max. 5 redirects | | |
-| 401/403/429/5xx/999/TLS/timeouts as "unknown" instead of broken | ❌ | ❌ | ✅ broken only 404, 410, unknown host; status filter | 📋 escalation after 3 checks / 7 days | #96525, #85006 |
+| 401/403/429/5xx/999/TLS/timeouts as "unknown" instead of broken | ❌ | ❌ | ✅ broken only 404, 410, unknown host; status filter; cURL error from Guzzle 7 and 8; timeout message names the seconds | 📋 escalation after 3 checks / 7 days | #96525, #85006 |
 | Full error message (e.g. cURL TLS details) | 🟡 one localised text per cURL code | ❓ | 🟡 stored in `error_details`, not shown | 📋 show details, store `errno` + `ssl_verify_result` | #101935 |
 | Polite crawling: own User-Agent | ✅ configurable | ✅ | ✅ `externalUserAgent` | | #89287 |
 | Polite crawling: crawl delay per domain, `Retry-After` | ❌ | ✅ crawl delay | ❌ | 📋 later | #89287 |
@@ -122,14 +122,14 @@ solved ones in `done/`.
 | Edit record from the report | ✅ | ✅ | ✅ | | |
 | Open the link target from the report | ❓ | ❓ | ✅ new tab: external URL, page in the frontend preview (hidden/scheduled pages included), file by its public URL | | |
 | Recheck a single URL | ❌ | ✅ | ❌ | 💭 | #96447 |
-| "Broken since" | ❌ | ❌ | ✅ | | |
+| "First detected" (also for notices and "cannot be checked") | ❌ | ❌ | ✅ | | |
 | Which records were checked | ❌ | ❌ | ❌ only a count | 📋 module step | |
 | Access for editors | ✅ filtered by permissions | ✅ | ✅ only what the user may fix: page/content edit permission, tables, exclude fields, authMode, languages (SQL, pagination correct) | | #105413, #104004 |
 | Links in page properties below a page without edit permission | ❌ hidden: stored pid is the parent page | ❓ | ✅ `pid` of a page is the page itself, edit permission checked on it | | #105413, #105873 |
 | `authMode` restrictions | 🟡 type field only, empty list = no restriction | ❓ | ✅ every `select` field with `authMode` (values from `items`) | | #104004 |
 | Workspace users | ❌ live users only | ❓ | ❌ `workspaces => live` | 📋 module in workspaces, hint "results show the live state" | #107983 |
 | **Visibility elsewhere** | | | | | |
-| Markers in the rich text editor | 🟡 page missing/hidden, file, known external | 🟡 similar | 🟡 same checkers as the report, external from cache; record links with a mapped identifier wrongly marked (no page in the event) | 📋 fix | |
+| Markers in the rich text editor | 🟡 page missing/hidden, file, known external | 🟡 similar | ✅ same checkers as the report, external from cache; page of the edited record from the form request (Page TSconfig `TCEMAIN.linkHandler`), record links to an unknown table never marked | | |
 | Page module callout | ❌ | ✅ with EXT:page_callouts | ❌ | 📋 later | |
 | Dashboard widget | ❌ | ❌ | ❌ | 💭 | |
 | **Reporting** | | | | | |
