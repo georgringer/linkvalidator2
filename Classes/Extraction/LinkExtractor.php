@@ -16,6 +16,7 @@ declare(strict_types=1);
  */
 namespace TYPO3\CMS\Linkvalidator2\Extraction;
 
+use TYPO3\CMS\Core\DataHandling\SoftReference\SoftReferenceParserFactory;
 use TYPO3\CMS\Core\Domain\Repository\PageRepository;
 use TYPO3\CMS\Core\Html\HtmlParser;
 use TYPO3\CMS\Core\LinkHandling\TypoLinkCodecService;
@@ -26,6 +27,7 @@ final readonly class LinkExtractor
         private CheckableFieldResolver $checkableFieldResolver,
         private TypoLinkCodecService $typoLinkCodecService,
         private HtmlParser $htmlParser,
+        private SoftReferenceParserFactory $softReferenceParserFactory,
     ) {}
 
     /**
@@ -39,12 +41,15 @@ final readonly class LinkExtractor
             if ($value === '') {
                 continue;
             }
-            $links = match ($field->mode) {
-                ExtractionMode::Typolink => $this->extractFromTypolink($value),
-                ExtractionMode::Html => $this->extractFromHtml($value),
-            };
-            foreach ($links as $link => $linkText) {
-                $candidates[] = new LinkCandidate($table, (int)$row['uid'], $pid, $language, $field->name, (string)$link, $linkText);
+            foreach ($field->modes as $mode) {
+                $links = match ($mode) {
+                    ExtractionMode::Typolink => $this->extractFromTypolink($value),
+                    ExtractionMode::Html => $this->extractFromHtml($value),
+                    ExtractionMode::PlainUrl => $this->extractPlainUrls($value),
+                };
+                foreach ($links as $link => $linkText) {
+                    $candidates[] = new LinkCandidate($table, (int)$row['uid'], $pid, $language, $field->name, (string)$link, $linkText);
+                }
             }
         }
         $shortcut = $this->extractShortcut($table, $row, $pid, $language);
@@ -75,6 +80,8 @@ final readonly class LinkExtractor
         for ($i = 1, $count = count($blocks); $i < $count; $i += 2) {
             $attributes = $this->htmlParser->get_tag_attributes($this->htmlParser->getFirstTag($blocks[$i]), true)[0];
             $href = trim((string)($attributes['href'] ?? ''));
+            // @todo Empty href (RTE transformation turns links to missing files/folders into
+            //       href="") is broken for visitors: report as link.empty? Decision open in spec.
             if ($href === '' || isset($links[$href])) {
                 continue;
             }
@@ -83,6 +90,30 @@ final readonly class LinkExtractor
         return $links;
     }
 
+    /**
+     * The parser skips URLs directly after a quote or "=", so href attributes are not found twice.
+     * A URL used as link text is, but deduplicated with its link when both are the same target.
+     *
+     * @return array<string, string> link => link text
+     */
+    private function extractPlainUrls(string $value): array
+    {
+        $links = [];
+        $result = $this->softReferenceParserFactory->getSoftReferenceParser('url')->parse('', '', 0, $value);
+        foreach ($result->getMatchedElements() as $element) {
+            // Sentence punctuation directly after a URL is matched by the parser as well
+            $url = rtrim(htmlspecialchars_decode((string)($element['matchString'] ?? '')), '.,;:!?');
+            if ($url !== '') {
+                $links[$url] = $url;
+            }
+        }
+        return $links;
+    }
+
+    /**
+     * @todo Only SHORTCUT_MODE_NONE is checked. "First subpage" and "random subpage" are broken
+     *       without a visible subpage, "parent page" on a root page.
+     */
     private function extractShortcut(string $table, array $row, int $pid, int $language): ?LinkCandidate
     {
         if ($table !== 'pages'

@@ -48,6 +48,10 @@ final readonly class MarkBrokenRteLinkListener
         $resolved = $event->getLinkData();
         $resolved['type'] ??= $event->getLinkType();
         // The event does not tell which record the link belongs to
+        // @todo Without a pid, record links whose identifier is mapped via TCEMAIN.linkHandler
+        //       (e.g. "category" → sys_category) fall back to identifier = table and get marked
+        //       as record.unknownTable although valid. Find the page (request/FormEngine context)
+        //       or do not mark unknown tables here.
         $source = new LinkCandidate('', 0, 0, 0, '', '', '');
         $target = $this->linkTargetFactory->createFromResolved($resolved, $source);
         if ($target === null) {

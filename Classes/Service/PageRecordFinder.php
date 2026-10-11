@@ -53,6 +53,10 @@ final readonly class PageRecordFinder
     }
 
     /**
+     * @todo Deleted records are not returned, so their stored results are never touched again and stay
+     *       in the report. Reconcile stored rows of the page with the records found here when a page
+     *       is checked; DataHandler cleanup on delete/move follows in step 4.
+     *
      * @return list<array{table: string, uid: int}>
      */
     public function findOnPage(int $pageUid): array

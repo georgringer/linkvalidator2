@@ -64,7 +64,7 @@ final readonly class LinkTargetFactory
                 'folder:' . (($resolved['folder'] ?? null) instanceof Folder ? $resolved['folder']->getCombinedIdentifier() : $candidate->link),
                 $resolved
             ),
-            LinkService::TYPE_URL => new LinkTarget($type, 'url:' . $resolved['url'], $resolved),
+            LinkService::TYPE_URL => $this->createUrlTarget($resolved),
             LinkService::TYPE_EMAIL, LinkService::TYPE_TELEPHONE, LinkService::TYPE_INPAGE => null,
             // An internal link LinkService cannot resolve, e.g. a record link without identifier,
             // ends up in the legacy notation converter with an arbitrary type
@@ -97,6 +97,16 @@ final readonly class LinkTargetFactory
         $table = (string)($pageTsConfig['TCEMAIN.']['linkHandler.'][$identifier . '.']['configuration.']['table'] ?? $identifier);
         $resolved['table'] = $table;
         return new LinkTarget(LinkService::TYPE_RECORD, 'record:' . $table . ':' . $uid, $resolved);
+    }
+
+    /**
+     * The fragment is not sent to the server, so URLs differing only in it share one target.
+     */
+    private function createUrlTarget(array $resolved): LinkTarget
+    {
+        $url = explode('#', (string)($resolved['url'] ?? ''), 2)[0];
+        $resolved['url'] = $url;
+        return new LinkTarget(LinkService::TYPE_URL, 'url:' . $url, $resolved);
     }
 
     private function createUnresolvableTarget(string $link): ?LinkTarget

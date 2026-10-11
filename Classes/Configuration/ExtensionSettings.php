@@ -33,16 +33,35 @@ final readonly class ExtensionSettings
         return in_array($table . '.*', $excluded, true) || in_array($table . '.' . $field, $excluded, true);
     }
 
+    public function getExternalCacheLifetime(): int
+    {
+        return max(0, (int)$this->get('externalCacheLifetime', '168')) * 3600;
+    }
+
+    public function getExternalTimeout(): int
+    {
+        return max(1, (int)$this->get('externalTimeout', '10'));
+    }
+
+    public function getExternalUserAgent(): string
+    {
+        return trim($this->get('externalUserAgent', 'TYPO3 LinkValidator')) ?: 'TYPO3 LinkValidator';
+    }
+
     /**
      * @return list<string>
      */
     private function getList(string $path): array
     {
+        return GeneralUtility::trimExplode(',', $this->get($path, ''), true);
+    }
+
+    private function get(string $path, string $default): string
+    {
         try {
-            $value = (string)$this->extensionConfiguration->get('linkvalidator2', $path);
+            return (string)($this->extensionConfiguration->get('linkvalidator2', $path) ?? $default);
         } catch (ExtensionConfigurationExtensionNotConfiguredException|ExtensionConfigurationPathDoesNotExistException) {
-            return [];
+            return $default;
         }
-        return GeneralUtility::trimExplode(',', $value, true);
     }
 }

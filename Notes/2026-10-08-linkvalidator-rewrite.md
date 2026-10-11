@@ -30,6 +30,19 @@
 2. Externe Links  3. Modul (admin-only)  4. DataHandler  5. Ziel-Ausschlüsse
 6. Site Settings  7. Sprachregel  8. Anker
 
+Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-11):
+- vor Schritt 4, Bugfixes (Plan 1, Task 8d): #97937 `&nbsp;`, #94086 eigene LinkHandler,
+  #106675/#101367 Rootline, #89426 Abgleich beim Prüfen einer Seite
+- Queue/Batches (Task 8 + Browser-Batches): #89266, #89287 (Crawl-Delay, Retry-After)
+- 2 Extern Rest: #96525 Eskalation, #101935 Fehlerdetails im Modul
+- 4 DataHandler: #105911, #89426
+- 5 Ausschlüsse: #92822, #85127
+- 6 Site Settings + Mail-Report: #110615, #106487, #106677
+- 7 Sprachregel: #94195 (+ Quelle unter versteckter Seite)
+- 8 Anker: #100933 (`uid=current#c…`)
+- Berechtigungen: #105413, #104004, danach #107983 (Workspace-User)
+- Teilweise offen ohne Schritt: #92542 Shortcut-Modi
+
 ## Datenmodell
 - `tx_linkvalidator_target`: Prüf-Cache, ein Eintrag pro eindeutigem Ziel, auch ok.
   type, target, target_hash, status, error (JSON), last_checked.
@@ -47,6 +60,19 @@
 - DataHandler: Speichern → neu extrahieren, intern sofort prüfen, extern nur Cache,
   ungecachte extern → fällig markieren. Löschen/Verschieben → aufräumen/pid nachziehen.
 - Waisen-Cleanup im Scheduler-Lauf.
+- **Bekannter Bug (bis dahin), reproduziert 2026-10-08:** Ergebnisse gelöschter oder
+  verschobener Datensätze bleiben stehen.
+  - Gelöschtes Inhaltselement auf bestehender Seite: Zeilen in `broken_link`/`record_status`
+    bleiben **auch nach erneuter Prüfung der Seite** und erscheinen weiter im Report –
+    `PageRecordFinder::findOnPage()` findet gelöschte Datensätze nicht mehr, sie werden nie
+    erneut angefasst (Repro: tt_content auf `deleted=1`, `--page=<pid>`, Zeilen bleiben).
+  - Gelöschte Seite: Zeilen bleiben in der DB, im Report unsichtbar (Seite nicht mehr im Baum).
+  - Verschobener Datensatz/Seite: `pid` veraltet, Treffer erscheint unter der alten Seite, bis
+    er am neuen Ort geprüft wird.
+  - Geplante Abhilfe: (1) beim Prüfen einer Seite Ergebnis-/Statuszeilen dieser pid mit den
+    gefundenen Datensätzen abgleichen und Überzählige löschen (deckt auch SQL/Import und neu
+    ausgeschlossene Felder/Tabellen ab); (2) DataHandler-Hook (Schritt 4) für sofortige
+    Korrektur; (3) Waisen-Cleanup für gelöschte Seiten.
 
 ## Ausführung
 - Interaktiv: browser-getriebene Batches (AJAX, Fortschrittsbalken).
@@ -72,16 +98,24 @@
 - Ziel-Ausschlüsse als Datensätze `tx_linkvalidator_exclusion` (TCA): exakte URL
   oder Domain inkl. Subdomains, Grund. Scope global. Anlegen aus dem Report.
   Kein eigenes Modul, Tab im Modul. Recht: Custom Permission oder Admin.
+- Kein Regex/Präfix (Redakteure). Zu entscheiden (#85127): zusätzlich Domain-Ausschluss
+  in der Extension-Konfiguration für Intranet-/SSO-Systeme (per Deployment statt Datensatz).
+- Ausschluss greift vor der Prüfung (kein HTTP); beim Anlegen vorhandene Treffer entfernen.
 
 ## Workspaces
 - v1 nur Live. Spalte `workspace` (immer 0) in record_status + link von Anfang an.
 - Hinweis im Modul, wenn in Workspace: „Ergebnisse zeigen Live-Stand“.
+- Modul auch in Workspaces erreichbar (`workspaces => '*'`, #107983), sobald Berechtigungen
+  umgesetzt sind. „Prüfen“ im Workspace prüft Live; DataHandler-Hook reagiert erst auf Publish.
 
 ## Linktypen / Erweiterbarkeit
 - Pipeline: Softref-Parser → `LinkService::resolve()` → Checker nach LinkService-Typ.
 - Checker = getaggte Services (`linkvalidator.checker`); Core: page, record, file,
   folder, url. email/telephone werden übersprungen.
 - Rückgabe `CheckResult` (ok | broken | unknown, Fehlertyp, Details).
+- Eigene LinkHandler (#94086): Typ mit registriertem Checker → generisches Ziel und prüfen;
+  Typ eines registrierten Handlers ohne Checker → überspringen; nur wirklich nicht
+  auflösbare `t3://` → `link.invalid`. Heute fälschlich alles `link.invalid`.
 - `LinktypeInterface`/`LinktypeRegistry` entfallen (Breaking).
 
 ## Externe Links
@@ -92,11 +126,45 @@
 - HEAD, Fallback GET (nur Header). 429 + Retry-After respektieren.
   Crawl-Delay pro Domain. Konfigurierbarer User-Agent.
 - Modul: unknown nicht in „kaputt“, eigener Filter „nicht prüfbar“.
+- Fehlerdetails (volle cURL-Meldung) im Modul anzeigen, `errno` + `ssl_verify_result`
+  mitspeichern (#101935).
+- `robots.txt`: nicht beachten (einzelne HEAD-Requests, kein Crawler) – in Doku begründen (#89287).
+
+- Plain-Text-URLs (Softref `url`, z. B. `tt_content.bodytext`) mit Schritt 2 extrahieren:
+  Core-`UrlSoftReferenceParser` über `SoftReferenceParserFactory`, `matchString` als
+  Link. Regex überspringt URLs nach `"`/`'`/`=` (also keine `href`-Duplikate); URL als
+  Linktext dedupliziert `field|identifier`. Dafür `CheckableField` mit mehreren
+  Extraktionsarten pro Feld (bodytext: Html + PlainUrl). Liefert nur http(s)/ftp →
+  erst mit externer Prüfung sinnvoll.
+
+### Umsetzung Stand 2026-10-08 (Basis, erweiterbar)
+- `ExternalUrlChecker` (Guzzle über `RequestFactory`): HEAD, GET nur bei 405/501 (gestreamt,
+  Body wird nie gelesen), max. 5 Redirects. ok = 2xx; broken = 404 (`url.notFound`),
+  410 (`url.gone`), cURL 6 (`url.unknownHost`); unknown = sonstige Status (`url.httpStatus`
+  mit `httpStatus`), Timeout, TLS, Verbindung, zu viele Redirects, nicht http(s).
+- Cache über neues `CacheableLinkCheckerInterface::getCacheLifetime()`: `RecordCheckService`
+  nimmt das gespeicherte Target-Ergebnis, solange frisch, **ohne** `last_checked` zu erhöhen.
+  Weitere teure Checker bekommen den Cache damit automatisch.
+- `checkRecord(..., cachedOnly: true)`: cachebare Checks nur aus dem Cache, ungecachte werden
+  übersprungen. Nutzt das Modul (sonst Timeout im großen Baum), CLI mit `--no-external`.
+- Extension-Konfiguration: `externalCacheLifetime` (h, 168), `externalTimeout` (s, 10),
+  `externalUserAgent`.
+- URL-Identifier ohne Fragment. Plain-Text-URLs umgesetzt (`ExtractionMode::PlainUrl`,
+  Felder können mehrere Modi haben).
+- Offen (`@todo`): Eskalation unknown → broken (Zähler werden schon geschrieben),
+  Crawl-Delay, Retry-After, „fällig markieren“ für übersprungene URLs (Queue),
+  Modul live prüfen erst mit Batches.
+- Testelement „Externe Fälle“ tt_content:20277 auf 1292 (httpbin.org-Statuscodes, Redirects,
+  Timeout, `.invalid`-Domain, ftp, Text-URLs mit Satzpunkt und `&amp;`); per SQL angelegt,
+  nicht im Seed-Skript.
 
 ## Interne Links
 - Seite broken: fehlt/gelöscht, hidden, endtime abgelaufen, Doktyp ohne FE
   (Sysfolder, Papierkorb, Spacer), Anker #cNNN fehlt/andere Seite.
-- Seite ok: starttime Zukunft, fe_group, andere Site.
+- Seite broken auch über die Rootline: Vorfahr mit `extendToSubpages` hidden/abgelaufen
+  (#106675, #101367) → eigene Fehlertypen mit `parentPage`. Rootline pro Lauf cachen.
+- Seite ok: starttime Zukunft, fe_group, andere Site (auch über die Rootline).
+- `t3://page?uid=current#c…` (#100933): Seite aus der Quelle, Anker prüfen (Schritt 8).
 - Record: gelöscht/hidden/abgelaufen → broken.
 - Datei: sys_file fehlt oder missing=1 → broken; Storage offline → unknown.
 - **Sprachregel (v1, eigener späterer Commit)**: Ziel in Sprache der Quelle unter
@@ -163,6 +231,11 @@
 - Report zeigt nur, was der User **reparieren** kann: Seiten-Bearbeitungsrecht
   (Inhalt), tables_modify, allowed_languages, non_exclude_fields. Admin: alles.
 - Filterung in SQL (Paginierung korrekt), Feldrechte via `field IN (…)` pro Tabelle.
+- Seiten-Felder: `PAGE_EDIT` an der Seite selbst, Inhalte: `CONTENT_EDIT` an der Seite.
+  Seitenbaum erst komplett sammeln, dann nach Recht filtern – nicht beim Abstieg
+  abbrechen, Unterseiten können erlaubt sein (#105413).
+- `authMode` für jedes `select`-Feld mit `authMode`, nicht nur das Type-Feld; leere
+  Erlaubt-Liste = nichts erlaubt; auch für pages (#104004).
 - „Ziel ausnehmen“: Custom Permission.
 - **HARTE BEDINGUNG:** bis zur Umsetzung Modul-Access `admin` (sonst Info-Leck).
 
@@ -184,18 +257,76 @@
 - [ ] Berechtigungen umsetzen (siehe oben), danach Modul für Redakteure öffnen.
 - [ ] Mail-Report: Delta seit letztem Report (neu kaputt + Summe + Link ins Modul),
       keine Mail ohne Änderung, pro Site (Site Settings), periodisch entkoppelt vom
-      Prüflauf, `last_report_sent` pro Site, Fluid-Mail.
+      Prüflauf, `last_report_sent` pro Site, Fluid-Mail. Site-Titel im Betreff,
+      volle klickbare Ziel-URL, Links zum Bearbeiten/ins Modul mit absoluter
+      Backend-URL (Basis aus Site bzw. Site Setting, CLI kennt keinen Host;
+      #106487, #106677). Auf Staging abschaltbar ohne DB: Empfänger per `%env()%` in
+      Site Settings + globaler Schalter in der Extension-Konfiguration (#110615).
+- [ ] Sichtbarkeit der Quelle über die Seite: `RecordCheckService::isVisible()` prüft nur
+      den Datensatz selbst. Inhalte auf versteckter/abgelaufener Seite oder unter
+      `extend_to_subpages` werden gemeldet, obwohl unsichtbar → mit Sprachregel (Schritt 7)
+      als „übersprungen“ behandeln.
+- [ ] Synchrone Prüfung im Modul durch Browser-Batches ersetzen (siehe „Modul: Level,
+      Filter, Pagination“), **vor Schritt 2**, sonst Timeouts mit externen Links.
+- [ ] Modul-Liste: `ReportController::getBrokenLinks()` lädt Datensatz + Seitentitel pro
+      Zeile (max. eine Seite à 50) → gesammelt laden.
+- [ ] Dedupe nur pro Feld (`field|identifier`): gleiches Ziel in zwei Feldern = zwei Zeilen.
+      Bestätigen, dass gewollt (Felder werden getrennt repariert).
+- [ ] **Bug RTE-Listener:** Event ohne pid → Record-Links mit per TSconfig gemapptem
+      Identifier (`category` → `sys_category`) werden als `record.unknownTable` markiert,
+      obwohl gültig. Seite aus Request/FormEngine-Kontext ermitteln oder unbekannte Tabellen
+      im RTE nicht markieren. Reproduzierbar mit `seed-bigtree.php` (Kategorie-Links).
+- [ ] **Bug Plain-URLs (#97937, reproduziert 2026-10-11):** `https://x.org&nbsp;` →
+      Host `x.org&nbsp` → `url.unknownHost` (broken). `&nbsp;`/`&#160;` vor dem Parsen in
+      `LinkExtractor::extractPlainUrls()` zu Leerzeichen machen.
+- [ ] **Bug eigene LinkHandler (#94086):** `LinkTargetFactory` meldet unbekannte Typen als
+      `link.invalid`, auch wenn ein Checker für den Typ registriert ist.
+- [ ] Ziel per Rootline prüfen (`extendToSubpages`, #106675/#101367).
+- [ ] Fehlerdetails (`error_details.message`) im Modul anzeigen (#101935).
+- Analyse aller offenen Forge-Issues: `Resources/Private/Issues/`.
+- [ ] Shortcut-Seiten mit `shortcut_mode` ≠ NONE prüfen (erste/zufällige Unterseite ohne
+      sichtbare Unterseite, Elternseite auf Root-Seite).
 
-## Zwischenstand Modul: Level-Dropdown (bewusst, muss überdacht werden)
-- Modul hat ein Dropdown „Levels“ (diese Seite, 1–4, unendlich), gespeichert in
-  moduleData `depth`; „Check“ prüft synchron alle Datensätze der Seiten bis zu dieser
-  Tiefe, die Liste zeigt dieselben Seiten (Spalte „Page“). CLI: `--page=… --depth=…`.
-- **Nachdenken:** widerspricht Entscheidung „rekursiv, kein Tiefen-Selektor“ (UI/UX)
-  und „interaktiv = Browser-Batches“ (Ausführung). Synchron + „unendlich“ unter einer
-  großen Seite = Timeout, mit externen Links (Schritt 2) erst recht. Beim Modul-Schritt
-  entscheiden: Level behalten? Nur für die Anzeige? Durch Batches ersetzen?
+## Modul: Level, Filter, Pagination (entschieden 2026-10-08)
+- **Level-Dropdown bleibt** (diese Seite, 1–4, unendlich; moduleData `depth`) und gilt
+  für Prüfen **und** Anzeigen – ein Bereich, keine getrennten Einstellungen wie im alten
+  Modul (dort Report-Ebene 0 + keine Linktypen vs. Check-Ebene 3 → „No broken links“).
+  Revidiert „rekursiv, kein Tiefen-Selektor“ aus UI/UX.
+- Filter: Status, Linktyp (`target.link_type`), Tabelle, Sprache, Freitext (Link,
+  Linktext). In moduleData persistiert, angeboten werden nur Werte, die im Bereich
+  vorkommen. Reset-Link setzt alle Filter auf leer.
+- Sortierung per Klick auf die Spaltenüberschrift (zweiter Klick dreht um), moduleData
+  `orderField`/`orderDirection`, stabile Nebensortierung für die Pagination.
+- Pagination in SQL (`LIMIT/OFFSET`, 50 pro Seite), `page` nur in der URL; Partial nach
+  Vorbild EXT:redirects (`Partials/Pagination`), ohne Seiten-Eingabefeld (bräuchte JS).
+- Prüfen bleibt vorerst synchron. Ziel: Queue-Service (Task 8) + Browser-Batches
+  (AJAX-Route ruft denselben Service mit ~5 s Budget, Fortschrittsbalken).
+- Verifikation ohne BE-Login: `Notes/render-module.php` rendert das Modul als Admin
+  (`ddev exec "TYPO3_PATH_ROOT=/var/www/html TYPO3_PATH_APP=/var/www/html php
+  typo3conf/ext/linkvalidator2/Notes/render-module.php 'id=1287&depth=999&linkType=page'"`).
 
 ## Testdaten (lokal, DDEV, Seed: `Notes/seed-testdata.php`)
+- **Lasttest-Baum** (`Notes/seed-bigtree.php [fanout] [levels] [contentPerPage]`, Default
+  10 3 4, `--delete` räumt inkl. linkvalidator2-Ergebnissen ab): Seite „Großer Baum“
+  unter 1287, 1110 Seiten, jede 10. mit DE-Übersetzung (111), 4440 Inhaltselemente
+  + 444 Übersetzungen. Direkt per SQL (nur die Wurzel über DataHandler), ~2 s.
+  Pro Element 5 gültige Links (2 Seiten im Baum, typo3.org, Datei, Kategorie) + 1
+  kaputter (reihum aus 11 Varianten) + jedes 3. ein externer Link auf example.org;
+  `header_link` am ersten Element (je 10 Seiten: 1× gelöschte Seite, 1× versteckte
+  Kategorie, 1× gültige Kategorie, sonst Seite im Baum). Status-Tabelle bleibt leer
+  (= nie geprüft) → Queue-Test.
+  Record-Links: Page TSconfig an der Wurzel `TCEMAIN.linkHandler.category` →
+  `sys_category` (Identifier ≠ Tabelle, testet das Mapping), Sysfolder „Kategorien“ mit
+  10 gültigen + versteckter/abgelaufener/gelöschter Kategorie. Jedes Element 1 gültiger
+  Kategorie-Link; kaputte reihum inkl. Kategorie versteckt/abgelaufen/gelöscht/nie
+  vorhanden und `tt_content` 467 (ohne Handler-Konfiguration → Fallback Identifier =
+  Tabelle).
+  EXT:styleguide als weitere **Quellen** (nicht Ziele), Sysfolder „Styleguide-Datensätze“:
+  50 `tx_styleguide_elements_basic` (link_1 Seite, link_2 Kategorie, link_3 typo3.org,
+  link_4 kaputt reihum, link_5 mailto = übersprungen, link_6 jedes 3. example.org-404) und
+  30 `tx_styleguide_elements_rte` (rte_1 wie Inhaltselemente, rte_11 ein kaputter Link);
+  jeder 10. versteckt (darf nichts melden). Erwartet: 60 + 63 kaputte Links. NOT-NULL-Spalten
+  ohne Default (uuid_1 …) füllt das Skript über information_schema.
 - Unter pages:1287. Seiten: sichtbar 1299, versteckt 1298, gelöscht 1297,
   abgelaufen 1296, Zukunft 1295, Sysfolder 1294, Spacer 1293, Testinhalte 1292
   (DE-Übersetzung 1300), Link-Seite extern 1291, Link-Seite → versteckt 1290,
@@ -207,11 +338,12 @@
   sie), Übersetzungen eingeblendet – beides macht das Seed-Skript selbst.
 
 ## Offen
-- `Notes/` (diese Notizen, Plan) und `.superpowers/` gehören nicht in den Core: beim
+- `Notes/` (diese Notizen, Plan), `AGENTS.md`/`CLAUDE.md` und `.superpowers/` gehören nicht in den Core: beim
   Einzug weglassen. Sie enthalten `linkvalidator2` absichtlich.
 - RTE-Transformation beim Speichern macht aus Links auf nicht existierende Dateien/
   Ordner `href=""`, aus `#top` `t3://page?uid=current#top`. Leeres href = für Besucher
-  kaputt → melden (`link.empty`)? Entscheidung offen.
+  kaputt → melden (`link.empty`)? Entscheidung offen. Tendenz: melden, für Besucher kaputt
+  (`@todo` in `LinkExtractor::extractFromHtml()`).
 - Beim Einzug in typo3/sysext: composer.json `type` zurück auf `typo3-cms-framework`
   (lokal `typo3-cms-extension`, sonst kein Autoload im Classic Mode), Root-composer.json
   PSR-4 ergänzen, `version`/`providesPackages` entfernen (Framework-Pakete brauchen es nicht).

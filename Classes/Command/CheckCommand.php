@@ -41,12 +41,14 @@ final class CheckCommand extends Command
         $this
             ->addOption('record', 'r', InputOption::VALUE_REQUIRED, 'Check a single record, format "table:uid"')
             ->addOption('page', 'p', InputOption::VALUE_REQUIRED, 'Check all records of a page')
-            ->addOption('depth', 'd', InputOption::VALUE_REQUIRED, 'Levels of subpages to include with --page', '0');
+            ->addOption('depth', 'd', InputOption::VALUE_REQUIRED, 'Levels of subpages to include with --page', '0')
+            ->addOption('no-external', null, InputOption::VALUE_NONE, 'Do not request external URLs, use stored results only');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
+        $cachedOnly = (bool)$input->getOption('no-external');
         $record = (string)$input->getOption('record');
         if ($record !== '') {
             [$table, $uid] = $this->parseRecordOption($record);
@@ -54,7 +56,7 @@ final class CheckCommand extends Command
                 $io->error('Option --record expects "table:uid", e.g. "tt_content:12".');
                 return Command::INVALID;
             }
-            foreach ($this->recordCheckService->checkRecord($table, $uid) as $checkedLink) {
+            foreach ($this->recordCheckService->checkRecord($table, $uid, $cachedOnly) as $checkedLink) {
                 $io->writeln(sprintf(
                     '%s  %s  %s %s',
                     $checkedLink->candidate->field,
@@ -72,7 +74,7 @@ final class CheckCommand extends Command
             $broken = 0;
             foreach ($pageIds as $pageId) {
                 foreach ($this->pageRecordFinder->findOnPage($pageId) as ['table' => $table, 'uid' => $uid]) {
-                    foreach ($this->recordCheckService->checkRecord($table, $uid) as $checkedLink) {
+                    foreach ($this->recordCheckService->checkRecord($table, $uid, $cachedOnly) as $checkedLink) {
                         $broken += $checkedLink->result->isOk() ? 0 : 1;
                     }
                     $recordCount++;

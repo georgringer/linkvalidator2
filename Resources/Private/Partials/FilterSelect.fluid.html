@@ -1,0 +1,14 @@
+<html
+    xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+    data-namespace-typo3-fluid="true"
+>
+<div class="form-group">
+    <label for="linkvalidator2-filter-{name}" class="form-label"><f:translate key="linkvalidator2.messages:filter.{name}" /></label>
+    <select id="linkvalidator2-filter-{name}" name="{name}" class="form-select">
+        <option value=""><f:translate key="linkvalidator2.messages:filter.all" /></option>
+        <f:for each="{options}" as="option">
+            <option value="{option.value}" {f:if(condition: option.selected, then: 'selected')}>{option.label}</option>
+        </f:for>
+    </select>
+</div>
+</html>

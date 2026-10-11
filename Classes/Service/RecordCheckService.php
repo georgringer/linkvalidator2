@@ -21,6 +21,7 @@ use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Schema\Capability\TcaSchemaCapability;
 use TYPO3\CMS\Core\Schema\TcaSchema;
 use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
+use TYPO3\CMS\Linkvalidator2\Check\CacheableLinkCheckerInterface;
 use TYPO3\CMS\Linkvalidator2\Check\CheckerRegistry;
 use TYPO3\CMS\Linkvalidator2\Extraction\LinkExtractor;
 use TYPO3\CMS\Linkvalidator2\Repository\BrokenLinkRepository;
@@ -42,9 +43,12 @@ final readonly class RecordCheckService
     ) {}
 
     /**
+     * @param bool $cachedOnly Cacheable checks (external URLs) only use stored results, regardless of their
+     *                         age; links without a stored result are skipped. For interactive use until
+     *                         checks run in batches.
      * @return list<CheckedLink>
      */
-    public function checkRecord(string $table, int $uid): array
+    public function checkRecord(string $table, int $uid, bool $cachedOnly = false): array
     {
         $row = $this->tcaSchemaFactory->has($table) ? BackendUtility::getRecord($table, $uid) : null;
         if ($row === null) {
@@ -72,13 +76,24 @@ final readonly class RecordCheckService
             if ($target === null || $checker === null) {
                 continue;
             }
+            // @todo Deduplicated per field only: the same target in two fields of a record yields
+            //       two broken link rows. Confirm this is intended (each field is fixed separately).
             $key = $candidate->field . '|' . $target->identifier;
             if (isset($seen[$key])) {
                 continue;
             }
             $seen[$key] = true;
-            $result = $checker->check($target, $candidate);
-            $targetUid = $this->targetRepository->store($target, $result, $now);
+            $stored = $checker instanceof CacheableLinkCheckerInterface ? $this->targetRepository->findStored($target) : null;
+            if ($stored !== null && ($cachedOnly || $stored['lastChecked'] + $checker->getCacheLifetime() > $now)) {
+                // Reused results keep their check time, so they expire after the cache lifetime
+                ['uid' => $targetUid, 'result' => $result] = $stored;
+            } elseif ($cachedOnly && $checker instanceof CacheableLinkCheckerInterface) {
+                // @todo Mark the record as due for a full check once there is a queue (task 8)
+                continue;
+            } else {
+                $result = $checker->check($target, $candidate);
+                $targetUid = $this->targetRepository->store($target, $result, $now);
+            }
             $checkedLinks[] = new CheckedLink($candidate, $target, $result);
             if (!$result->isOk()) {
                 $brokenLinks[] = ['candidate' => $candidate, 'targetUid' => $targetUid, 'result' => $result];
@@ -116,6 +131,10 @@ final readonly class RecordCheckService
 
     /**
      * Links in hidden or expired records are not visible to visitors and not reported.
+     *
+     * @todo Only the record itself is considered. Records on a hidden/expired page or below a
+     *       page with extend_to_subpages are still reported although visitors never see them.
+     *       Treat them as skipped together with the language rule (step 7).
      */
     private function isVisible(TcaSchema $schema, array $row, int $now): bool
     {

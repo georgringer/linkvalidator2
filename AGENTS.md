@@ -1,0 +1,32 @@
+# linkvalidator2 – agent instructions
+
+Local rewrite of the core `linkvalidator`. The core `AGENTS.md` of the repository
+applies; this file adds what is specific to this extension. Design decisions and
+the plan live in `Notes/` (German).
+
+## Keep the README feature comparison up to date
+
+Every change that adds, removes or changes behaviour also updates the
+**Feature comparison** table in `README.md` in the same step: move items between
+"done" and "planned", add rows for new capabilities, and mark known bugs or
+limitations (🟡) instead of claiming ✅. Do this before reporting the work as done.
+
+## Tests
+
+Run in containers from the extension root, independent of the core checkout:
+`Build/Scripts/runTests.sh -s composerInstall` once, then `-s unit` and
+`-s functional` (sqlite by default). New behaviour and every bug fix come with a test
+(bug: test first). On the core move the tests go to the core's `runTests.sh`; `Build/`,
+`.Build/` and the `require-dev`/`config` parts of `composer.json` stay behind.
+
+## Not part of the core move
+
+`AGENTS.md`, `CLAUDE.md`, `Notes/`, `Resources/Private/Issues/` and `.superpowers/`
+stay out of the patch series when the extension replaces `typo3/sysext/linkvalidator`.
+
+## Forge issues
+
+`Resources/Private/Issues/` holds one analysis per open Forge issue of the category
+Linkvalidator. When a change solves an issue, move its file to `done/`, update its
+status line, the index `README.md` there and the *Forge* column of the feature
+comparison.

@@ -22,4 +22,6 @@ enum ExtractionMode
     case Typolink;
     /** The field value is HTML containing <a href> tags */
     case Html;
+    /** URLs written as plain text, found by the "url" soft reference parser */
+    case PlainUrl;
 }

@@ -112,10 +112,17 @@ final readonly class CheckableFieldResolver
             $field->getSoftReferenceKeys() ?: []
         );
         if ($field->isType(TableColumnType::LINK) || in_array('typolink', $softReferenceParsers, true)) {
-            return new CheckableField($field->getName(), ExtractionMode::Typolink);
+            return new CheckableField($field->getName(), [ExtractionMode::Typolink]);
         }
+        $modes = [];
         if (($field instanceof TextFieldType && $field->isRichText()) || in_array('typolink_tag', $softReferenceParsers, true)) {
-            return new CheckableField($field->getName(), ExtractionMode::Html);
+            $modes[] = ExtractionMode::Html;
+        }
+        if (in_array('url', $softReferenceParsers, true)) {
+            $modes[] = ExtractionMode::PlainUrl;
+        }
+        if ($modes !== []) {
+            return new CheckableField($field->getName(), $modes);
         }
         return null;
     }

@@ -23,7 +23,7 @@ use TYPO3\CMS\Linkvalidator2\Target\LinkTarget;
 
 final readonly class TargetRepository
 {
-    private const TABLE = 'tx_linkvalidator2_target';
+    public const TABLE = 'tx_linkvalidator2_target';
 
     public function __construct(
         private ConnectionPool $connectionPool,
@@ -31,17 +31,29 @@ final readonly class TargetRepository
 
     public function findResult(LinkTarget $target): ?CheckResult
     {
+        return $this->findStored($target)['result'] ?? null;
+    }
+
+    /**
+     * @return array{uid: int, result: CheckResult, lastChecked: int}|null
+     */
+    public function findStored(LinkTarget $target): ?array
+    {
         $row = $this->connectionPool->getConnectionForTable(self::TABLE)
-            ->select(['status', 'error_type', 'error_details'], self::TABLE, ['identifier_hash' => $target->getHash()])
+            ->select(['uid', 'status', 'error_type', 'error_details', 'last_checked'], self::TABLE, ['identifier_hash' => $target->getHash()])
             ->fetchAssociative();
         if ($row === false || CheckStatus::tryFrom((string)$row['status']) === null) {
             return null;
         }
-        return new CheckResult(
-            CheckStatus::from((string)$row['status']),
-            (string)$row['error_type'],
-            (array)json_decode((string)$row['error_details'], true)
-        );
+        return [
+            'uid' => (int)$row['uid'],
+            'result' => new CheckResult(
+                CheckStatus::from((string)$row['status']),
+                (string)$row['error_type'],
+                (array)json_decode((string)$row['error_details'], true)
+            ),
+            'lastChecked' => (int)$row['last_checked'],
+        ];
     }
 
     public function store(LinkTarget $target, CheckResult $result, int $now): int

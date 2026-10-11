@@ -1,0 +1,7 @@
+"tt_content"
+,"uid","pid","CType","header","header_link","bodytext","hidden","deleted","endtime","sys_language_uid","l18n_parent"
+,10,1,"text","All cases","t3://page?uid=3","<p><a href=""t3://page?uid=2"">ok</a> <a href=""t3://page?uid=3"">hidden</a> <a href=""t3://page?uid=3"">hidden again</a> <a href=""t3://page?uid=4"">deleted</a> <a href=""t3://page?uid=5"">expired</a> <a href=""t3://page?uid=6"">folder</a> <a href=""t3://page?uid=999"">missing</a> <a href=""t3://gibtsnicht?uid=1"">invalid</a> <a href=""mailto:info@example.org"">mail</a></p>",0,0,0,0,0
+,11,1,"text","Hidden","","<p><a href=""t3://page?uid=3"">hidden</a></p>",1,0,0,0,0
+,12,1,"text","Expired","","<p><a href=""t3://page?uid=3"">hidden</a></p>",0,0,1,0,0
+,13,1,"text","Only valid links","t3://page?uid=2","<p><a href=""t3://page?uid=2"">ok</a></p>",0,0,0,0,0
+,14,1,"text","Translation","","<p><a href=""t3://page?uid=4"">deleted</a></p>",0,0,0,1,13

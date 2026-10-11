@@ -1,2 +1,11 @@
 # cat=basic; type=string; label=Excluded fields: Comma-separated list of "table.field" or "table.*" that are never checked
 excludedFields =
+
+# cat=external; type=int+; label=Cache lifetime (hours): How long the result of an external URL is reused before the URL is requested again
+externalCacheLifetime = 168
+
+# cat=external; type=int+; label=Timeout (seconds): Total time allowed per request to an external URL
+externalTimeout = 10
+
+# cat=external; type=string; label=User agent: Sent with requests to external URLs
+externalUserAgent = TYPO3 LinkValidator

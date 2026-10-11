@@ -1,0 +1,12 @@
+"pages"
+,"uid","pid","title","doktype","is_siteroot","hidden","deleted","endtime","shortcut","shortcut_mode","link","sys_language_uid","l10n_parent"
+,1,0,"Root",1,1,0,0,0,"",0,"",0,0
+,2,1,"Visible",1,0,0,0,0,"",0,"",0,0
+,3,1,"Hidden",1,0,1,0,0,"",0,"",0,0
+,4,1,"Deleted",1,0,0,1,0,"",0,"",0,0
+,5,1,"Expired",1,0,0,0,1,"",0,"",0,0
+,6,1,"Folder",254,0,0,0,0,"",0,"",0,0
+,7,1,"Shortcut to deleted page",4,0,0,0,0,"4",0,"",0,0
+,8,1,"Shortcut to visible page",4,0,0,0,0,"2",0,"",0,0
+,9,1,"Link to hidden page",3,0,0,0,0,"",0,"t3://page?uid=3",0,0
+,10,1,"Visible (de)",1,0,0,0,0,"",0,"",1,2

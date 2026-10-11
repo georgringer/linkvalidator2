@@ -1,1 +1,6 @@
 .superpowers/
+/.Build/
+/.cache/
+/composer.lock
+/typo3temp/
+/var/

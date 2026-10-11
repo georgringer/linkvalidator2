@@ -49,6 +49,8 @@ Symfony Console/DI, DDEV-Instanz `t3-main` (Classic Mode, `typo3conf/PackageStat
    `pid` einer übersetzten Seite = uid der Default-Seite. Smoke: Task 7, Test: Task 9.
 5. **Queue terminiert**: `--limit` größer als Anzahl Datensätze prüft jeden höchstens
    einmal pro Lauf und endet. Smoke: Task 8, Test: Task 9.
+6. **Forge-Issues** (`Resources/Private/Issues/`): jeder Bugfix aus Task 8d bekommt einen
+   Regressionstest in Task 9, der genau das Szenario des Issues nachstellt.
 
 ---
 
@@ -1911,7 +1913,39 @@ CLI `--depth`. **Muss überdacht werden** – siehe Spec „Zwischenstand Modul:
 
 ---
 
+### Task 8d: Bugfixes aus der Forge-Analyse (vor Task 9)
+
+Aus der Analyse der offenen Forge-Issues (`Resources/Private/Issues/`, 2026-10-11).
+Klein und unabhängig voneinander, je ein Commit; nach dem Fix die Issue-Datei nach
+`done/` (bzw. Status anpassen), Index und README-Spalte *Forge* nachziehen.
+
+- [ ] **#97937 `&nbsp;` in Text-URLs** – `LinkExtractor::extractPlainUrls()`: `&nbsp;`/`&#160;`
+      vor dem Parsen in Leerzeichen umsetzen. Smoke: HTML aus dem Issue → 6 URLs, keine
+      endet auf `&nbsp`.
+- [ ] **#94086 eigene LinkHandler** – `LinkTargetFactory::createFromResolved()` `default`:
+      Typ mit Checker (`CheckerRegistry`) → generisches `LinkTarget`; Typ eines registrierten
+      Handlers ohne Checker → `null`; sonst `link.invalid`.
+- [ ] **#106675/#101367 Rootline** – `PageChecker`: Vorfahren mit `extendToSubpages`
+      (hidden, endtime) prüfen, Fehlertypen `page.hiddenByParent`/`page.expiredByParent`
+      mit `parentPage`, Labels in `messages.xlf`. Smoke: neue Seiten unter 1287 im Seed.
+- [ ] **#89426 Abgleich beim Prüfen einer Seite** – nach `findOnPage()` alle
+      `broken_link`/`record_status`-Zeilen dieser `pid`, deren Datensatz nicht gefunden
+      wurde, löschen. Smoke: Repro aus der Spec („Bekannter Bug“).
+
+---
+
 ### Task 9: Test-Infrastruktur und Tests (aufgeschoben, laut Absprache)
+
+**Stand 2026-10-11 – Infrastruktur anders gelöst als unten geplant:** eigenständig wie
+EXT:news (`Build/Scripts/runTests.sh` nur unit/functional, `Build/phpunit/`, `.Build/` mit
+`typo3/cms-core` dev-main + `typo3/testing-framework` dev-main). Keine Änderung an der
+Root-`composer.json`, kein Wächter nötig – Steps 1–2 entfallen. Erste Tests:
+`Unit/Check/CheckerRegistryTest`, `Unit/Configuration/ExtensionSettingsTest`,
+`Functional/Extraction/LinkExtractorTest`, `Functional/Service/RecordCheckServiceTest`
+(29 Tests). Weitere Tests unten bleiben offen.
+
+Zusätzlich zu den Tests unten je ein Regressionstest pro Forge-Issue, das als gelöst gilt
+(`Resources/Private/Issues/done/`, Abschnitt „Test“ der jeweiligen Datei) und für Task 8d.
 
 Erst jetzt. Plan aus der Spec: PSR-4 für `TYPO3\CMS\Linkvalidator2\` und `…\Tests\` als
 **lokale, nie committete** Änderung an der Root-`composer.json` von t3-main, Wächter-Eintrag
@@ -2203,8 +2237,8 @@ Die Spec `Notes/2026-10-08-linkvalidator-rewrite.md` um diese Punkte ergänzen:
 
 - Softref-Parser werden nicht zum Extrahieren genutzt (verlieren den Link-String), nur zur
   Feldauswahl.
-- Plain-Text-URLs (Softref `url`, z. B. im bodytext ohne `<a>`) werden **nicht** extrahiert –
-  Entscheidung: TODO oder nie?
+- ~~Plain-Text-URLs nicht extrahiert~~ – erledigt mit Schritt 2 (`ExtractionMode::PlainUrl`),
+  Bug #97937 siehe Task 8d.
 - Links in versteckten/abgelaufenen Quell-Datensätzen werden nicht gemeldet.
 - `javascript:`/sonstige `unknown`-Links werden übersprungen statt als `link.invalid` gemeldet.
 - Ergebnisse von Task 4 Step 4 (`t3://page` ohne uid) und Task 9 Step 4/6 (runTests-Pfade).

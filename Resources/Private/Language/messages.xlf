@@ -99,6 +99,102 @@
       <trans-unit id="report.column.page">
         <source>Page</source>
       </trans-unit>
+      <trans-unit id="filter.status">
+        <source>Status</source>
+      </trans-unit>
+      <trans-unit id="filter.linkType">
+        <source>Link type</source>
+      </trans-unit>
+      <trans-unit id="filter.table">
+        <source>Table</source>
+      </trans-unit>
+      <trans-unit id="filter.language">
+        <source>Language</source>
+      </trans-unit>
+      <trans-unit id="filter.search">
+        <source>Search</source>
+      </trans-unit>
+      <trans-unit id="filter.all">
+        <source>All</source>
+      </trans-unit>
+      <trans-unit id="filter.submit">
+        <source>Filter</source>
+      </trans-unit>
+      <trans-unit id="filter.reset">
+        <source>Reset</source>
+      </trans-unit>
+      <trans-unit id="report.emptyFiltered">
+        <source>No broken links match the filter.</source>
+      </trans-unit>
+      <trans-unit id="status.broken">
+        <source>Broken</source>
+      </trans-unit>
+      <trans-unit id="status.unknown">
+        <source>Cannot be checked</source>
+      </trans-unit>
+      <trans-unit id="linkType.page">
+        <source>Page</source>
+      </trans-unit>
+      <trans-unit id="linkType.record">
+        <source>Record</source>
+      </trans-unit>
+      <trans-unit id="linkType.file">
+        <source>File</source>
+      </trans-unit>
+      <trans-unit id="linkType.folder">
+        <source>Folder</source>
+      </trans-unit>
+      <trans-unit id="linkType.url">
+        <source>External URL</source>
+      </trans-unit>
+      <trans-unit id="linkType.invalid">
+        <source>Invalid link</source>
+      </trans-unit>
+      <trans-unit id="language.all">
+        <source>All languages</source>
+      </trans-unit>
+      <trans-unit id="pagination.records">
+        <source>%1$d–%2$d of %3$d</source>
+      </trans-unit>
+      <trans-unit id="report.externalCachedOnly">
+        <source>External URLs are not requested by "Check". They show the result of their last check.</source>
+      </trans-unit>
+      <trans-unit id="error.url.notFound">
+        <source>Page not found (HTTP %s)</source>
+      </trans-unit>
+      <trans-unit id="error.url.gone">
+        <source>Page removed permanently (HTTP %s)</source>
+      </trans-unit>
+      <trans-unit id="error.url.unknownHost">
+        <source>Domain does not exist</source>
+      </trans-unit>
+      <trans-unit id="error.url.httpStatus">
+        <source>Server responded with HTTP %s</source>
+      </trans-unit>
+      <trans-unit id="error.url.timeout">
+        <source>Server did not respond in time</source>
+      </trans-unit>
+      <trans-unit id="error.url.tlsError">
+        <source>Secure connection failed (TLS)</source>
+      </trans-unit>
+      <trans-unit id="error.url.connectionFailed">
+        <source>Connection failed</source>
+      </trans-unit>
+      <trans-unit id="error.url.tooManyRedirects">
+        <source>Too many redirects</source>
+      </trans-unit>
+      <trans-unit id="error.url.requestFailed">
+        <source>Request failed</source>
+      </trans-unit>
+      <trans-unit id="error.url.unsupportedScheme">
+        <source>Only http and https URLs can be checked</source>
+      </trans-unit>
+      <trans-unit id="report.checkExternal">
+        <source>Check external URLs</source>
+      </trans-unit>
+      <trans-unit id="report.externalBudgetExceeded">
+        <source>External URLs were requested for %1$d seconds only. %2$d records used stored results for their external URLs; press "Check" again to continue.</source>
+      </trans-unit>
     </body>
   </file>
 </xliff>

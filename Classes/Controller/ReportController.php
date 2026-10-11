@@ -20,12 +20,18 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Backend\Attribute\AsController;
 use TYPO3\CMS\Backend\Routing\UriBuilder;
+use TYPO3\CMS\Backend\Template\ModuleTemplate;
 use TYPO3\CMS\Backend\Template\ModuleTemplateFactory;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
+use TYPO3\CMS\Core\Exception\SiteNotFoundException;
 use TYPO3\CMS\Core\Localization\LanguageService;
+use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
+use TYPO3\CMS\Core\Site\SiteFinder;
 use TYPO3\CMS\Core\Type\Bitmask\Permission;
 use TYPO3\CMS\Core\Type\ContextualFeedbackSeverity;
+use TYPO3\CMS\Linkvalidator2\Report\ReportFilter;
+use TYPO3\CMS\Linkvalidator2\Report\ReportOrdering;
 use TYPO3\CMS\Linkvalidator2\Repository\BrokenLinkRepository;
 use TYPO3\CMS\Linkvalidator2\Service\PageRecordFinder;
 use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
@@ -37,6 +43,9 @@ use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
 final readonly class ReportController
 {
     private const DEPTH_OPTIONS = [0, 1, 2, 3, 4, 999];
+    private const ITEMS_PER_PAGE = 50;
+    /** Seconds external URLs are requested during "Check", the rest uses stored results */
+    private const EXTERNAL_TIME_BUDGET = 20;
 
     public function __construct(
         private ModuleTemplateFactory $moduleTemplateFactory,
@@ -44,6 +53,8 @@ final readonly class ReportController
         private PageRecordFinder $pageRecordFinder,
         private RecordCheckService $recordCheckService,
         private BrokenLinkRepository $brokenLinkRepository,
+        private TcaSchemaFactory $tcaSchemaFactory,
+        private SiteFinder $siteFinder,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -63,20 +74,16 @@ final readonly class ReportController
             $depth = 0;
         }
         $pageIds = $pageRecord !== [] ? $this->pageRecordFinder->findPageIds($pageUid, $depth) : [];
+        $filter = ReportFilter::fromModuleData($request->getAttribute('moduleData'));
+        $ordering = ReportOrdering::fromModuleData($request->getAttribute('moduleData'));
+        $pagination = $this->getPagination(
+            $this->brokenLinkRepository->countByPids($pageIds, $filter),
+            (int)($request->getQueryParams()['page'] ?? 1)
+        );
 
+        $checkExternal = (bool)$request->getAttribute('moduleData')->get('checkExternal', false);
         if ($pageIds !== [] && ($request->getParsedBody()['checkPage'] ?? false)) {
-            $recordCount = 0;
-            foreach ($pageIds as $pageId) {
-                foreach ($this->pageRecordFinder->findOnPage($pageId) as ['table' => $table, 'uid' => $uid]) {
-                    $this->recordCheckService->checkRecord($table, $uid);
-                    $recordCount++;
-                }
-            }
-            $view->addFlashMessage(
-                sprintf($this->getLanguageService()->sL('linkvalidator2.messages:report.checked'), $recordCount, count($pageIds)),
-                '',
-                ContextualFeedbackSeverity::OK
-            );
+            $this->checkPages($view, $pageIds, $checkExternal);
         }
 
         $view->assignMultiple([
@@ -85,7 +92,16 @@ final readonly class ReportController
             'moduleUrl' => $moduleUrl,
             'depth' => $depth,
             'depthOptions' => $this->getDepthOptions(),
-            'brokenLinks' => $this->getBrokenLinks($pageIds, $moduleUrl),
+            'checkExternal' => $checkExternal,
+            'filter' => $filter,
+            'filterOptions' => $this->getFilterOptions($pageIds, $pageUid, $filter),
+            'resetFilterUrl' => (string)$this->uriBuilder->buildUriFromRoute(
+                'linkvalidator2_report',
+                ['id' => $pageUid, ...array_fill_keys(ReportFilter::PROPERTIES, '')]
+            ),
+            'pagination' => $pagination,
+            'columns' => $this->getColumns($pageUid, $ordering),
+            'brokenLinks' => $this->getBrokenLinks($pageIds, $filter, $ordering, $pagination, $moduleUrl),
         ]);
         return $view->renderResponse('Backend/Report');
     }
@@ -103,20 +119,25 @@ final readonly class ReportController
     }
 
     /**
+     * @todo Fetches record and page title per row (at most one page of results). Load in bulk.
+     *
      * @param list<int> $pageIds
+     * @param array{startRecord: int} $pagination
      * @return list<array<string, mixed>>
      */
-    private function getBrokenLinks(array $pageIds, string $returnUrl): array
+    private function getBrokenLinks(array $pageIds, ReportFilter $filter, ReportOrdering $ordering, array $pagination, string $returnUrl): array
     {
         $result = [];
         $pageTitles = [];
-        foreach ($this->brokenLinkRepository->findByPids($pageIds) as $row) {
+        $rows = $this->brokenLinkRepository->findByPids($pageIds, $filter, $ordering, self::ITEMS_PER_PAGE, $pagination['startRecord'] - 1);
+        foreach ($rows as $row) {
             $table = (string)$row['table_name'];
             $uid = (int)$row['record_uid'];
             $pid = (int)$row['pid'];
             $record = BackendUtility::getRecord($table, $uid) ?? [];
             $pageTitles[$pid] ??= BackendUtility::getRecordTitle('pages', BackendUtility::getRecord('pages', $pid) ?? ['uid' => $pid]);
             $row['pageTitle'] = $pageTitles[$pid];
+            $row['details'] = (array)json_decode((string)$row['error_details'], true);
             $row['recordTitle'] = $record !== [] ? BackendUtility::getRecordTitle($table, $record) : $table . ':' . $uid;
             $row['editUrl'] = (string)$this->uriBuilder->buildUriFromRoute('record_edit', [
                 'edit' => [$table => [$uid => 'edit']],
@@ -125,6 +146,142 @@ final readonly class ReportController
             $result[] = $row;
         }
         return $result;
+    }
+
+    /**
+     * External URLs are requested only within a time budget, a synchronous check of a larger tree would
+     * otherwise run into the request timeout. Records after that use stored results; checking again
+     * continues, as URLs requested before are then taken from the cache.
+     *
+     * @todo Replace by browser-driven batches on top of the queue service (task 8).
+     *
+     * @param list<int> $pageIds
+     */
+    private function checkPages(ModuleTemplate $view, array $pageIds, bool $checkExternal): void
+    {
+        $languageService = $this->getLanguageService();
+        $start = microtime(true);
+        $recordCount = 0;
+        $recordsWithoutExternal = 0;
+        foreach ($pageIds as $pageId) {
+            foreach ($this->pageRecordFinder->findOnPage($pageId) as ['table' => $table, 'uid' => $uid]) {
+                $cachedOnly = !$checkExternal || microtime(true) - $start > self::EXTERNAL_TIME_BUDGET;
+                $this->recordCheckService->checkRecord($table, $uid, $cachedOnly);
+                $recordCount++;
+                $recordsWithoutExternal += $checkExternal && $cachedOnly ? 1 : 0;
+            }
+        }
+        $view->addFlashMessage(
+            sprintf($languageService->sL('linkvalidator2.messages:report.checked'), $recordCount, count($pageIds)),
+            '',
+            ContextualFeedbackSeverity::OK
+        );
+        if ($recordsWithoutExternal > 0) {
+            $view->addFlashMessage(
+                sprintf($languageService->sL('linkvalidator2.messages:report.externalBudgetExceeded'), self::EXTERNAL_TIME_BUDGET, $recordsWithoutExternal),
+                '',
+                ContextualFeedbackSeverity::WARNING
+            );
+        }
+    }
+
+    /**
+     * Table header: clicking a column sorts by it, clicking the sorted column reverses the direction.
+     *
+     * @return list<array{label: string, url: string, active: bool, descending: bool}>
+     */
+    private function getColumns(int $pageUid, ReportOrdering $ordering): array
+    {
+        $columns = [];
+        foreach (array_keys(ReportOrdering::FIELDS) as $field) {
+            $active = $ordering->field === $field;
+            $columns[] = [
+                'label' => $this->getLanguageService()->sL('linkvalidator2.messages:report.column.' . $field),
+                'url' => (string)$this->uriBuilder->buildUriFromRoute('linkvalidator2_report', [
+                    'id' => $pageUid,
+                    'orderField' => $field,
+                    'orderDirection' => $active && !$ordering->descending ? 'desc' : 'asc',
+                ]),
+                'active' => $active,
+                'descending' => $ordering->descending,
+            ];
+        }
+        return $columns;
+    }
+
+    /**
+     * @return array{total: int, current: int, numberOfPages: int, startRecord: int, endRecord: int, previousPage: int, nextPage: int}
+     */
+    private function getPagination(int $total, int $page): array
+    {
+        $numberOfPages = max(1, (int)ceil($total / self::ITEMS_PER_PAGE));
+        $current = min(max(1, $page), $numberOfPages);
+        $startRecord = ($current - 1) * self::ITEMS_PER_PAGE + 1;
+        return [
+            'total' => $total,
+            'current' => $current,
+            'numberOfPages' => $numberOfPages,
+            'startRecord' => $startRecord,
+            'endRecord' => min($startRecord + self::ITEMS_PER_PAGE - 1, $total),
+            'previousPage' => $current > 1 ? $current - 1 : 0,
+            'nextPage' => $current < $numberOfPages ? $current + 1 : 0,
+        ];
+    }
+
+    /**
+     * Only values that occur among the broken links of the selected pages are offered.
+     *
+     * @param list<int> $pageIds
+     * @return array<string, list<array{value: string, label: string, selected: bool}>>
+     */
+    private function getFilterOptions(array $pageIds, int $pageUid, ReportFilter $filter): array
+    {
+        $languageService = $this->getLanguageService();
+        $values = $this->brokenLinkRepository->findFilterValues($pageIds);
+        $labels = [];
+        foreach ($values['status'] as $status) {
+            $labels['status'][$status] = $languageService->sL('linkvalidator2.messages:status.' . $status) ?: $status;
+        }
+        foreach ($values['linkType'] as $linkType) {
+            $labels['linkType'][$linkType] = $languageService->sL('linkvalidator2.messages:linkType.' . $linkType) ?: $linkType;
+        }
+        foreach ($values['table'] as $table) {
+            $title = $this->tcaSchemaFactory->has($table) ? $languageService->sL($this->tcaSchemaFactory->get($table)->getTitle()) : '';
+            $labels['table'][$table] = $title !== '' ? $title : $table;
+        }
+        $languageTitles = $this->getLanguageTitles($pageUid);
+        foreach ($values['language'] as $language) {
+            $labels['language'][$language] = $languageTitles[$language] ?? ('#' . $language);
+        }
+        $selected = [
+            'status' => $filter->status,
+            'linkType' => $filter->linkType,
+            'table' => $filter->table,
+            'language' => $filter->language === null ? '' : (string)$filter->language,
+        ];
+        $options = [];
+        foreach ($selected as $property => $selectedValue) {
+            $options[$property] = [];
+            foreach ($labels[$property] ?? [] as $value => $label) {
+                $options[$property][] = ['value' => (string)$value, 'label' => $label, 'selected' => (string)$value === $selectedValue];
+            }
+        }
+        return $options;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function getLanguageTitles(int $pageUid): array
+    {
+        $titles = [-1 => $this->getLanguageService()->sL('linkvalidator2.messages:language.all')];
+        try {
+            foreach ($this->siteFinder->getSiteByPageId($pageUid)->getAllLanguages() as $siteLanguage) {
+                $titles[$siteLanguage->getLanguageId()] = $siteLanguage->getTitle();
+            }
+        } catch (SiteNotFoundException) {
+        }
+        return $titles;
     }
 
     private function getBackendUser(): BackendUserAuthentication

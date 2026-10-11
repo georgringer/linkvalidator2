@@ -18,8 +18,11 @@ namespace TYPO3\CMS\Linkvalidator2\Extraction;
 
 final readonly class CheckableField
 {
+    /**
+     * @param non-empty-list<ExtractionMode> $modes
+     */
     public function __construct(
         public string $name,
-        public ExtractionMode $mode,
+        public array $modes,
     ) {}
 }

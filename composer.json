@@ -6,17 +6,38 @@
 		"GPL-2.0-or-later"
 	],
 	"require": {
+		"typo3/cms-backend": "15.0.*@dev",
 		"typo3/cms-core": "15.0.*@dev"
+	},
+	"require-dev": {
+		"typo3/testing-framework": "dev-main"
 	},
 	"autoload": {
 		"psr-4": {
 			"TYPO3\\CMS\\Linkvalidator2\\": "Classes/"
 		}
 	},
+	"autoload-dev": {
+		"psr-4": {
+			"TYPO3\\CMS\\Linkvalidator2\\Tests\\": "Tests/"
+		}
+	},
+	"minimum-stability": "dev",
+	"prefer-stable": true,
+	"config": {
+		"allow-plugins": {
+			"typo3/class-alias-loader": true,
+			"typo3/cms-composer-installers": true
+		},
+		"bin-dir": ".Build/bin",
+		"sort-packages": true,
+		"vendor-dir": ".Build/vendor"
+	},
 	"extra": {
 		"typo3/cms": {
 			"extension-key": "linkvalidator2",
 			"version": "15.0.0",
+			"web-dir": ".Build/Web",
 			"Package": {
 				"providesPackages": {}
 			}

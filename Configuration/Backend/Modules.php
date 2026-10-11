@@ -22,6 +22,14 @@ return [
         ],
         'moduleData' => [
             'depth' => 0,
+            'checkExternal' => 0,
+            'status' => '',
+            'linkType' => '',
+            'table' => '',
+            'language' => '',
+            'search' => '',
+            'orderField' => 'page',
+            'orderDirection' => 'asc',
         ],
     ],
 ];

@@ -1,0 +1,12 @@
+"tx_linkvalidator2_broken_link"
+,"table_name","record_uid","field","pid","language","link_string","status","error_type"
+,"tt_content",10,"bodytext",1,0,"t3://page?uid=3","broken","page.hidden"
+,"tt_content",10,"bodytext",1,0,"t3://page?uid=4","broken","page.missing"
+,"tt_content",10,"bodytext",1,0,"t3://page?uid=5","broken","page.expired"
+,"tt_content",10,"bodytext",1,0,"t3://page?uid=6","broken","page.noFrontend"
+,"tt_content",10,"bodytext",1,0,"t3://page?uid=999","broken","page.missing"
+,"tt_content",10,"bodytext",1,0,"t3://gibtsnicht?uid=1","broken","link.invalid"
+,"tt_content",10,"header_link",1,0,"t3://page?uid=3","broken","page.hidden"
+"tx_linkvalidator2_record_status"
+,"table_name","record_uid","pid","language","broken_count"
+,"tt_content",10,1,0,7
