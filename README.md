@@ -113,7 +113,7 @@ solved ones in `done/`.
 | **Exclusions** | | | | | |
 | Exclude link targets (URL / domain / page) | ❌ | ✅ records + own module | ✅ records `tx_linkvalidator2_exclusion` on a page, apply to its subtree (root level: everywhere); types "URL or domain" (everything starting with it, incl. subdomains, scheme and anchor ignored), page and "all links" (no check in the subtree, e.g. an archive); excluded links are not checked (no HTTP request) and not stored | 📋 site-wide exclusions as site setting (deployed with the project); regex only as own matcher | #85127, #92822 |
 | "Ignore" from the report | ❌ | ❓ | ✅ per result: URL, its domain or the target page, stored on the page of the record through the DataHandler (permissions apply), results disappear right away | 📋 "accept this occurrence" (single link) | #92822 |
-| Count of links skipped by exclusions | ❌ | ❓ | ✅ stored per record (`excluded_count`), summed in the report for the selected pages with a link to the exclusions | | |
+| Count of links skipped by exclusions | ❌ | ❓ | ✅ stored per record (`excluded_count`), summed in the report for the selected pages with a link to the exclusions; a new exclusion removes the results it matches directly (database prefilter on the link string, then the matcher), without checking, so it is fast on large sites; links that were fine are counted by the next check of their record | | |
 | List of exclusions | ❌ | ✅ own module | ✅ view in the module (toggle in the doc header): record list with levels, selection, edit/hide/delete, plus the exclusions inherited from pages above | | #92822 |
 | Custom exclusion types | ❌ | ❌ | ✅ `ExclusionMatcherInterface` (tagged automatically) + TCA type | | |
 | Accept a single occurrence | ❌ | ❌ | ❌ | 📋 later | |

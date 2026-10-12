@@ -63,6 +63,48 @@ final class ExclusionChangeTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function newExclusionAdjustsTheCountersOfTheRecordWithoutCheckingIt(): void
+    {
+        $this->getConnectionPool()->getConnectionForTable('tx_linkvalidator2_record_status')
+            ->update('tx_linkvalidator2_record_status', ['last_checked' => 12345], ['table_name' => 'tt_content', 'record_uid' => 15]);
+
+        $this->process([self::EXCLUSION_TABLE => ['NEW1' => ['pid' => 2, 'type' => 'page', 'target_page' => 3]]]);
+
+        $status = $this->getStatus(15);
+        // The hidden page 3 was the only broken link, the notice for page 11 stays
+        self::assertSame(0, (int)$status['broken_count']);
+        self::assertSame(1, (int)$status['excluded_count']);
+        self::assertSame(12345, (int)$status['last_checked'], 'The record is not checked again');
+    }
+
+    #[Test]
+    public function exclusionWithoutMatchesLeavesTheResultsAlone(): void
+    {
+        $before = [$this->getReportedTargets(10), $this->getReportedTargets(15), $this->getStatus(10)];
+
+        $this->process([self::EXCLUSION_TABLE => ['NEW1' => ['pid' => 1, 'type' => 'url', 'value' => 'no-match.example']]]);
+
+        self::assertSame($before, [$this->getReportedTargets(10), $this->getReportedTargets(15), $this->getStatus(10)]);
+    }
+
+    #[Test]
+    public function newUrlExclusionRemovesTheResultsOfItsDomainAndSubdomains(): void
+    {
+        $this->addExternalResult(10, 'https://example.org/page', 'urlA');
+        $this->addExternalResult(10, 'http://blog.example.org/x#top', 'urlB');
+        $this->addExternalResult(10, 'https://notexample.org/', 'urlC');
+        $this->addExternalResult(10, 'https://example.com/', 'urlD');
+
+        $this->process([self::EXCLUSION_TABLE => ['NEW1' => ['pid' => 1, 'type' => 'url', 'value' => 'Example.org']]]);
+
+        $targets = $this->getReportedTargets(10);
+        self::assertNotContains('url:https://example.org/page', $targets);
+        self::assertNotContains('url:http://blog.example.org/x', $targets);
+        self::assertContains('url:https://notexample.org/', $targets);
+        self::assertContains('url:https://example.com/', $targets);
+    }
+
+    #[Test]
     public function deletedExclusionMakesRecordsOfItsSubtreeDue(): void
     {
         $uid = $this->addExclusion(2);
@@ -120,6 +162,37 @@ final class ExclusionChangeTest extends FunctionalTestCase
         $dataHandler->process_datamap();
         $dataHandler->process_cmdmap();
         self::assertSame([], $dataHandler->errorLog, 'DataHandler errors');
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function getStatus(int $contentUid): array
+    {
+        return $this->getConnectionPool()->getConnectionForTable('tx_linkvalidator2_record_status')
+            ->select(['broken_count', 'excluded_count', 'last_checked'], 'tx_linkvalidator2_record_status', ['table_name' => 'tt_content', 'record_uid' => $contentUid])
+            ->fetchAssociative();
+    }
+
+    private function addExternalResult(int $contentUid, string $url, string $hash): void
+    {
+        $targets = $this->getConnectionPool()->getConnectionForTable('tx_linkvalidator2_target');
+        $targets->insert('tx_linkvalidator2_target', [
+            'link_type' => 'url',
+            'identifier' => 'url:' . explode('#', $url)[0],
+            'identifier_hash' => sha1($hash),
+            'status' => 'broken',
+        ]);
+        $this->getConnectionPool()->getConnectionForTable('tx_linkvalidator2_broken_link')->insert('tx_linkvalidator2_broken_link', [
+            'target' => (int)$targets->lastInsertId(),
+            'table_name' => 'tt_content',
+            'record_uid' => $contentUid,
+            'field' => 'bodytext',
+            'pid' => 1,
+            'link_string' => $url,
+            'status' => 'broken',
+            'error_type' => 'url.notFound',
+        ]);
     }
 
     private function getLastChecked(int $contentUid): int

@@ -42,6 +42,24 @@ final readonly class RecordStatusRepository
         $connection->insert(self::TABLE, $identifier + $data);
     }
 
+    /**
+     * Results of the record were removed because of an exclusion: they are no broken links any
+     * more and count as excluded. Links that were fine have no result, they are counted by the
+     * next check of the record.
+     */
+    public function markExcluded(string $table, int $recordUid, int $removedBroken, int $removedTotal): void
+    {
+        $connection = $this->connectionPool->getConnectionForTable(self::TABLE);
+        $row = $connection->select(['broken_count', 'excluded_count'], self::TABLE, ['table_name' => $table, 'record_uid' => $recordUid, 'workspace' => 0])->fetchAssociative();
+        if ($row === false) {
+            return;
+        }
+        $connection->update(self::TABLE, [
+            'broken_count' => max(0, (int)$row['broken_count'] - $removedBroken),
+            'excluded_count' => (int)$row['excluded_count'] + $removedTotal,
+        ], ['table_name' => $table, 'record_uid' => $recordUid, 'workspace' => 0]);
+    }
+
     public function remove(string $table, int $recordUid): void
     {
         $this->connectionPool->getConnectionForTable(self::TABLE)

@@ -232,6 +232,49 @@ final readonly class BrokenLinkRepository
         $queryBuilder->andWhere($expr->or(...$tableConstraints));
     }
 
+    /**
+     * Stored results below the pages whose link string contains the hint, for an exclusion to
+     * decide on. Without a hint all results of the pages.
+     *
+     * @param list<int>|null $pids null for all pages
+     * @return list<array<string, mixed>>
+     */
+    public function findForExclusion(?array $pids, ?string $hint): array
+    {
+        $rows = [];
+        foreach ($pids === null ? [null] : array_chunk($pids, 1000) as $chunk) {
+            $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+            $queryBuilder->select('uid', 'table_name', 'record_uid', 'field', 'pid', 'language', 'link_string', 'link_text', 'status')->from(self::TABLE);
+            if ($chunk !== null) {
+                $queryBuilder->where($queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter($chunk, Connection::PARAM_INT_ARRAY)));
+            }
+            if ($hint !== null) {
+                $queryBuilder->andWhere($queryBuilder->expr()->comparison(
+                    'LOWER(' . $queryBuilder->quoteIdentifier('link_string') . ')',
+                    'LIKE',
+                    $queryBuilder->createNamedParameter('%' . $queryBuilder->escapeLikeWildcards(mb_strtolower($hint)) . '%')
+                ));
+            }
+            foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row) {
+                $rows[] = $row;
+            }
+        }
+        return $rows;
+    }
+
+    /**
+     * @param list<int> $uids
+     */
+    public function removeByUids(array $uids): void
+    {
+        foreach (array_chunk($uids, 1000) as $chunk) {
+            $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+            $queryBuilder->delete(self::TABLE)
+                ->where($queryBuilder->expr()->in('uid', $queryBuilder->createNamedParameter($chunk, Connection::PARAM_INT_ARRAY)))
+                ->executeStatement();
+        }
+    }
+
     public function removeForRecord(string $table, int $recordUid): void
     {
         $this->connectionPool->getConnectionForTable(self::TABLE)

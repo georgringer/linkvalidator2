@@ -45,6 +45,15 @@ final readonly class ExclusionMatcher
     }
 
     /**
+     * @see PrefilterableExclusionMatcherInterface::getLinkStringHint()
+     */
+    public function getLinkStringHint(Exclusion $exclusion): ?string
+    {
+        $matcher = $this->matchers[$exclusion->type] ?? null;
+        return $matcher instanceof PrefilterableExclusionMatcherInterface ? $matcher->getLinkStringHint($exclusion) : null;
+    }
+
+    /**
      * Exclusions of a type without matcher never apply.
      *
      * @param list<Exclusion> $exclusions

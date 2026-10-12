@@ -19,17 +19,23 @@ namespace GeorgRinger\Linkvalidator2\Exclusion\Matcher;
 
 use TYPO3\CMS\Core\LinkHandling\LinkService;
 use GeorgRinger\Linkvalidator2\Exclusion\Exclusion;
-use GeorgRinger\Linkvalidator2\Exclusion\ExclusionMatcherInterface;
+use GeorgRinger\Linkvalidator2\Exclusion\PrefilterableExclusionMatcherInterface;
 use GeorgRinger\Linkvalidator2\Target\LinkTarget;
 
 /**
  * Links to one page, e.g. a login page restricted on purpose
  */
-final readonly class PageExclusionMatcher implements ExclusionMatcherInterface
+final readonly class PageExclusionMatcher implements PrefilterableExclusionMatcherInterface
 {
     public function getType(): string
     {
         return 'page';
+    }
+
+    public function getLinkStringHint(Exclusion $exclusion): ?string
+    {
+        $pageUid = (int)($exclusion->row['target_page'] ?? 0);
+        return $pageUid > 0 ? (string)$pageUid : null;
     }
 
     public function matches(Exclusion $exclusion, LinkTarget $target): bool

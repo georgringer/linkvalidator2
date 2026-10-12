@@ -45,6 +45,16 @@ final class ExclusionRepository
         return $this->cache[$pid] ??= $this->findByPids($this->getRootlinePids($pid));
     }
 
+    /**
+     * The exclusions stored on this page, without the ones of the pages above
+     *
+     * @return list<Exclusion>
+     */
+    public function findOnPage(int $pid): array
+    {
+        return $this->findByPids([$pid]);
+    }
+
     public function reset(): void
     {
         $this->cache = [];
