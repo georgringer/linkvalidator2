@@ -24,6 +24,7 @@ use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
 use GeorgRinger\Linkvalidator2\Controller\ExclusionController;
 use GeorgRinger\Linkvalidator2\Service\RecordCheckService;
 use GeorgRinger\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
+use TYPO3\CMS\Core\Type\Bitmask\Permission;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 /**
@@ -91,6 +92,51 @@ final class ExclusionControllerTest extends FunctionalTestCase
 
         self::assertSame(403, $this->create(['pid' => 1, 'type' => 'page', 'value' => '3'])->getStatusCode());
         self::assertSame(0, $this->getConnectionPool()->getConnectionForTable(self::EXCLUSION_TABLE)->count('*', self::EXCLUSION_TABLE, []));
+    }
+
+    #[Test]
+    public function anEditorWithTheModuleButWithoutEditPermissionOnThePageIsDenied(): void
+    {
+        $this->prepareEditor(Permission::PAGE_SHOW);
+        $this->setUpUser(2);
+
+        $response = $this->create(['pid' => 1, 'type' => 'page', 'value' => '3']);
+
+        self::assertSame(403, $response->getStatusCode());
+        self::assertSame(0, $this->getConnectionPool()->getConnectionForTable(self::EXCLUSION_TABLE)->count('*', self::EXCLUSION_TABLE, []));
+    }
+
+    #[Test]
+    public function anEditorWithTheModuleMayIgnoreOnAPageWhoseContentTheyMayEdit(): void
+    {
+        $this->prepareEditor(Permission::PAGE_SHOW | Permission::CONTENT_EDIT);
+        $this->setUpUser(2);
+
+        self::assertSame(200, $this->create(['pid' => 1, 'type' => 'page', 'value' => '3'])->getStatusCode());
+    }
+
+    #[Test]
+    public function anEditorCannotIgnoreOnTheRootLevel(): void
+    {
+        $this->prepareEditor(Permission::PAGE_SHOW | Permission::CONTENT_EDIT);
+        $this->setUpUser(2);
+
+        self::assertSame(403, $this->create(['pid' => 0, 'type' => 'page', 'value' => '3'])->getStatusCode());
+        self::assertSame(0, $this->getConnectionPool()->getConnectionForTable(self::EXCLUSION_TABLE)->count('*', self::EXCLUSION_TABLE, []));
+    }
+
+    /**
+     * The editor has the module, may modify exclusions and has page 1 as mount with these permissions for everybody
+     */
+    private function prepareEditor(int $pagePermissions): void
+    {
+        $this->getConnectionPool()->getConnectionForTable('be_groups')->update('be_groups', [
+            'groupMods' => 'link_management,linkvalidator2_report',
+            'tables_select' => 'pages,tt_content,' . self::EXCLUSION_TABLE,
+            'tables_modify' => 'pages,tt_content,' . self::EXCLUSION_TABLE,
+        ], ['uid' => 1]);
+        $this->getConnectionPool()->getConnectionForTable('be_users')->update('be_users', ['db_mountpoints' => '1'], ['uid' => 2]);
+        $this->getConnectionPool()->getConnectionForTable('pages')->update('pages', ['perms_everybody' => $pagePermissions], ['uid' => 1]);
     }
 
     private function setUpUser(int $uid): void

@@ -39,7 +39,7 @@ use TYPO3\CMS\Core\Site\SiteFinder;
 use TYPO3\CMS\Core\Type\Bitmask\Permission;
 use TYPO3\CMS\Core\Utility\MathUtility;
 use GeorgRinger\Linkvalidator2\Configuration\ExtensionSettings;
-use GeorgRinger\Linkvalidator2\Exclusion\ExclusionRepository;
+use GeorgRinger\Linkvalidator2\Exclusion\ExclusionPermissions;
 use GeorgRinger\Linkvalidator2\Report\LanguageIconProvider;
 use GeorgRinger\Linkvalidator2\Report\ReportFilter;
 use GeorgRinger\Linkvalidator2\Report\ReportOrdering;
@@ -73,6 +73,7 @@ final readonly class ReportController
         private RecordStatusRepository $recordStatusRepository,
         private ExtensionSettings $extensionSettings,
         private LanguageIconProvider $languageIconProvider,
+        private ExclusionPermissions $exclusionPermissions,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -87,15 +88,18 @@ final readonly class ReportController
         }
         $view->setTitle($this->getLanguageService()->sL('linkvalidator2.module:title'));
         $view->makeDocHeaderModuleMenu(['id' => $pageUid]);
-        $view->addButtonToButtonBar(
-            $this->componentFactory->createLinkButton()
-                ->setHref((string)$this->uriBuilder->buildUriFromRoute('linkvalidator2_report.exclusions', ['id' => $pageUid]))
-                ->setTitle($this->getLanguageService()->sL('linkvalidator2.messages:exclusions.show'))
-                ->setShowLabelText(true)
-                ->setIcon($this->iconFactory->getIcon('actions-ban', IconSize::SMALL)),
-            ButtonBar::BUTTON_POSITION_RIGHT,
-            1
-        );
+        $mayManageExclusions = $this->exclusionPermissions->mayEditOnPage($pageUid, $pageRecord);
+        if ($mayManageExclusions) {
+            $view->addButtonToButtonBar(
+                $this->componentFactory->createLinkButton()
+                    ->setHref((string)$this->uriBuilder->buildUriFromRoute('linkvalidator2_report.exclusions', ['id' => $pageUid]))
+                    ->setTitle($this->getLanguageService()->sL('linkvalidator2.messages:exclusions.show'))
+                    ->setShowLabelText(true)
+                    ->setIcon($this->iconFactory->getIcon('actions-ban', IconSize::SMALL)),
+                ButtonBar::BUTTON_POSITION_RIGHT,
+                1
+            );
+        }
 
         $depth = (int)$request->getAttribute('moduleData')->get('depth', 0);
         if (!in_array($depth, self::DEPTH_OPTIONS, true)) {
@@ -137,8 +141,9 @@ final readonly class ReportController
             ),
             'pagination' => $pagination,
             'columns' => $this->getColumns($pageUid, $ordering),
-            'brokenLinks' => $this->getBrokenLinks($pageIds, $filter, $ordering, $pagination, $moduleUrl, $permissions),
+            'brokenLinks' => $this->getBrokenLinks($pageIds, $filter, $ordering, $pagination, $moduleUrl, $permissions, $mayManageExclusions),
             'excludedCount' => $this->recordStatusRepository->countExcluded($pageIds),
+            'mayManageExclusions' => $mayManageExclusions,
             'exclusionsUrl' => (string)$this->uriBuilder->buildUriFromRoute('linkvalidator2_report.exclusions', ['id' => $pageUid]),
             // Tells an empty report of pages never checked from one without broken links
             'lastChecked' => $pagination['total'] === 0 && !$filter->isActive() ? $this->recordStatusRepository->findLastChecked($pageIds) : 0,
@@ -266,10 +271,9 @@ final readonly class ReportController
      * @param array{startRecord: int} $pagination
      * @return list<array<string, mixed>>
      */
-    private function getBrokenLinks(array $pageIds, ReportFilter $filter, ReportOrdering $ordering, array $pagination, string $returnUrl, ?ReportPermissions $permissions): array
+    private function getBrokenLinks(array $pageIds, ReportFilter $filter, ReportOrdering $ordering, array $pagination, string $returnUrl, ?ReportPermissions $permissions, bool $mayIgnore): array
     {
         $result = [];
-        $mayIgnore = $this->getBackendUser()->check('tables_modify', ExclusionRepository::TABLE);
         $pageTitles = [];
         $pageRecords = [];
         $rows = $this->brokenLinkRepository->findByPids($pageIds, $filter, $ordering, self::ITEMS_PER_PAGE, $pagination['startRecord'] - 1, $permissions);

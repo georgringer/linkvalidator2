@@ -35,6 +35,7 @@ use TYPO3\CMS\Core\Imaging\IconSize;
 use TYPO3\CMS\Core\Localization\LanguageService;
 use TYPO3\CMS\Core\Type\Bitmask\Permission;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use GeorgRinger\Linkvalidator2\Exclusion\ExclusionPermissions;
 use GeorgRinger\Linkvalidator2\Exclusion\ExclusionRepository;
 
 /**
@@ -58,6 +59,7 @@ final readonly class ExclusionController
         private IconFactory $iconFactory,
         private ExclusionRepository $exclusionRepository,
         private ModuleProvider $moduleProvider,
+        private ExclusionPermissions $exclusionPermissions,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -142,7 +144,7 @@ final readonly class ExclusionController
     {
         $result = [];
         foreach ($this->exclusionRepository->findForPid($pageUid) as $exclusion) {
-            if ($exclusion->pid === $pageUid) {
+            if ($exclusion->pid === $pageUid || !$this->exclusionPermissions->maySee($exclusion)) {
                 continue;
             }
             $page = $exclusion->pid > 0 ? BackendUtility::getRecord('pages', $exclusion->pid, 'title') : null;
@@ -179,7 +181,7 @@ final readonly class ExclusionController
         }
         $view->addButtonToButtonBar($depthButton, ButtonBar::BUTTON_POSITION_LEFT, 1);
 
-        if ($this->mayCreate($pageUid, $pageRecord)) {
+        if ($this->exclusionPermissions->mayEditOnPage($pageUid, $pageRecord)) {
             $newButton = $this->componentFactory->createLinkButton()
                 ->setHref((string)$this->uriBuilder->buildUriFromRoute('record_edit', [
                     'edit' => [ExclusionRepository::TABLE => [$pageUid => 'new']],
@@ -190,17 +192,6 @@ final readonly class ExclusionController
                 ->setIcon($this->iconFactory->getIcon('actions-plus', IconSize::SMALL));
             $view->addButtonToButtonBar($newButton, ButtonBar::BUTTON_POSITION_LEFT, 2);
         }
-    }
-
-    private function mayCreate(int $pageUid, array $pageRecord): bool
-    {
-        $backendUser = $this->getBackendUser();
-        if ($backendUser->isAdmin()) {
-            return true;
-        }
-        return $pageUid > 0
-            && $backendUser->check('tables_modify', ExclusionRepository::TABLE)
-            && $backendUser->doesUserHaveAccess($pageRecord, Permission::CONTENT_EDIT);
     }
 
     private function getBackendUser(): BackendUserAuthentication

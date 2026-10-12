@@ -47,7 +47,9 @@
                 <div class="mt-3">
                     <f:be.infobox state="{f:constant(name: 'TYPO3\CMS\Core\Type\ContextualFeedbackSeverity::INFO')}">
                         <f:translate key="linkvalidator2.messages:report.excludedCount" arguments="{count: excludedCount}" />
-                        <a href="{exclusionsUrl}"><f:translate key="linkvalidator2.messages:report.showExclusions" /></a>
+                        <f:if condition="{mayManageExclusions}">
+                            <a href="{exclusionsUrl}"><f:translate key="linkvalidator2.messages:report.showExclusions" /></a>
+                        </f:if>
                     </f:be.infobox>
                 </div>
             </f:if>

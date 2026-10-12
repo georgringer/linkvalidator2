@@ -47,6 +47,13 @@ An editor needs
 *   :php:`tables_modify` for :php:`tx_linkvalidator2_exclusion`
 *   and edit permission on the content of the page the exclusion is stored on.
 
+Without both the module offers nothing to change exclusions: no
+:guilabel:`Ignore` in the results, no :guilabel:`Exclusions` button and no
+link :guilabel:`Show exclusions` in the notice about links that are not
+checked. The number in that notice is shown to everybody. The list of
+exclusions shows the ones inherited from the pages above only for pages the
+user may read and with :php:`tables_select` for the table.
+
 What happens to the results
 ===========================
 
