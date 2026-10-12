@@ -95,6 +95,46 @@ final class CheckCommandTest extends FunctionalTestCase
         self::assertSame(0, $this->countRows(self::STATUS_TABLE, 'pages', 10));
     }
 
+    #[Test]
+    public function depthIncludesTheSubpagesAndTheOutputShowsTheProgress(): void
+    {
+        $tester = new CommandTester($this->get(CheckCommand::class));
+
+        $tester->execute(['--page' => '1', '--depth' => '99', '--no-external' => true]);
+
+        $tester->assertCommandIsSuccessful();
+        // Without --depth only the page itself is checked, here the whole tree
+        self::assertSame(15, $this->countStatusRows());
+        self::assertStringContainsString('9 pages, 15 records, ', $tester->getDisplay());
+        self::assertStringContainsString('Checked 15 records on 9 pages', $tester->getDisplay());
+    }
+
+    #[Test]
+    public function withoutDepthOnlyThePageItselfIsChecked(): void
+    {
+        $this->checkPage(1);
+
+        // Page 1 and its five content elements
+        self::assertSame(6, $this->countStatusRows());
+    }
+
+    #[Test]
+    public function withoutPageOrRecordNothingIsCheckedAndTheQueueIsPointedOut(): void
+    {
+        $tester = new CommandTester($this->get(CheckCommand::class));
+
+        $tester->execute([]);
+
+        self::assertSame(2, $tester->getStatusCode());
+        self::assertStringContainsString('linkvalidator2:fillqueue', $tester->getDisplay());
+        self::assertSame(0, $this->countStatusRows());
+    }
+
+    private function countStatusRows(): int
+    {
+        return $this->getConnectionPool()->getConnectionForTable(self::STATUS_TABLE)->count('*', self::STATUS_TABLE, []);
+    }
+
     private function checkPage(int $pageUid): void
     {
         $tester = new CommandTester($this->get(CheckCommand::class));

@@ -49,11 +49,11 @@ forgotten.
   doctrine` works it off (cron or systemd, not the scheduler without `--time-limit`); messages are routed
   to `doctrine` by `ext_localconf.php`, route to `default` to check synchronously; records of `pid = 0`
   are not checked; several workers are possible, per-domain politeness is not solved yet.
-- Scheduler: task "Execute console commands" with `linkvalidator2:check` and e.g.
-  `--time-limit=300`. Each run checks records never checked first, then records marked due
-  (saved with external URLs not checked yet), then records checked longer ago than
-  `--interval` hours (default 24). `--limit` caps the number of records. Overlapping runs
-  are prevented by a lock. Results of deleted pages are cleaned up at the start.
+- Scheduler: task "Execute console commands" with `linkvalidator2:fillqueue <page>`, one entry per
+  area with its own rhythm; the worker (`messenger:consume doctrine`) is not run by the scheduler
+  (or with `--time-limit` below the cron interval). `linkvalidator2:check --page` / `--record` check
+  right away in the process without a queue, for scripts and small installations. The former
+  background mode of `linkvalidator2:check` without options is gone.
 - Staging with a database synced from live: do not set up the scheduler cron there, or
   send mails to a catcher (`MAIL.transport` per environment, e.g. Mailpit or `null`).
   Mail report recipients can come from an environment variable (`%env()%` in site

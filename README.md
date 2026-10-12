@@ -24,10 +24,8 @@ Status: **work in progress**. Design decisions and the implementation plan live 
 ```bash
 # check one record, print every link and its result
 bin/typo3 linkvalidator2:check --record=tt_content:471
-# check all records of a page and its subpages
-bin/typo3 linkvalidator2:check --page=1287 --depth=1
-# background run (scheduler): records never checked, due ones, then those older than 24 h
-bin/typo3 linkvalidator2:check --time-limit=300 --interval=24
+# check all records of a page and its subpages right away, in this process (prints the progress)
+bin/typo3 linkvalidator2:check --page=1287 --depth=99
 # message queue: queue a page tree, a worker checks it (several workers may run in parallel)
 bin/typo3 linkvalidator2:fillqueue 1287
 bin/typo3 messenger:consume doctrine --time-limit=240
@@ -118,10 +116,10 @@ solved ones in `done/`.
 | Custom exclusion types | ❌ | ❌ | ✅ `ExclusionMatcherInterface` (tagged automatically) + TCA type | | |
 | Accept a single occurrence | ❌ | ❌ | ❌ | 📋 later | |
 | **Running checks** | | | | | |
-| Scheduler | ✅ own scheduler task | ✅ schedulable command | ✅ queue command via "Execute console commands", lock against overlapping runs | | |
+| Scheduler | ✅ own scheduler task | ✅ schedulable command | ✅ `linkvalidator2:fillqueue <page>` via "Execute console commands" (one entry per area), the worker runs as cron or service | | |
 | Message queue (parallel workers) | ❌ | ❌ | ✅ `linkvalidator2:fillqueue <page>` queues a page tree (level by level, in messages of `--chunk-size` records, vanished records cleaned up), `messenger:consume doctrine` checks them; several workers possible, large pages are split | 📋 `--only-if-empty`, per-domain politeness with several workers, hook queues instead of checking | #89266 |
 | Disable on staging (survives DB sync) | ❌ task lives in the DB | ❓ | ➖ not linkvalidator-specific: mail transport per environment (Mailpit, `null`) or no scheduler cron on staging; mail report recipients via `%env()%` in site settings | 📋 document | #110615 (closed) |
-| CLI command | ❌ | ✅ `brofix:checklinks` | ✅ `--record`, `--page`, `--depth`, `--no-external`; without them the queue: never checked, due, older than `--interval` (24 h), with `--limit` / `--time-limit` | 📋 `--site` | |
+| CLI command | ❌ | ✅ `brofix:checklinks` | ✅ `linkvalidator2:check --record` / `--page` `--depth` `--no-external` checks right away in the process and prints the progress (page tree level by level, vanished records cleaned up); the background run is the message queue | | |
 | Link types to check | 🟡 TSconfig `linktypes`, report shows stale results of the other types | ✅ | ✅ always all links of a record, results replaced per record; link type is a report filter | | #92586 |
 | Interactive check of large trees without timeouts | ❌ synchronous | ❓ not verified | ✅ browser checks page by page via AJAX (5 s budget per request, a page continues in the next request), progress bar, cancel, summary notification with new broken links | | #89266 |
 | Disable the interactive check | ❌ | ❓ | ✅ extension configuration `allowManualCheck`: buttons hidden, `check/start` and `check/page` answer 403; the command is not affected | | |

@@ -3,7 +3,9 @@
 Status: Entwurf aus der Diskussion vom 2026-10-12. Umgesetzt (2026-10-12): `fillqueue`,
 `CheckRecordsMessage`, `CheckRecordsHandler`, Routing auf `doctrine`. Abweichung vom Entwurf: es
 gibt nur noch Nachrichten pro Tabelle mit bis zu `--chunk-size` Records (kein `CheckPageMessage`),
-das Aufräumen verschwundener Records macht `fillqueue` selbst beim Durchlaufen. Der Handler leert den Runtime-Cache pro Nachricht (siehe unten). Offen sind
+das Aufräumen verschwundener Records macht `fillqueue` selbst beim Durchlaufen. Der Handler leert den Runtime-Cache pro Nachricht (siehe unten). Danach umgesetzt:
+`RecordQueue` und der Queue-Modus von `linkvalidator2:check` ohne Optionen sind entfernt,
+`check --page` läuft über dieselbe Seitenbaum-Abfrage und gibt den Fortschritt aus. Offen sind
 `--only-if-empty`, der Hook, `CheckCommand` ohne Optionen und die Messung mit großen Beständen.
 
 ## Ausgangslage
