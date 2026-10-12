@@ -77,11 +77,11 @@ Options:
     -t <14|15>
         Only with -s composerInstallHighest|composerInstallLowest.
         TYPO3 core version to install, default: 15.
-            - 14: TYPO3 v14.3 (PHP 8.2 - 8.5)
-            - 15: TYPO3 v15 (main, PHP 8.4 - 8.5)
+            - 14: TYPO3 v14.3 (PHP 8.5)
+            - 15: TYPO3 v15 (main, PHP 8.5 only)
 
-    -p <8.2|8.3|8.4|8.5>
-        PHP version, default: 8.5.
+    -p <8.5>
+        PHP version, default: 8.5 (the extension requires 8.5).
 
     -x
         Send xdebug information to a listening IDE (port 9003, change with -y).
@@ -147,7 +147,7 @@ while getopts "b:s:d:i:p:t:xy:h" OPT; do
             ;;
         p)
             PHP_VERSION=${OPTARG}
-            if ! [[ ${PHP_VERSION} =~ ^(8.2|8.3|8.4|8.5)$ ]]; then
+            if ! [[ ${PHP_VERSION} =~ ^(8.5)$ ]]; then
                 INVALID_OPTIONS+=("-p ${OPTARG}")
             fi
             ;;
