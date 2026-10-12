@@ -206,7 +206,9 @@ final readonly class BrokenLinkRepository
             ->from(self::TABLE, 'b')
             ->leftJoin('b', TargetRepository::TABLE, 't', $queryBuilder->expr()->eq('t.uid', $queryBuilder->quoteIdentifier('b.target')))
             ->where(
-                $queryBuilder->expr()->in('b.pid', $queryBuilder->createNamedParameter($pids, Connection::PARAM_INT_ARRAY)),
+                // The integers are part of the SQL, not placeholders: a database allows about 65,000 of them in
+                // a statement, and a report over a large page tree has more pages than that
+                $queryBuilder->expr()->in('b.pid', array_map(intval(...), $pids)),
                 $queryBuilder->expr()->eq('b.workspace', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT))
             );
         if ($permissions !== null) {
