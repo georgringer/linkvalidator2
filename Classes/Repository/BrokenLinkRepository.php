@@ -111,6 +111,31 @@ final readonly class BrokenLinkRepository
     }
 
     /**
+     * Number of broken links (not notices) per page
+     *
+     * @param list<int> $pids
+     * @return array<int, int> Pages with at least one broken link, by uid
+     */
+    public function countBrokenGroupedByPid(array $pids, ?ReportPermissions $permissions = null): array
+    {
+        $counts = [];
+        foreach (array_chunk($pids, 1000) as $chunk) {
+            $queryBuilder = $this->createQueryBuilderForPids($chunk, $permissions);
+            $rows = $queryBuilder
+                ->select('b.pid')
+                ->addSelectLiteral('COUNT(b.uid) AS amount')
+                ->andWhere($queryBuilder->expr()->in('b.status', $queryBuilder->createNamedParameter(self::BROKEN_STATUSES, Connection::PARAM_STR_ARRAY)))
+                ->groupBy('b.pid')
+                ->executeQuery()
+                ->fetchAllAssociative();
+            foreach ($rows as $row) {
+                $counts[(int)$row['pid']] = (int)$row['amount'];
+            }
+        }
+        return $counts;
+    }
+
+    /**
      * Values present among the broken links of the given pages with their number of results, to offer
      * only filter options with results. Not narrowed by the other filters.
      *

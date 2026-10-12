@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="en" datatype="plaintext" original="widget.xlf" product-name="linkvalidator2">
+    <header/>
+    <body>
+      <trans-unit id="widget.title">
+        <source>Broken links</source>
+      </trans-unit>
+      <trans-unit id="widget.description">
+        <source>The pages below a page with the most broken links. Choose the page and the levels in the settings of the widget.</source>
+      </trans-unit>
+      <trans-unit id="setting.label.label">
+        <source>Title</source>
+      </trans-unit>
+      <trans-unit id="setting.label.description">
+        <source>Replaces the title of the widget</source>
+      </trans-unit>
+      <trans-unit id="setting.page.label">
+        <source>Page</source>
+      </trans-unit>
+      <trans-unit id="setting.page.description">
+        <source>The page and its subpages are counted</source>
+      </trans-unit>
+      <trans-unit id="setting.depth.label">
+        <source>Levels</source>
+      </trans-unit>
+      <trans-unit id="setting.depth.description">
+        <source>Levels of subpages below the page</source>
+      </trans-unit>
+      <trans-unit id="setting.depth.0">
+        <source>Only the page</source>
+      </trans-unit>
+      <trans-unit id="setting.depth.1">
+        <source>1 level</source>
+      </trans-unit>
+      <trans-unit id="setting.depth.2">
+        <source>2 levels</source>
+      </trans-unit>
+      <trans-unit id="setting.depth.3">
+        <source>3 levels</source>
+      </trans-unit>
+      <trans-unit id="setting.depth.4">
+        <source>4 levels</source>
+      </trans-unit>
+      <trans-unit id="setting.depth.99">
+        <source>All levels</source>
+      </trans-unit>
+      <trans-unit id="setting.limit.label">
+        <source>Pages shown</source>
+      </trans-unit>
+      <trans-unit id="setting.limit.description">
+        <source>Number of pages in the list, the ones with most broken links first</source>
+      </trans-unit>
+      <trans-unit id="state.noModule">
+        <source>You do not have access to the module Check Links.</source>
+      </trans-unit>
+      <trans-unit id="state.noPage">
+        <source>Choose a page in the settings of the widget.</source>
+      </trans-unit>
+      <trans-unit id="state.noAccess">
+        <source>You do not have access to the selected page.</source>
+      </trans-unit>
+      <trans-unit id="summary">
+        <source>%1$d broken links on %2$d pages below "%3$s"</source>
+      </trans-unit>
+      <trans-unit id="column.page">
+        <source>Page</source>
+      </trans-unit>
+      <trans-unit id="column.amount">
+        <source>Broken links</source>
+      </trans-unit>
+      <trans-unit id="more">
+        <source>and %1$d more pages</source>
+      </trans-unit>
+      <trans-unit id="empty">
+        <source>No broken links below "%1$s".</source>
+      </trans-unit>
+      <trans-unit id="openReport">
+        <source>Open the report</source>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

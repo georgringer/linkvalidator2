@@ -18,6 +18,7 @@
 		"typo3/cms-frontend": "^14.3 || 15.0.*@dev"
 	},
 	"require-dev": {
+		"typo3/cms-dashboard": "^14.3 || 15.0.*@dev",
 		"typo3/testing-framework": "dev-main"
 	},
 	"autoload": {
@@ -30,6 +31,9 @@
 			"GeorgRinger\\Linkvalidator2\\Tests\\": "Tests/",
 			"TYPO3Tests\\TestLinkHandler\\": "Tests/Functional/Fixtures/Extensions/test_link_handler/Classes/"
 		}
+	},
+	"suggest": {
+		"typo3/cms-dashboard": "Widget with the pages with the most broken links"
 	},
 	"minimum-stability": "dev",
 	"prefer-stable": true,

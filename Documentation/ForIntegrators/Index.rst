@@ -33,3 +33,4 @@ How the extension works, in short:
     BackgroundChecking
     Exclusions
     KeepingResultsCurrent
+    DashboardWidget

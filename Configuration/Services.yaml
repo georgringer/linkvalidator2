@@ -6,6 +6,8 @@ services:
 
   GeorgRinger\Linkvalidator2\:
     resource: '../Classes/*'
+    # Needs EXT:dashboard, registered in Services.php
+    exclude: '../Classes/Widget/*'
 
   GeorgRinger\Linkvalidator2\Check\CheckerRegistry:
     arguments:
