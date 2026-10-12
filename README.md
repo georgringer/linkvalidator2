@@ -84,7 +84,7 @@ solved ones in `done/`.
 | Source hidden by its page (hidden/expired page, `extendToSubpages`) | ❌ | ❓ | ❌ reported | 📋 step 7: not reported, shown as skipped | #96447 |
 | Translation whose default language record is hidden | ❌ checked | ❓ | ❌ checked | 📋 step 7 | #94195 |
 | Translations of untranslated pages | ❌ checked | ❌ checked | ❌ checked | 📋 step 7: not reported, shown as skipped | |
-| Workspaces | ❌ live only | 🟡 live only, `doNotCheckLinksOnWorkspace` | ❌ live only, column prepared | 📋 later | |
+| Workspaces | ❌ live only, module not available in a workspace | 🟡 live only, `doNotCheckLinksOnWorkspace` | ❌ live only like the core, module not available in a workspace, columns prepared | 📋 **required before it may replace the core linkvalidator**, not optional: the records changed, created or deleted in a workspace, no moves in the first step (see `Notes/2026-10-12-workspaces.md`) | |
 | **Checking internal targets** | | | | | |
 | Page missing / deleted / hidden | ✅ | ✅ | ✅ | | |
 | Target changed after linking (page hidden, deleted, …) | ❌ only on the next full run | ❓ | ✅ records referencing a changed record (reference index) become due and are queued with priority (a worker takes them before the regular queue), or checked by "Check links"; subpages via `extendToSubpages` only by the regular run | | |
