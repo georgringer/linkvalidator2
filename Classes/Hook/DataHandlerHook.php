@@ -24,6 +24,7 @@ use GeorgRinger\Linkvalidator2\Exclusion\ExclusionChangeProcessor;
 use GeorgRinger\Linkvalidator2\Exclusion\ExclusionRepository;
 use GeorgRinger\Linkvalidator2\Extraction\CheckableFieldResolver;
 use GeorgRinger\Linkvalidator2\Repository\RecordStatusRepository;
+use GeorgRinger\Linkvalidator2\Service\DueQueue;
 use GeorgRinger\Linkvalidator2\Service\PageRecordFinder;
 use GeorgRinger\Linkvalidator2\Service\ReferencingRecordFinder;
 use GeorgRinger\Linkvalidator2\Service\RecordCheckService;
@@ -68,6 +69,7 @@ final class DataHandlerHook
         private readonly ExclusionChangeProcessor $exclusionChangeProcessor,
         private readonly ReferencingRecordFinder $referencingRecordFinder,
         private readonly RecordStatusRepository $recordStatusRepository,
+        private readonly DueQueue $dueQueue,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -179,7 +181,23 @@ final class DataHandlerHook
             }
         }
         // After the checks above, which mark records as checked
+        $this->queueRecordsWithUncheckedUrls($records);
         $this->markReferencingRecordsDue();
+    }
+
+    /**
+     * Saved records with external URLs that have no result yet are due after the check from the
+     * cache: the queue with priority checks them
+     *
+     * @param array<string, array{table: string, uid: int}> $records
+     */
+    private function queueRecordsWithUncheckedUrls(array $records): void
+    {
+        try {
+            $this->dueQueue->queue($this->recordStatusRepository->findDue(array_values($records)));
+        } catch (\Throwable $e) {
+            $this->logger->warning('Queueing records with unchecked URLs failed: {message}', ['message' => $e->getMessage(), 'exception' => $e]);
+        }
     }
 
     private function markReferencingRecordsDue(): void
@@ -192,7 +210,7 @@ final class DataHandlerHook
                     $this->referencingRecordFinder->find($table, array_values($uids)),
                     fn(array $record): bool => isset($this->getCheckableTables()[$record['table']])
                 );
-                $this->recordStatusRepository->markDue(array_values($records));
+                $this->dueQueue->queue(array_values($records));
             }
         } catch (\Throwable $e) {
             $this->logger->warning('Marking records referencing changed records as due failed: {message}', ['message' => $e->getMessage(), 'exception' => $e]);

@@ -19,6 +19,7 @@ namespace GeorgRinger\Linkvalidator2\Exclusion;
 
 use GeorgRinger\Linkvalidator2\Repository\BrokenLinkRepository;
 use GeorgRinger\Linkvalidator2\Repository\RecordStatusRepository;
+use GeorgRinger\Linkvalidator2\Service\DueQueue;
 use GeorgRinger\Linkvalidator2\Service\PageRecordFinder;
 use GeorgRinger\Linkvalidator2\Extraction\LinkCandidate;
 use GeorgRinger\Linkvalidator2\Target\LinkTargetFactory;
@@ -27,7 +28,7 @@ use GeorgRinger\Linkvalidator2\Target\LinkTargetFactory;
  * Applies changed exclusions to the stored results of their subtree. A new exclusion removes
  * the results it matches right away, without checking anything: excluded links are not
  * stored. Where an exclusion may have been removed, links excluded so far were never checked:
- * those records become due for the queue.
+ * those records become due and are queued with priority.
  *
  * @internal
  */
@@ -40,6 +41,7 @@ final readonly class ExclusionChangeProcessor
         private BrokenLinkRepository $brokenLinkRepository,
         private RecordStatusRepository $recordStatusRepository,
         private LinkTargetFactory $linkTargetFactory,
+        private DueQueue $dueQueue,
     ) {}
 
     /**
@@ -53,7 +55,7 @@ final readonly class ExclusionChangeProcessor
             $this->removeExcludedResults($pid);
         }
         foreach (array_unique($removedPids) as $pid) {
-            $this->recordStatusRepository->markDueByPids($this->getSubtree($pid));
+            $this->dueQueue->queue($this->recordStatusRepository->findRecordsByPids($this->getSubtree($pid)));
         }
     }
 

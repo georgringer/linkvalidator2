@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use GeorgRinger\Linkvalidator2\Hook\DataHandlerHook;
+use GeorgRinger\Linkvalidator2\Message\CheckDueRecordsMessage;
 use GeorgRinger\Linkvalidator2\Message\CheckRecordsMessage;
 
 defined('TYPO3') or die();
@@ -12,3 +13,5 @@ $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_tcemain.php']['proc
 
 // Checked in the background by messenger:consume doctrine; route to "default" to check synchronously
 $GLOBALS['TYPO3_CONF_VARS']['SYS']['messenger']['routing'][CheckRecordsMessage::class] ??= 'doctrine';
+// Records that became due go to a transport of their own, which a worker takes before the regular one
+$GLOBALS['TYPO3_CONF_VARS']['SYS']['messenger']['routing'][CheckDueRecordsMessage::class] ??= 'linkvalidator2_priority';

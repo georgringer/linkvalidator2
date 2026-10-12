@@ -28,7 +28,7 @@ bin/typo3 linkvalidator2:check --record=tt_content:471
 bin/typo3 linkvalidator2:check --page=1287 --depth=99
 # message queue: queue a page tree, a worker checks it (several workers may run in parallel)
 bin/typo3 linkvalidator2:fillqueue 1287
-bin/typo3 messenger:consume doctrine --time-limit=240
+bin/typo3 messenger:consume linkvalidator2_priority doctrine --time-limit=240
 ```
 
 `fillqueue` walks the page tree below the page, level by level, and queues the records of every
@@ -36,6 +36,7 @@ page in messages of `--chunk-size` records (25). Queueing a record twice is harm
 per area with its own rhythm; overlapping areas only cost time. Records without a page (`pid = 0`)
 are not checked. The messages are routed to the `doctrine` transport, set
 `$GLOBALS['TYPO3_CONF_VARS']['SYS']['messenger']['routing']` to `default` to check synchronously.
+Records that became due (saved with URLs not checked yet, changed link targets, removed exclusions) go to the transport `linkvalidator2_priority`: a worker started as above takes them before the regular queue.
 `messenger:consume` blocks the scheduler while it runs: use `--time-limit` below the cron interval
 or run it as a service.
 
@@ -86,7 +87,7 @@ solved ones in `done/`.
 | Workspaces | ❌ live only | 🟡 live only, `doNotCheckLinksOnWorkspace` | ❌ live only, column prepared | 📋 later | |
 | **Checking internal targets** | | | | | |
 | Page missing / deleted / hidden | ✅ | ✅ | ✅ | | |
-| Target changed after linking (page hidden, deleted, …) | ❌ only on the next full run | ❓ | ✅ records referencing a changed record (reference index) become due, checked by the next run or "Check links"; subpages via `extendToSubpages` only by the regular run | | |
+| Target changed after linking (page hidden, deleted, …) | ❌ only on the next full run | ❓ | ✅ records referencing a changed record (reference index) become due and are queued with priority (a worker takes them before the regular queue), or checked by "Check links"; subpages via `extendToSubpages` only by the regular run | | |
 | Shortcut / link page whose target is not reachable | ❌ | ❓ | ✅ `page.targetNotReachable` (frontend resolution) | | #92542 |
 | Page hidden / expired via a parent with `extendToSubpages` | ❌ | ❓ | ✅ decided by the frontend's page resolution (`PageInformationFactory`, without rendering) | | #106675, #101367 |
 | Restricted or scheduled target (fe_group, start time, future stop time, also via parent) | ❌ | ❓ | ✅ reported as notice, not as broken; listed with a badge, status filter | | #106675 |
@@ -125,7 +126,7 @@ solved ones in `done/`.
 | Disable the interactive check | ❌ | ❓ | ✅ extension configuration `allowManualCheck`: buttons hidden, `check/start` and `check/page` answer 403; the command is not affected | | |
 | Accessible progress | ❌ | ❓ | ✅ live region (`role="status"`, polite) announces start, every 10 % and cancelling; focus moves to "Cancel" while running; notifications are polite live regions of the core | | |
 | Report during a running check / parallel checks | ❌ list emptied first, duplicates | ❓ | 🟡 previous results stay visible, report reloads when done; parallel runs not locked | 📋 transaction in `replaceForRecord()` | #89266 |
-| Recheck on save | 🟡 when returning to the module (`actionAfterEditRecord`) | 🟡 when returning to the module | ✅ DataHandler hook (save, new, move, restore, copy, localize, publish): internal immediately, external from cache, records with unchecked URLs become due | 📋 records linking to a page whose visibility changed are not rechecked | #105911 |
+| Recheck on save | 🟡 when returning to the module (`actionAfterEditRecord`) | 🟡 when returning to the module | ✅ DataHandler hook (save, new, move, restore, copy, localize, publish): internal immediately, external from cache, records with unchecked URLs become due and are queued with priority | 📋 records linking to a page whose visibility changed are not rechecked | #105911 |
 | Clean up on delete / move | ❌ deleted pages stay forever | ✅ delete | ✅ DataHandler: delete removes results (incl. translations, everything below a deleted page), move updates the page; checking a page reconciles changes made around the DataHandler | 📋 orphan cleanup in the queue run | #89426 |
 | Record hidden after the check | ❌ stays in the report | ❓ | ✅ removed when saved; an end time passing removes it with the next check | | #105911 |
 | Results kept between runs | ❌ list is rebuilt | ✅ updated | ✅ only changed records rewritten, `first_detected` kept | | |

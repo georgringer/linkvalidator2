@@ -141,6 +141,7 @@ final class DataHandlerHookTest extends FunctionalTestCase
         // Requesting the URL would have reported the .invalid host as broken
         self::assertSame([], $this->getErrorTypes($uid));
         self::assertSame(0, $this->getStatus($uid)['last_checked']);
+        self::assertSame(1, $this->countPriorityMessages(), 'Queued with priority');
     }
 
     /**
@@ -156,6 +157,7 @@ final class DataHandlerHookTest extends FunctionalTestCase
 
         self::assertSame(0, $this->getStatus($uid)['last_checked']);
         self::assertGreaterThan(0, $this->getStatus($otherUid)['last_checked'], 'Not linking to the page');
+        self::assertSame(1, $this->countPriorityMessages(), 'Only the record linking to the page is queued with priority');
     }
 
     #[Test]
@@ -214,6 +216,12 @@ final class DataHandlerHookTest extends FunctionalTestCase
             ->fetchFirstColumn();
         sort($errorTypes);
         return $errorTypes;
+    }
+
+    private function countPriorityMessages(): int
+    {
+        return $this->getConnectionPool()->getConnectionForTable('sys_messenger_messages')
+            ->count('*', 'sys_messenger_messages', ['queue_name' => 'linkvalidator2_priority']);
     }
 
     /**

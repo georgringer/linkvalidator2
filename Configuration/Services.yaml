@@ -18,3 +18,17 @@ services:
   # Instantiated by the DataHandler through GeneralUtility::makeInstance()
   GeorgRinger\Linkvalidator2\Hook\DataHandlerHook:
     public: true
+
+  # Transport for records that became due, a worker consumes it before the regular one:
+  # messenger:consume linkvalidator2_priority doctrine
+  linkvalidator2.transport.priority:
+    class: Symfony\Component\Messenger\Bridge\Doctrine\Transport\DoctrineTransport
+    factory: ['@TYPO3\CMS\Core\Messenger\DoctrineTransportFactory', 'createTransport']
+    arguments:
+      $options:
+        queue_name: 'linkvalidator2_priority'
+    tags:
+      - name: 'messenger.sender'
+        identifier: 'linkvalidator2_priority'
+      - name: 'messenger.receiver'
+        identifier: 'linkvalidator2_priority'

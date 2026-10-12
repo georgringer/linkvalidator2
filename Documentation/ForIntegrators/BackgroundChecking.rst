@@ -36,7 +36,8 @@ checks the records.
     :caption: Fill the queue, then run a worker
 
     vendor/bin/typo3 linkvalidator2:fillqueue 1287
-    vendor/bin/typo3 messenger:consume doctrine --time-limit=240
+    vendor/bin/typo3 messenger:consume linkvalidator2_priority doctrine \
+        --time-limit=240
 
 :bash:`fillqueue` takes the page to start at. It walks the page tree below
 the page, level by level, and queues the records of every page. Records on
@@ -93,7 +94,8 @@ same as the check command:
 Running the worker
 ------------------
 
-The worker is :bash:`messenger:consume doctrine`. Start as many as the
+The worker is :bash:`messenger:consume linkvalidator2_priority doctrine`, see
+:ref:`background-priority` for the first transport. Start as many as the
 database and the network allow, for example one per CPU core.
 
 .. note::
@@ -106,7 +108,8 @@ database and the network allow, for example one per CPU core.
     :caption: Cron, every five minutes, a worker lives for four
 
     */5 * * * * cd /var/www/site && vendor/bin/typo3 \
-        messenger:consume doctrine --time-limit=240 --memory-limit=256M
+        messenger:consume linkvalidator2_priority doctrine \
+        --time-limit=240 --memory-limit=256M
 
 .. warning::
 
@@ -119,6 +122,32 @@ database and the network allow, for example one per CPU core.
 
 The time limit and the message limit of a worker are only checked between two
 messages. A message that is working on slow external URLs is not interrupted.
+
+.. _background-priority:
+
+Records that are due
+--------------------
+
+A queue filled for a whole site can hold millions of records. Records that
+became due should not wait for it. They are queued on a transport of their
+own, :php:`linkvalidator2_priority`, and a worker that lists it first takes
+its messages before the ones of the regular queue.
+
+Records become due when
+
+*   a record is saved with links to external URLs that have no result yet,
+*   the target of a link changed: the records that reference a changed page
+    (reference index) are queued,
+*   an exclusion was hidden, deleted or moved: the records below its page
+    are queued.
+
+The messages are queued at that moment, there is nothing to schedule. If no
+worker takes the priority transport, the records stay marked as due and are
+checked by the next :bash:`fillqueue` run for their page, like before.
+
+The route of the messages is set in `ext_localconf.php` and can be changed
+like the one of the regular messages. Do not route them to :php:`default`:
+the check would then run during the save in the backend.
 
 What you see while a worker runs
 --------------------------------

@@ -113,6 +113,9 @@ final class ExclusionChangeTest extends FunctionalTestCase
 
         self::assertSame(0, $this->getLastChecked(15));
         self::assertGreaterThan(0, $this->getLastChecked(10), 'Page 1 is outside of the subtree');
+        // Record 15 and page 2 itself, with priority
+        self::assertGreaterThan(0, $this->getConnectionPool()->getConnectionForTable('sys_messenger_messages')
+            ->count('*', 'sys_messenger_messages', ['queue_name' => 'linkvalidator2_priority']));
     }
 
     #[Test]

@@ -14,7 +14,8 @@ Saving records
 
 Saving a record in the backend checks it at once: internal links are checked
 immediately, external URLs from the cache. A record with external URLs that
-have no result yet is checked completely with the next run.
+have no result yet is queued with priority, see
+:ref:`background-priority`, and checked completely by a worker.
 
 *   Deleting a record removes its results.
 *   Copying, moving, restoring, localizing and publishing count as saving.
@@ -24,8 +25,9 @@ Changed targets
 ===============
 
 If a target changes, for example a page is hidden or deleted, the records
-that link to it are found through the reference index. The next run or
-:guilabel:`Check links` reports them.
+that link to it are found through the reference index and queued with
+priority, see :ref:`background-priority`. :guilabel:`Check links` reports
+them as well.
 
 .. important::
 

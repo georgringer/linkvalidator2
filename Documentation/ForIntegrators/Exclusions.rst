@@ -56,8 +56,8 @@ What happens to the results
     exclusions" counts links that were fine only at the next check of their
     record.
 *   Hiding or deleting an exclusion, or moving it to another page, makes the
-    links it kept out checkable again. They appear with the next run for the
-    pages concerned, see :ref:`background-queue`.
+    links it kept out checkable again. The records below its page are queued
+    with priority, see :ref:`background-priority`.
 
 Custom types
 ============

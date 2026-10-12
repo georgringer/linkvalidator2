@@ -89,6 +89,47 @@ final readonly class RecordStatusRepository
     }
 
     /**
+     * @param list<int>|null $pids null for all pages
+     * @return list<array{table: string, uid: int}>
+     */
+    public function findRecordsByPids(?array $pids): array
+    {
+        $records = [];
+        foreach ($pids === null ? [null] : array_chunk($pids, 1000) as $chunk) {
+            $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+            $queryBuilder->select('table_name', 'record_uid')->from(self::TABLE);
+            if ($chunk !== null) {
+                $queryBuilder->where($queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter($chunk, Connection::PARAM_INT_ARRAY)));
+            }
+            foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row) {
+                $records[] = ['table' => (string)$row['table_name'], 'uid' => (int)$row['record_uid']];
+            }
+        }
+        return $records;
+    }
+
+    /**
+     * Of these records the ones that are due: marked as such, for example because their links
+     * with external URLs were not checked yet
+     *
+     * @param list<array{table: string, uid: int}> $records
+     * @return list<array{table: string, uid: int}>
+     */
+    public function findDue(array $records): array
+    {
+        $due = [];
+        foreach ($records as ['table' => $table, 'uid' => $uid]) {
+            $lastChecked = $this->connectionPool->getConnectionForTable(self::TABLE)
+                ->select(['last_checked'], self::TABLE, ['table_name' => $table, 'record_uid' => $uid, 'workspace' => 0])
+                ->fetchOne();
+            if ($lastChecked !== false && (int)$lastChecked === 0) {
+                $due[] = ['table' => $table, 'uid' => $uid];
+            }
+        }
+        return $due;
+    }
+
+    /**
      * @return list<array{table: string, uid: int}>
      */
     public function findRecordsByPid(int $pid): array
