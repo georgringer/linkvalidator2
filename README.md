@@ -108,7 +108,7 @@ solved ones in `done/`.
 | Full error message (e.g. cURL TLS details) | 🟡 one localised text per cURL code | ❓ | ✅ short localised text, the cURL message in a "Details" modal (target, HTTP status, error code, message), `errno` stored; `details.message` shown for every checker | | #101935 |
 | Polite crawling: own User-Agent | ✅ configurable | ✅ | ✅ `externalUserAgent` | | #89287 |
 | Polite crawling: crawl delay per domain, `Retry-After` | ❌ | ✅ crawl delay | ❌ | 📋 later | #89287 |
-| `robots.txt` | ❌ | ❌ | ❌ | 💭 single HEAD requests, not a crawler | #89287 |
+| `robots.txt` | ➖ | ➖ | ➖ single requests to linked URLs, not a crawler: disallowed paths would be reported as "unknown" although they work; politeness comes from the user agent, the cache and the delay per domain | | #89287 |
 | **Exclusions** | | | | | |
 | Exclude link targets (URL / domain / page) | ❌ | ✅ records + own module | ✅ records `tx_linkvalidator2_exclusion` on a page, apply to its subtree (root level: everywhere); types "URL or domain" (everything starting with it, incl. subdomains, scheme and anchor ignored), page and "all links" (no check in the subtree, e.g. an archive); excluded links are not checked (no HTTP request) and not stored | 📋 site-wide exclusions as site setting (deployed with the project); regex only as own matcher | #85127, #92822 |
 | "Ignore" from the report | ❌ | ❓ | ✅ per result: URL, its domain or the target page, stored on the page of the record through the DataHandler (permissions apply), results disappear right away | 📋 "accept this occurrence" (single link) | #92822 |
