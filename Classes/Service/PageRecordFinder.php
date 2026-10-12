@@ -19,7 +19,6 @@ namespace GeorgRinger\Linkvalidator2\Service;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
-use TYPO3\CMS\Core\Domain\Repository\PageRepository;
 use TYPO3\CMS\Core\Schema\Capability\TcaSchemaCapability;
 use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -35,21 +34,22 @@ final readonly class PageRecordFinder
         private ConnectionPool $connectionPool,
         private TcaSchemaFactory $tcaSchemaFactory,
         private CheckableFieldResolver $checkableFieldResolver,
-        private PageRepository $pageRepository,
     ) {}
 
     /**
      * The page itself plus its subpages down to $depth levels, including hidden pages
-     * and folders, which may hold records with links as well.
+     * and folders, which may hold records with links as well. Mount points are not followed:
+     * the records of a mounted page are checked on the page they are stored on.
      *
      * @return list<int>
      */
     public function findPageIds(int $pageUid, int $depth): array
     {
-        if ($depth <= 0) {
-            return [$pageUid];
+        $pageIds = [];
+        foreach ($this->iteratePageIdBatches($pageUid, max(0, $depth), 1000) as $batch) {
+            array_push($pageIds, ...$batch);
         }
-        return [$pageUid, ...$this->pageRepository->getDescendantPageIdsRecursive($pageUid, $depth, 0, [], true)];
+        return $pageIds;
     }
 
     /**

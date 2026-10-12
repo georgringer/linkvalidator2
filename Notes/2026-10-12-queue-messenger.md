@@ -148,6 +148,42 @@ Gründen der Aktualität richtig). Forge-Meldung dazu: `fileadmin/forge/`.
 - README: Zeilen "Scheduler" und "CLI command" in der Feature-Tabelle anpassen, sobald
   etwas davon gebaut ist.
 
+## Messung mit großem Datenbestand
+
+DDEV, MariaDB 10.11, PHP 8.5, ein Container, Messdaten per SQL: ein Seitenordner mit
+20.000 Inhaltselementen (jedes fünfte mit kaputtem Link) und ein Seitenbaum mit 19.609
+Seiten (7 Unterseiten pro Seite, 5 Ebenen) mit je einem Inhaltselement, jedes zehnte mit
+kaputtem Link. Zusammen 59.216 Records. Kein externer Link, es geht um die Datenbank- und
+Speicherseite, nicht um HTTP.
+
+| Was | Zeit | Spitze RSS |
+|---|---|---|
+| `fillqueue` für den Ordner (20.001 Records, 801 Nachrichten) | 0,6 s | 116 MB |
+| `fillqueue` für den ganzen Baum (19.609 Seiten, 59.216 Records, 2.370 Nachrichten) | 3,5 s | 117 MB |
+| dasselbe nochmal, mit 65.000 vorhandenen Status-Zeilen (Aufräumen) | 3,4 s | 125 MB |
+| Worker, 2.270 Nachrichten (56.700 Records, 11.000 Ergebnisse) | 45 s | 114 MB, flach |
+| `markChecked()` 5.000 mal (Zählen plus Schreiben) | 0,5 s | |
+| Report für den ganzen Baum, unbegrenzte Tiefe | 4,0 s, jetzt 0,5-0,7 s | 113 MB |
+
+Ergebnisse:
+
+- **`fillqueue` und Worker tragen:** Der Speicher wächst nicht mit der Größe, ein Worker
+  schafft etwa 800 bis 1.250 Records pro Sekunde (ohne HTTP). Die Seite mit 20.000 Records
+  ist unkritisch: sie wird in 801 Nachrichten zerlegt.
+- **`markChecked()` als Upsert ist unnötig:** 0,1 ms pro Aufruf.
+- **Engpass im Report war `findPageIds()`:** Die Core-Funktion
+  `PageRepository::getDescendantPageIdsRecursive()` fragt eine Seite nach der anderen ab
+  und brauchte 2,8 s für 19.609 Seiten. Der Ebenen-Walker (`iteratePageIdBatches()`) braucht
+  0,11 s. `findPageIds()` nutzt jetzt den Walker. Mount-Points werden dabei nicht mehr
+  verfolgt: die Records einer eingebundenen Seite werden dort geprüft, wo sie liegen.
+- **Echte Grenze beim Report: etwa 65.000 Seiten.** `countByPids()`, `findByPids()` und
+  `findFilterValues()` hatten die Seiten als Platzhalter in einem `IN (…)`. Bei 60.000
+  ging es noch, ab 66.000 brach es mit "Prepared statement contains too many placeholders"
+  ab. Die Seiten stehen jetzt als Ganzzahlen im SQL, ein Test mit 100.000 Seiten sichert
+  das auf MariaDB ab (auf SQLite fällt es nicht auf, das Limit liegt dort höher).
+- **Nicht gemessen:** externe URLs (dort bestimmen die Timeouts, nicht die Datenbank), mehrere
+  Worker gleichzeitig und andere Datenbanken als MariaDB.
+
 ## Offen
 
 - Schwelle N und das Aufteilen großer Seiten (`CheckRecordsMessage`), Abgleich
@@ -156,6 +192,3 @@ Gründen der Aktualität richtig). Forge-Meldung dazu: `fileadmin/forge/`.
 - Routing und Transport-Default.
 - Hook: sofort prüfen oder einreihen.
 - Lock-Verhalten und Abbruch mitten im Lauf in einem Test belegen.
-- Messung mit großem Datenbestand (Seed in `seed-bigtree.php`) mit einer Seite mit
-  20.000 Records, außerdem `removeResultsOfMissingPages()` und die Report-Abfrage mit
-  vielen Seiten (`IN (…)`).
