@@ -94,6 +94,7 @@
                                         </td>
                                         <td>
                                             <f:if condition="{brokenLink.record}"><a href="#" data-contextmenu-trigger="click" data-contextmenu-table="{brokenLink.table_name}" data-contextmenu-uid="{brokenLink.record_uid}"><core:iconForRecord table="{brokenLink.table_name}" row="{brokenLink.record}" /></a></f:if>
+                                            <f:if condition="{brokenLink.languageIcon}"><f:format.raw>{brokenLink.languageIcon}</f:format.raw></f:if>
                                             <a href="{brokenLink.editUrl}">{brokenLink.recordTitle}</a>
                                             <br><small>{brokenLink.table_name}:{brokenLink.record_uid} · {brokenLink.field}</small>
                                         </td>

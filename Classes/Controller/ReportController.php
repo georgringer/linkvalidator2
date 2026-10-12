@@ -40,6 +40,7 @@ use TYPO3\CMS\Core\Type\Bitmask\Permission;
 use TYPO3\CMS\Core\Utility\MathUtility;
 use GeorgRinger\Linkvalidator2\Configuration\ExtensionSettings;
 use GeorgRinger\Linkvalidator2\Exclusion\ExclusionRepository;
+use GeorgRinger\Linkvalidator2\Report\LanguageIconProvider;
 use GeorgRinger\Linkvalidator2\Report\ReportFilter;
 use GeorgRinger\Linkvalidator2\Report\ReportOrdering;
 use GeorgRinger\Linkvalidator2\Report\ReportPermissions;
@@ -71,6 +72,7 @@ final readonly class ReportController
         private SiteFinder $siteFinder,
         private RecordStatusRepository $recordStatusRepository,
         private ExtensionSettings $extensionSettings,
+        private LanguageIconProvider $languageIconProvider,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -281,6 +283,7 @@ final readonly class ReportController
             $row['pageRecord'] = $pageRecords[$pid];
             $row['record'] = $record;
             $row['pageTitle'] = $pageTitles[$pid];
+            $row['languageIcon'] = $this->languageIconProvider->describe($pid, (int)$row['language'])['icon'] ?? '';
             $row['details'] = (array)json_decode((string)$row['error_details'], true);
             $row['detailsJson'] = json_encode($row['details'] + ['target' => (string)$row['link_string']], JSON_THROW_ON_ERROR);
             $row['messageArguments'] = $this->getMessageArguments((string)$row['error_type'], $row['details'], $pageTitles);

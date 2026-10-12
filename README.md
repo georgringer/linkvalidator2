@@ -133,6 +133,7 @@ solved ones in `done/`.
 | Placement | Link Management | own module | ✅ Link Management | | |
 | Depth selector | ✅ | ✅ | ✅ separate levels for checking (doc header, next to "Check links", no reload) and listing (filter form) | | |
 | Filter (status, link type, table, language, text) | 🟡 link type only | ✅ | ✅ | | #96447 |
+| Language of a result | ❌ | ❓ | ✅ flag with the name of the language as tooltip next to the record, of the site the page of the record belongs to; only for sites with several languages ("all languages" has its own icon) | | |
 | Paginate | ❌ | ✅ | ✅ 50 per page, in SQL | | #89454 |
 | Sort | ❌ | ✅ | ✅ by every column | | #96447 |
 | Edit record from the report | ✅ | ✅ | ✅ | | |
