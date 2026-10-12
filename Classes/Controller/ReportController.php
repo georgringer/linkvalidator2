@@ -38,6 +38,7 @@ use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
 use TYPO3\CMS\Core\Site\SiteFinder;
 use TYPO3\CMS\Core\Type\Bitmask\Permission;
 use TYPO3\CMS\Core\Utility\MathUtility;
+use GeorgRinger\Linkvalidator2\Configuration\ExtensionSettings;
 use GeorgRinger\Linkvalidator2\Exclusion\ExclusionRepository;
 use GeorgRinger\Linkvalidator2\Report\ReportFilter;
 use GeorgRinger\Linkvalidator2\Report\ReportOrdering;
@@ -69,6 +70,7 @@ final readonly class ReportController
         private TcaSchemaFactory $tcaSchemaFactory,
         private SiteFinder $siteFinder,
         private RecordStatusRepository $recordStatusRepository,
+        private ExtensionSettings $extensionSettings,
     ) {}
 
     public function __invoke(ServerRequestInterface $request): ResponseInterface
@@ -108,8 +110,10 @@ final readonly class ReportController
         );
 
         if ($pageRecord !== []) {
-            $this->addDocHeaderButtons($view, $pageUid, $depth);
-            $this->pageRenderer->loadJavaScriptModule('@typo3/linkvalidator2/check-links.js');
+            $this->addDocHeaderButtons($view, $pageUid, $depth, $this->extensionSettings->isManualCheckAllowed());
+            if ($this->extensionSettings->isManualCheckAllowed()) {
+                $this->pageRenderer->loadJavaScriptModule('@typo3/linkvalidator2/check-links.js');
+            }
             $this->pageRenderer->loadJavaScriptModule('@typo3/linkvalidator2/ignore-link.js');
         }
 
@@ -212,8 +216,11 @@ final readonly class ReportController
      * (no reload), the report is filtered by the levels of the filter form. Preselected are
      * the levels of the report.
      */
-    private function addDocHeaderButtons(ModuleTemplate $view, int $pageUid, int $depth): void
+    private function addDocHeaderButtons(ModuleTemplate $view, int $pageUid, int $depth, bool $manualCheckAllowed): void
     {
+        if (!$manualCheckAllowed) {
+            return;
+        }
         $languageService = $this->getLanguageService();
         $depthButton = $this->componentFactory->createDropDownButton()
             ->setLabel($languageService->sL('linkvalidator2.messages:report.depth'))

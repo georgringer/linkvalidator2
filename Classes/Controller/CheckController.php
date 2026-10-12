@@ -26,6 +26,7 @@ use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Http\JsonResponse;
 use TYPO3\CMS\Core\Type\Bitmask\Permission;
 use GeorgRinger\Linkvalidator2\Check\CheckStatus;
+use GeorgRinger\Linkvalidator2\Configuration\ExtensionSettings;
 use GeorgRinger\Linkvalidator2\Report\ReportFilter;
 use GeorgRinger\Linkvalidator2\Report\ReportPermissionsFactory;
 use GeorgRinger\Linkvalidator2\Repository\BrokenLinkRepository;
@@ -53,6 +54,7 @@ final readonly class CheckController
         private Context $context,
         private ReportPermissionsFactory $reportPermissionsFactory,
         private BrokenLinkRepository $brokenLinkRepository,
+        private ExtensionSettings $extensionSettings,
     ) {}
 
     public function startAction(ServerRequestInterface $request): ResponseInterface
@@ -104,7 +106,8 @@ final readonly class CheckController
 
     private function hasModuleAccess(): bool
     {
-        return $this->moduleProvider->accessGranted(self::MODULE, $this->getBackendUser());
+        return $this->extensionSettings->isManualCheckAllowed()
+            && $this->moduleProvider->accessGranted(self::MODULE, $this->getBackendUser());
     }
 
     private function hasPageAccess(int $pageUid): bool

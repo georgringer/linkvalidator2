@@ -33,6 +33,11 @@ final readonly class ExtensionSettings
         return in_array($table . '.*', $excluded, true) || in_array($table . '.' . $field, $excluded, true);
     }
 
+    public function isManualCheckAllowed(): bool
+    {
+        return (bool)(int)$this->get('allowManualCheck', '1');
+    }
+
     public function getExternalCacheLifetime(): int
     {
         return max(0, (int)$this->get('externalCacheLifetime', '168')) * 3600;

@@ -42,7 +42,7 @@ forgotten.
   link. Keep the reference index up to date after imports around the DataHandler.
 
 - Extension configuration: `excludedFields`, `externalCacheLifetime`,
-  `externalTimeout`, `externalUserAgent`.
+  `externalTimeout`, `externalUserAgent`, `allowManualCheck`.
 - No Page TSconfig any more (`mod.linkvalidator.*`), migration table in the breaking
   changelog.
 - Scheduler: task "Execute console commands" with `linkvalidator2:check` and e.g.

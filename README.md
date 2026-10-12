@@ -35,7 +35,9 @@ choose the levels and press *Check*.
 
 Configuration (extension configuration): `excludedFields` – comma-separated
 `table.field` or `table.*` that are never checked; `externalCacheLifetime` (hours),
-`externalTimeout` (seconds) and `externalUserAgent` for external URLs.
+`externalTimeout` (seconds) and `externalUserAgent` for external URLs;
+`allowManualCheck` (default on) – switch off to hide the check buttons in the module
+and deny the AJAX endpoints, e.g. when links are only checked by the command.
 
 Tests run standalone in containers (own `.Build/` with `typo3/cms-core` `dev-main` and
 the testing framework, independent of the surrounding core checkout):
@@ -110,6 +112,7 @@ solved ones in `done/`.
 | CLI command | ❌ | ✅ `brofix:checklinks` | ✅ `--record`, `--page`, `--depth`, `--no-external`; without them the queue: never checked, due, older than `--interval` (24 h), with `--limit` / `--time-limit` | 📋 `--site` | |
 | Link types to check | 🟡 TSconfig `linktypes`, report shows stale results of the other types | ✅ | ✅ always all links of a record, results replaced per record; link type is a report filter | | #92586 |
 | Interactive check of large trees without timeouts | ❌ synchronous | ❓ not verified | ✅ browser checks page by page via AJAX (5 s budget per request, a page continues in the next request), progress bar, cancel, summary notification with new broken links | | #89266 |
+| Disable the interactive check | ❌ | ❓ | ✅ extension configuration `allowManualCheck`: buttons hidden, `check/start` and `check/page` answer 403; the command is not affected | | |
 | Accessible progress | ❌ | ❓ | ✅ live region (`role="status"`, polite) announces start, every 10 % and cancelling; focus moves to "Cancel" while running; notifications are polite live regions of the core | | |
 | Report during a running check / parallel checks | ❌ list emptied first, duplicates | ❓ | 🟡 previous results stay visible, report reloads when done; parallel runs not locked | 📋 transaction in `replaceForRecord()` | #89266 |
 | Recheck on save | 🟡 when returning to the module (`actionAfterEditRecord`) | 🟡 when returning to the module | ✅ DataHandler hook (save, new, move, restore, copy, localize, publish): internal immediately, external from cache, records with unchecked URLs become due | 📋 records linking to a page whose visibility changed are not rechecked | #105911 |

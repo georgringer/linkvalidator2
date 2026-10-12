@@ -1,6 +1,9 @@
 # cat=basic; type=string; label=Excluded fields: Comma-separated list of "table.field" or "table.*" that are never checked
 excludedFields =
 
+# cat=basic; type=boolean; label=Allow manual checks: Editors can start a check from the backend module. Disable it if links are only checked by the command
+allowManualCheck = 1
+
 # cat=external; type=int+; label=Cache lifetime (hours): How long the result of an external URL is reused before the URL is requested again
 externalCacheLifetime = 168
 
