@@ -14,7 +14,7 @@ declare(strict_types=1);
  *
  * The TYPO3 project - inspiring people to share!
  */
-namespace TYPO3\CMS\Linkvalidator2\Check;
+namespace GeorgRinger\Linkvalidator2\Check;
 
 /**
  * A checker whose check is expensive, e.g. a network request. Its result is stored per

@@ -14,14 +14,14 @@ declare(strict_types=1);
  *
  * The TYPO3 project - inspiring people to share!
  */
-namespace TYPO3\CMS\Linkvalidator2\Service;
+namespace GeorgRinger\Linkvalidator2\Service;
 
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Linkvalidator2\Extraction\CheckableFieldResolver;
+use GeorgRinger\Linkvalidator2\Extraction\CheckableFieldResolver;
 
 /**
  * The record status table is the work queue: records never checked come first (no status row

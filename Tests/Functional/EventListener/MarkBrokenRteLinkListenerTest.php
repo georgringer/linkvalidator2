@@ -15,7 +15,7 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace TYPO3\CMS\Linkvalidator2\Tests\Functional\EventListener;
+namespace GeorgRinger\Linkvalidator2\Tests\Functional\EventListener;
 
 use PHPUnit\Framework\Attributes\Test;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -24,7 +24,7 @@ use TYPO3\CMS\Core\Html\Event\BrokenLinkAnalysisEvent;
 use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\LinkHandling\LinkService;
 use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
-use TYPO3\CMS\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
+use GeorgRinger\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 /**
@@ -34,7 +34,7 @@ final class MarkBrokenRteLinkListenerTest extends FunctionalTestCase
 {
     use SiteConfigurationTrait;
 
-    protected array $testExtensionsToLoad = ['typo3/cms-linkvalidator2'];
+    protected array $testExtensionsToLoad = ['georgringer/linkvalidator2'];
 
     protected function setUp(): void
     {

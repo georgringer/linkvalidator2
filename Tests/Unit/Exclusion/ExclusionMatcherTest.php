@@ -15,17 +15,17 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace TYPO3\CMS\Linkvalidator2\Tests\Unit\Exclusion;
+namespace GeorgRinger\Linkvalidator2\Tests\Unit\Exclusion;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Core\LinkHandling\LinkService;
-use TYPO3\CMS\Linkvalidator2\Exclusion\Exclusion;
-use TYPO3\CMS\Linkvalidator2\Exclusion\ExclusionMatcher;
-use TYPO3\CMS\Linkvalidator2\Exclusion\Matcher\AllExclusionMatcher;
-use TYPO3\CMS\Linkvalidator2\Exclusion\Matcher\PageExclusionMatcher;
-use TYPO3\CMS\Linkvalidator2\Exclusion\Matcher\UrlExclusionMatcher;
-use TYPO3\CMS\Linkvalidator2\Target\LinkTarget;
+use GeorgRinger\Linkvalidator2\Exclusion\Exclusion;
+use GeorgRinger\Linkvalidator2\Exclusion\ExclusionMatcher;
+use GeorgRinger\Linkvalidator2\Exclusion\Matcher\AllExclusionMatcher;
+use GeorgRinger\Linkvalidator2\Exclusion\Matcher\PageExclusionMatcher;
+use GeorgRinger\Linkvalidator2\Exclusion\Matcher\UrlExclusionMatcher;
+use GeorgRinger\Linkvalidator2\Target\LinkTarget;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 final class ExclusionMatcherTest extends UnitTestCase

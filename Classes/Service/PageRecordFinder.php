@@ -14,7 +14,7 @@ declare(strict_types=1);
  *
  * The TYPO3 project - inspiring people to share!
  */
-namespace TYPO3\CMS\Linkvalidator2\Service;
+namespace GeorgRinger\Linkvalidator2\Service;
 
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
@@ -23,7 +23,7 @@ use TYPO3\CMS\Core\Domain\Repository\PageRepository;
 use TYPO3\CMS\Core\Schema\Capability\TcaSchemaCapability;
 use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Linkvalidator2\Extraction\CheckableFieldResolver;
+use GeorgRinger\Linkvalidator2\Extraction\CheckableFieldResolver;
 
 /**
  * Finds the live records that belong to one page: the page itself,

@@ -4,17 +4,17 @@ services:
     autoconfigure: true
     public: false
 
-  TYPO3\CMS\Linkvalidator2\:
+  GeorgRinger\Linkvalidator2\:
     resource: '../Classes/*'
 
-  TYPO3\CMS\Linkvalidator2\Check\CheckerRegistry:
+  GeorgRinger\Linkvalidator2\Check\CheckerRegistry:
     arguments:
       $checkers: !tagged_iterator linkvalidator2.checker
 
-  TYPO3\CMS\Linkvalidator2\Exclusion\ExclusionMatcher:
+  GeorgRinger\Linkvalidator2\Exclusion\ExclusionMatcher:
     arguments:
       $matchers: !tagged_iterator linkvalidator2.exclusion_matcher
 
   # Instantiated by the DataHandler through GeneralUtility::makeInstance()
-  TYPO3\CMS\Linkvalidator2\Hook\DataHandlerHook:
+  GeorgRinger\Linkvalidator2\Hook\DataHandlerHook:
     public: true

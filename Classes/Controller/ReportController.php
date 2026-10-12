@@ -14,7 +14,7 @@ declare(strict_types=1);
  *
  * The TYPO3 project - inspiring people to share!
  */
-namespace TYPO3\CMS\Linkvalidator2\Controller;
+namespace GeorgRinger\Linkvalidator2\Controller;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -38,14 +38,14 @@ use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
 use TYPO3\CMS\Core\Site\SiteFinder;
 use TYPO3\CMS\Core\Type\Bitmask\Permission;
 use TYPO3\CMS\Core\Utility\MathUtility;
-use TYPO3\CMS\Linkvalidator2\Exclusion\ExclusionRepository;
-use TYPO3\CMS\Linkvalidator2\Report\ReportFilter;
-use TYPO3\CMS\Linkvalidator2\Report\ReportOrdering;
-use TYPO3\CMS\Linkvalidator2\Report\ReportPermissions;
-use TYPO3\CMS\Linkvalidator2\Report\ReportPermissionsFactory;
-use TYPO3\CMS\Linkvalidator2\Repository\BrokenLinkRepository;
-use TYPO3\CMS\Linkvalidator2\Repository\RecordStatusRepository;
-use TYPO3\CMS\Linkvalidator2\Service\PageRecordFinder;
+use GeorgRinger\Linkvalidator2\Exclusion\ExclusionRepository;
+use GeorgRinger\Linkvalidator2\Report\ReportFilter;
+use GeorgRinger\Linkvalidator2\Report\ReportOrdering;
+use GeorgRinger\Linkvalidator2\Report\ReportPermissions;
+use GeorgRinger\Linkvalidator2\Report\ReportPermissionsFactory;
+use GeorgRinger\Linkvalidator2\Repository\BrokenLinkRepository;
+use GeorgRinger\Linkvalidator2\Repository\RecordStatusRepository;
+use GeorgRinger\Linkvalidator2\Service\PageRecordFinder;
 
 /**
  * @internal This class is a specific Backend controller implementation and is not part of the TYPO3's Core API.
@@ -366,18 +366,18 @@ final readonly class ReportController
         $languageService = $this->getLanguageService();
         $values = $this->brokenLinkRepository->findFilterValues($pageIds, $permissions);
         $labels = [];
-        foreach ($values['status'] as $status) {
+        foreach (array_keys($values['status']) as $status) {
             $labels['status'][$status] = $languageService->sL('linkvalidator2.messages:status.' . $status) ?: $status;
         }
-        foreach ($values['linkType'] as $linkType) {
+        foreach (array_keys($values['linkType']) as $linkType) {
             $labels['linkType'][$linkType] = $languageService->sL('linkvalidator2.messages:linkType.' . $linkType) ?: $linkType;
         }
-        foreach ($values['table'] as $table) {
+        foreach (array_keys($values['table']) as $table) {
             $title = $this->tcaSchemaFactory->has($table) ? $languageService->sL($this->tcaSchemaFactory->get($table)->getTitle()) : '';
             $labels['table'][$table] = $title !== '' ? $title : $table;
         }
         $languageTitles = $this->getLanguageTitles($pageUid);
-        foreach ($values['language'] as $language) {
+        foreach (array_keys($values['language']) as $language) {
             $labels['language'][$language] = $languageTitles[$language] ?? ('#' . $language);
         }
         $selected = [
@@ -390,7 +390,7 @@ final readonly class ReportController
         foreach ($selected as $property => $selectedValue) {
             $options[$property] = [];
             foreach ($labels[$property] ?? [] as $value => $label) {
-                $options[$property][] = ['value' => (string)$value, 'label' => $label, 'selected' => (string)$value === $selectedValue];
+                $options[$property][] = ['value' => (string)$value, 'label' => $label, 'count' => $values[$property][$value] ?? 0, 'selected' => (string)$value === $selectedValue];
             }
         }
         return $options;

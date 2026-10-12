@@ -15,16 +15,16 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace TYPO3\CMS\Linkvalidator2\Tests\Functional\Extraction;
+namespace GeorgRinger\Linkvalidator2\Tests\Functional\Extraction;
 
 use PHPUnit\Framework\Attributes\Test;
-use TYPO3\CMS\Linkvalidator2\Extraction\LinkCandidate;
-use TYPO3\CMS\Linkvalidator2\Extraction\LinkExtractor;
+use GeorgRinger\Linkvalidator2\Extraction\LinkCandidate;
+use GeorgRinger\Linkvalidator2\Extraction\LinkExtractor;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 final class LinkExtractorTest extends FunctionalTestCase
 {
-    protected array $testExtensionsToLoad = ['typo3/cms-linkvalidator2'];
+    protected array $testExtensionsToLoad = ['georgringer/linkvalidator2'];
 
     #[Test]
     public function linkFieldAndRichTextLinksAreExtracted(): void

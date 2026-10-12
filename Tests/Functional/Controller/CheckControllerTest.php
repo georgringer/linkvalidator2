@@ -15,21 +15,21 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace TYPO3\CMS\Linkvalidator2\Tests\Functional\Controller;
+namespace GeorgRinger\Linkvalidator2\Tests\Functional\Controller;
 
 use PHPUnit\Framework\Attributes\Test;
 use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Http\ServerRequest;
-use TYPO3\CMS\Linkvalidator2\Controller\CheckController;
-use TYPO3\CMS\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
+use GeorgRinger\Linkvalidator2\Controller\CheckController;
+use GeorgRinger\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 final class CheckControllerTest extends FunctionalTestCase
 {
     use SiteConfigurationTrait;
 
-    protected array $testExtensionsToLoad = ['typo3/cms-linkvalidator2'];
+    protected array $testExtensionsToLoad = ['georgringer/linkvalidator2'];
 
     protected function setUp(): void
     {
@@ -122,6 +122,39 @@ final class CheckControllerTest extends FunctionalTestCase
         );
 
         self::assertSame(400, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function startIsDeniedWhenManualCheckIsDisabled(): void
+    {
+        $this->disableManualCheck();
+        $this->setUpBackendUser(1);
+
+        $response = $this->get(CheckController::class)->startAction(
+            (new ServerRequest('https://typo3-testing.local/'))->withQueryParams(['id' => 1, 'depth' => 0])
+        );
+
+        self::assertSame(403, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function pageActionIsDeniedWhenManualCheckIsDisabled(): void
+    {
+        $this->disableManualCheck();
+        $this->setUpBackendUser(1);
+
+        $response = $this->get(CheckController::class)->pageAction(
+            (new ServerRequest('https://typo3-testing.local/', 'POST'))->withParsedBody(['pageId' => 1, 'runStartedAt' => $this->now()])
+        );
+
+        self::assertSame(403, $response->getStatusCode());
+        self::assertSame(0, $this->getConnectionPool()->getConnectionForTable('tx_linkvalidator2_record_status')
+            ->count('*', 'tx_linkvalidator2_record_status', []));
+    }
+
+    private function disableManualCheck(): void
+    {
+        $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['linkvalidator2']['allowManualCheck'] = '0';
     }
 
     private function decode(ResponseInterface $response): array

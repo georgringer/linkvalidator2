@@ -14,12 +14,12 @@ declare(strict_types=1);
  *
  * The TYPO3 project - inspiring people to share!
  */
-namespace TYPO3\CMS\Linkvalidator2\Service;
+namespace GeorgRinger\Linkvalidator2\Service;
 
-use TYPO3\CMS\Linkvalidator2\Check\CheckStatus;
-use TYPO3\CMS\Linkvalidator2\Report\ReportFilter;
-use TYPO3\CMS\Linkvalidator2\Repository\BrokenLinkRepository;
-use TYPO3\CMS\Linkvalidator2\Repository\RecordStatusRepository;
+use GeorgRinger\Linkvalidator2\Check\CheckStatus;
+use GeorgRinger\Linkvalidator2\Report\ReportFilter;
+use GeorgRinger\Linkvalidator2\Repository\BrokenLinkRepository;
+use GeorgRinger\Linkvalidator2\Repository\RecordStatusRepository;
 
 /**
  * Checks all records of one page within an optional time budget. Repeated calls with the same

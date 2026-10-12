@@ -15,13 +15,13 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace TYPO3\CMS\Linkvalidator2\Tests\Functional\Command;
+namespace GeorgRinger\Linkvalidator2\Tests\Functional\Command;
 
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Tester\CommandTester;
 use TYPO3\CMS\Core\Context\Context;
-use TYPO3\CMS\Linkvalidator2\Command\CheckCommand;
-use TYPO3\CMS\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
+use GeorgRinger\Linkvalidator2\Command\CheckCommand;
+use GeorgRinger\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 /**
@@ -36,7 +36,7 @@ final class CheckCommandQueueTest extends FunctionalTestCase
     /** Live pages 1–3, 5–11 and content 10–14 of the fixtures */
     private const RECORD_COUNT = 15;
 
-    protected array $testExtensionsToLoad = ['typo3/cms-linkvalidator2'];
+    protected array $testExtensionsToLoad = ['georgringer/linkvalidator2'];
 
     protected function setUp(): void
     {

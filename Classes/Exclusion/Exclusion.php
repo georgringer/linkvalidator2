@@ -15,7 +15,7 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace TYPO3\CMS\Linkvalidator2\Exclusion;
+namespace GeorgRinger\Linkvalidator2\Exclusion;
 
 /**
  * An active exclusion record. It applies to links in records on its page and the

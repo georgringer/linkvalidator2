@@ -15,12 +15,12 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace TYPO3\CMS\Linkvalidator2\Exclusion\Matcher;
+namespace GeorgRinger\Linkvalidator2\Exclusion\Matcher;
 
 use TYPO3\CMS\Core\LinkHandling\LinkService;
-use TYPO3\CMS\Linkvalidator2\Exclusion\Exclusion;
-use TYPO3\CMS\Linkvalidator2\Exclusion\ExclusionMatcherInterface;
-use TYPO3\CMS\Linkvalidator2\Target\LinkTarget;
+use GeorgRinger\Linkvalidator2\Exclusion\Exclusion;
+use GeorgRinger\Linkvalidator2\Exclusion\ExclusionMatcherInterface;
+use GeorgRinger\Linkvalidator2\Target\LinkTarget;
 
 /**
  * Links to one page, e.g. a login page restricted on purpose

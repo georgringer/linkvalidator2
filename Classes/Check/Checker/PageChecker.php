@@ -14,18 +14,18 @@ declare(strict_types=1);
  *
  * The TYPO3 project - inspiring people to share!
  */
-namespace TYPO3\CMS\Linkvalidator2\Check\Checker;
+namespace GeorgRinger\Linkvalidator2\Check\Checker;
 
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Domain\Repository\PageRepository;
 use TYPO3\CMS\Core\LinkHandling\LinkService;
-use TYPO3\CMS\Linkvalidator2\Check\CheckResult;
-use TYPO3\CMS\Linkvalidator2\Check\FrontendPageResolver;
-use TYPO3\CMS\Linkvalidator2\Check\LinkCheckerInterface;
-use TYPO3\CMS\Linkvalidator2\Extraction\LinkCandidate;
-use TYPO3\CMS\Linkvalidator2\Target\LinkTarget;
+use GeorgRinger\Linkvalidator2\Check\CheckResult;
+use GeorgRinger\Linkvalidator2\Check\FrontendPageResolver;
+use GeorgRinger\Linkvalidator2\Check\LinkCheckerInterface;
+use GeorgRinger\Linkvalidator2\Extraction\LinkCandidate;
+use GeorgRinger\Linkvalidator2\Target\LinkTarget;
 
 /**
  * Whether a visitor gets the page is decided by the frontend's page resolution. The page and its

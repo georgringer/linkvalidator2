@@ -15,13 +15,13 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace TYPO3\CMS\Linkvalidator2\Tests\Unit\Configuration;
+namespace GeorgRinger\Linkvalidator2\Tests\Unit\Configuration;
 
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationExtensionNotConfiguredException;
-use TYPO3\CMS\Linkvalidator2\Configuration\ExtensionSettings;
+use GeorgRinger\Linkvalidator2\Configuration\ExtensionSettings;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 final class ExtensionSettingsTest extends UnitTestCase
@@ -52,6 +52,7 @@ final class ExtensionSettingsTest extends UnitTestCase
         self::assertSame(10, $subject->getExternalTimeout());
         self::assertSame('TYPO3 LinkValidator', $subject->getExternalUserAgent());
         self::assertFalse($subject->isFieldExcluded('tt_content', 'bodytext'));
+        self::assertTrue($subject->isManualCheckAllowed());
     }
 
     #[Test]
@@ -62,6 +63,13 @@ final class ExtensionSettingsTest extends UnitTestCase
         self::assertSame(0, $subject->getExternalCacheLifetime());
         self::assertSame(1, $subject->getExternalTimeout());
         self::assertSame('TYPO3 LinkValidator', $subject->getExternalUserAgent());
+    }
+
+    #[Test]
+    public function manualCheckCanBeDisabled(): void
+    {
+        self::assertFalse($this->createSubject(['allowManualCheck' => '0'])->isManualCheckAllowed());
+        self::assertTrue($this->createSubject(['allowManualCheck' => '1'])->isManualCheckAllowed());
     }
 
     private function createSubject(array $configuration): ExtensionSettings

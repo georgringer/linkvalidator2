@@ -1,7 +1,7 @@
 <?php
 
-use TYPO3\CMS\Linkvalidator2\Controller\CheckController;
-use TYPO3\CMS\Linkvalidator2\Controller\ExclusionController;
+use GeorgRinger\Linkvalidator2\Controller\CheckController;
+use GeorgRinger\Linkvalidator2\Controller\ExclusionController;
 
 /**
  * Definitions for AJAX routes provided by EXT:linkvalidator2

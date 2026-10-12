@@ -32,9 +32,9 @@ $request = (new ServerRequest('https://t3-main.ddev.site/typo3/module/link-manag
     ->withAttribute('normalizedParams', NormalizedParams::createFromServerParams($_SERVER))
     ->withAttribute('module', $module)
     ->withAttribute('moduleData', $moduleData)
-    ->withAttribute('route', new Route('/module/link-management/linkvalidator2', ['_identifier' => 'linkvalidator2_report', 'packageName' => 'typo3/cms-linkvalidator2', 'module' => $module]));
+    ->withAttribute('route', new Route('/module/link-management/linkvalidator2', ['_identifier' => 'linkvalidator2_report', 'packageName' => 'georgringer/linkvalidator2', 'module' => $module]));
 $GLOBALS['TYPO3_REQUEST'] = $request;
-$controller = GeneralUtility::makeInstance(\TYPO3\CMS\Linkvalidator2\Controller\ReportController::class);
+$controller = GeneralUtility::makeInstance(\GeorgRinger\Linkvalidator2\Controller\ReportController::class);
 $html = (string)$controller($request)->getBody();
 $start = strpos($html, '<h1');
 echo strip_tags(preg_replace(['/<option([^>]*)selected/', '/<\/(tr|option|li|h1|label)>/'], ['<option$1>[*]', "$0\n"], substr($html, $start)));

@@ -14,7 +14,7 @@ declare(strict_types=1);
  *
  * The TYPO3 project - inspiring people to share!
  */
-namespace TYPO3\CMS\Linkvalidator2\Controller;
+namespace GeorgRinger\Linkvalidator2\Controller;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -25,12 +25,12 @@ use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Http\JsonResponse;
 use TYPO3\CMS\Core\Type\Bitmask\Permission;
-use TYPO3\CMS\Linkvalidator2\Check\CheckStatus;
-use TYPO3\CMS\Linkvalidator2\Report\ReportFilter;
-use TYPO3\CMS\Linkvalidator2\Report\ReportPermissionsFactory;
-use TYPO3\CMS\Linkvalidator2\Repository\BrokenLinkRepository;
-use TYPO3\CMS\Linkvalidator2\Service\PageCheckService;
-use TYPO3\CMS\Linkvalidator2\Service\PageRecordFinder;
+use GeorgRinger\Linkvalidator2\Check\CheckStatus;
+use GeorgRinger\Linkvalidator2\Report\ReportFilter;
+use GeorgRinger\Linkvalidator2\Report\ReportPermissionsFactory;
+use GeorgRinger\Linkvalidator2\Repository\BrokenLinkRepository;
+use GeorgRinger\Linkvalidator2\Service\PageCheckService;
+use GeorgRinger\Linkvalidator2\Service\PageRecordFinder;
 
 /**
  * AJAX endpoints for checking a page tree from the backend module in batches: the browser

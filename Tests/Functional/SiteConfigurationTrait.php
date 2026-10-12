@@ -15,7 +15,7 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace TYPO3\CMS\Linkvalidator2\Tests\Functional;
+namespace GeorgRinger\Linkvalidator2\Tests\Functional;
 
 use TYPO3\CMS\Core\Configuration\SiteWriter;
 

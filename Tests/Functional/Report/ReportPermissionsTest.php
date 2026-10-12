@@ -15,17 +15,17 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace TYPO3\CMS\Linkvalidator2\Tests\Functional\Report;
+namespace GeorgRinger\Linkvalidator2\Tests\Functional\Report;
 
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Core\Type\Bitmask\Permission;
-use TYPO3\CMS\Linkvalidator2\Report\ReportFilter;
-use TYPO3\CMS\Linkvalidator2\Report\ReportOrdering;
-use TYPO3\CMS\Linkvalidator2\Report\ReportPermissions;
-use TYPO3\CMS\Linkvalidator2\Report\ReportPermissionsFactory;
-use TYPO3\CMS\Linkvalidator2\Repository\BrokenLinkRepository;
-use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
-use TYPO3\CMS\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
+use GeorgRinger\Linkvalidator2\Report\ReportFilter;
+use GeorgRinger\Linkvalidator2\Report\ReportOrdering;
+use GeorgRinger\Linkvalidator2\Report\ReportPermissions;
+use GeorgRinger\Linkvalidator2\Report\ReportPermissionsFactory;
+use GeorgRinger\Linkvalidator2\Repository\BrokenLinkRepository;
+use GeorgRinger\Linkvalidator2\Service\RecordCheckService;
+use GeorgRinger\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 /**
@@ -37,7 +37,7 @@ final class ReportPermissionsTest extends FunctionalTestCase
 
     private const PAGE_IDS = [1, 2, 9];
 
-    protected array $testExtensionsToLoad = ['typo3/cms-linkvalidator2'];
+    protected array $testExtensionsToLoad = ['georgringer/linkvalidator2'];
 
     protected function setUp(): void
     {
@@ -113,8 +113,12 @@ final class ReportPermissionsTest extends FunctionalTestCase
         $repository = $this->get(BrokenLinkRepository::class);
 
         self::assertSame(8, $repository->countByPids(self::PAGE_IDS, new ReportFilter(), $permissions));
-        self::assertSame([0], $repository->findFilterValues(self::PAGE_IDS, $permissions)['language']);
-        self::assertSame(['pages', 'tt_content'], $repository->findFilterValues(self::PAGE_IDS, $permissions)['table']);
+        $filterValues = $repository->findFilterValues(self::PAGE_IDS, $permissions);
+        self::assertSame([0 => 8], $filterValues['language']);
+        self::assertSame(['pages', 'tt_content'], array_keys($filterValues['table']));
+        self::assertSame(8, array_sum($filterValues['table']));
+        self::assertSame(8, array_sum($filterValues['status']));
+        self::assertSame(8, array_sum($filterValues['linkType']));
         self::assertSame(7, $repository->countBrokenByPid(1, $permissions));
     }
 

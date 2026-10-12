@@ -15,7 +15,7 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace TYPO3\CMS\Linkvalidator2\Check;
+namespace GeorgRinger\Linkvalidator2\Check;
 
 final readonly class CheckResult
 {

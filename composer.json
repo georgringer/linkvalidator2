@@ -1,26 +1,33 @@
 {
-	"name": "typo3/cms-linkvalidator2",
+	"name": "georgringer/linkvalidator2",
 	"type": "typo3-cms-extension",
-	"description": "TYPO3 CMS LinkValidator (rewrite) - Checks links in records and reports broken ones.",
+	"description": "LinkValidator (rewrite) - Checks links in records and reports broken ones.",
 	"license": [
 		"GPL-2.0-or-later"
 	],
+	"authors": [
+		{
+			"name": "Georg Ringer",
+			"email": "mail@ringer.it"
+		}
+	],
 	"require": {
-		"typo3/cms-backend": "15.0.*@dev",
-		"typo3/cms-core": "15.0.*@dev",
-		"typo3/cms-frontend": "15.0.*@dev"
+		"php": ">= 8.2 < 8.6",
+		"typo3/cms-backend": "^14.3 || 15.0.*@dev",
+		"typo3/cms-core": "^14.3 || 15.0.*@dev",
+		"typo3/cms-frontend": "^14.3 || 15.0.*@dev"
 	},
 	"require-dev": {
 		"typo3/testing-framework": "dev-main"
 	},
 	"autoload": {
 		"psr-4": {
-			"TYPO3\\CMS\\Linkvalidator2\\": "Classes/"
+			"GeorgRinger\\Linkvalidator2\\": "Classes/"
 		}
 	},
 	"autoload-dev": {
 		"psr-4": {
-			"TYPO3\\CMS\\Linkvalidator2\\Tests\\": "Tests/",
+			"GeorgRinger\\Linkvalidator2\\Tests\\": "Tests/",
 			"TYPO3Tests\\TestLinkHandler\\": "Tests/Functional/Fixtures/Extensions/test_link_handler/Classes/"
 		}
 	},
@@ -32,13 +39,14 @@
 			"typo3/cms-composer-installers": true
 		},
 		"bin-dir": ".Build/bin",
+		"lock": false,
 		"sort-packages": true,
 		"vendor-dir": ".Build/vendor"
 	},
 	"extra": {
 		"typo3/cms": {
 			"extension-key": "linkvalidator2",
-			"version": "15.0.0",
+			"version": "0.1.0",
 			"web-dir": ".Build/Web",
 			"Package": {
 				"providesPackages": {}

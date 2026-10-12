@@ -14,7 +14,7 @@ declare(strict_types=1);
  *
  * The TYPO3 project - inspiring people to share!
  */
-namespace TYPO3\CMS\Linkvalidator2\Service;
+namespace GeorgRinger\Linkvalidator2\Service;
 
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Context\Context;
@@ -25,16 +25,16 @@ use TYPO3\CMS\Core\Schema\Capability\TcaSchemaCapability;
 use TYPO3\CMS\Core\Schema\TcaSchema;
 use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Linkvalidator2\Check\CacheableLinkCheckerInterface;
-use TYPO3\CMS\Linkvalidator2\Check\CheckerRegistry;
-use TYPO3\CMS\Linkvalidator2\Check\CheckStatus;
-use TYPO3\CMS\Linkvalidator2\Exclusion\ExclusionMatcher;
-use TYPO3\CMS\Linkvalidator2\Exclusion\ExclusionRepository;
-use TYPO3\CMS\Linkvalidator2\Extraction\LinkExtractor;
-use TYPO3\CMS\Linkvalidator2\Repository\BrokenLinkRepository;
-use TYPO3\CMS\Linkvalidator2\Repository\RecordStatusRepository;
-use TYPO3\CMS\Linkvalidator2\Repository\TargetRepository;
-use TYPO3\CMS\Linkvalidator2\Target\LinkTargetFactory;
+use GeorgRinger\Linkvalidator2\Check\CacheableLinkCheckerInterface;
+use GeorgRinger\Linkvalidator2\Check\CheckerRegistry;
+use GeorgRinger\Linkvalidator2\Check\CheckStatus;
+use GeorgRinger\Linkvalidator2\Exclusion\ExclusionMatcher;
+use GeorgRinger\Linkvalidator2\Exclusion\ExclusionRepository;
+use GeorgRinger\Linkvalidator2\Extraction\LinkExtractor;
+use GeorgRinger\Linkvalidator2\Repository\BrokenLinkRepository;
+use GeorgRinger\Linkvalidator2\Repository\RecordStatusRepository;
+use GeorgRinger\Linkvalidator2\Repository\TargetRepository;
+use GeorgRinger\Linkvalidator2\Target\LinkTargetFactory;
 
 final readonly class RecordCheckService
 {

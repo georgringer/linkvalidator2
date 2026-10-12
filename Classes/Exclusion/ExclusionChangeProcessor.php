@@ -15,12 +15,12 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace TYPO3\CMS\Linkvalidator2\Exclusion;
+namespace GeorgRinger\Linkvalidator2\Exclusion;
 
-use TYPO3\CMS\Linkvalidator2\Repository\BrokenLinkRepository;
-use TYPO3\CMS\Linkvalidator2\Repository\RecordStatusRepository;
-use TYPO3\CMS\Linkvalidator2\Service\PageRecordFinder;
-use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
+use GeorgRinger\Linkvalidator2\Repository\BrokenLinkRepository;
+use GeorgRinger\Linkvalidator2\Repository\RecordStatusRepository;
+use GeorgRinger\Linkvalidator2\Service\PageRecordFinder;
+use GeorgRinger\Linkvalidator2\Service\RecordCheckService;
 
 /**
  * Applies changed exclusions to the stored results of their subtree. Records with results are

@@ -15,7 +15,7 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace TYPO3\CMS\Linkvalidator2\Command;
+namespace GeorgRinger\Linkvalidator2\Command;
 
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -27,11 +27,11 @@ use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Locking\Exception\LockAcquireWouldBlockException;
 use TYPO3\CMS\Core\Locking\LockFactory;
 use TYPO3\CMS\Core\Locking\LockingStrategyInterface;
-use TYPO3\CMS\Linkvalidator2\Check\CheckStatus;
-use TYPO3\CMS\Linkvalidator2\Service\PageCheckService;
-use TYPO3\CMS\Linkvalidator2\Service\PageRecordFinder;
-use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
-use TYPO3\CMS\Linkvalidator2\Service\RecordQueue;
+use GeorgRinger\Linkvalidator2\Check\CheckStatus;
+use GeorgRinger\Linkvalidator2\Service\PageCheckService;
+use GeorgRinger\Linkvalidator2\Service\PageRecordFinder;
+use GeorgRinger\Linkvalidator2\Service\RecordCheckService;
+use GeorgRinger\Linkvalidator2\Service\RecordQueue;
 
 #[AsCommand('linkvalidator2:check', 'Check links in records and store broken ones.')]
 final class CheckCommand extends Command

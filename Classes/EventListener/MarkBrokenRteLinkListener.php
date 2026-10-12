@@ -14,7 +14,7 @@ declare(strict_types=1);
  *
  * The TYPO3 project - inspiring people to share!
  */
-namespace TYPO3\CMS\Linkvalidator2\EventListener;
+namespace GeorgRinger\Linkvalidator2\EventListener;
 
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
@@ -23,12 +23,12 @@ use TYPO3\CMS\Core\Html\Event\BrokenLinkAnalysisEvent;
 use TYPO3\CMS\Core\Localization\LanguageService;
 use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
 use TYPO3\CMS\Core\LinkHandling\LinkService;
-use TYPO3\CMS\Linkvalidator2\Check\CheckerRegistry;
-use TYPO3\CMS\Linkvalidator2\Check\CheckResult;
-use TYPO3\CMS\Linkvalidator2\Check\CheckStatus;
-use TYPO3\CMS\Linkvalidator2\Extraction\LinkCandidate;
-use TYPO3\CMS\Linkvalidator2\Repository\TargetRepository;
-use TYPO3\CMS\Linkvalidator2\Target\LinkTargetFactory;
+use GeorgRinger\Linkvalidator2\Check\CheckerRegistry;
+use GeorgRinger\Linkvalidator2\Check\CheckResult;
+use GeorgRinger\Linkvalidator2\Check\CheckStatus;
+use GeorgRinger\Linkvalidator2\Extraction\LinkCandidate;
+use GeorgRinger\Linkvalidator2\Repository\TargetRepository;
+use GeorgRinger\Linkvalidator2\Target\LinkTargetFactory;
 
 /**
  * Marks broken links when a rich text field is opened in the editor, using the same

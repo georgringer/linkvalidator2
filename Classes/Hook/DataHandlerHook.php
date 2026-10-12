@@ -14,19 +14,19 @@ declare(strict_types=1);
  *
  * The TYPO3 project - inspiring people to share!
  */
-namespace TYPO3\CMS\Linkvalidator2\Hook;
+namespace GeorgRinger\Linkvalidator2\Hook;
 
 use Psr\Log\LoggerInterface;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\DataHandling\DataHandler;
 use TYPO3\CMS\Core\Utility\MathUtility;
-use TYPO3\CMS\Linkvalidator2\Exclusion\ExclusionChangeProcessor;
-use TYPO3\CMS\Linkvalidator2\Exclusion\ExclusionRepository;
-use TYPO3\CMS\Linkvalidator2\Extraction\CheckableFieldResolver;
-use TYPO3\CMS\Linkvalidator2\Repository\RecordStatusRepository;
-use TYPO3\CMS\Linkvalidator2\Service\PageRecordFinder;
-use TYPO3\CMS\Linkvalidator2\Service\ReferencingRecordFinder;
-use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
+use GeorgRinger\Linkvalidator2\Exclusion\ExclusionChangeProcessor;
+use GeorgRinger\Linkvalidator2\Exclusion\ExclusionRepository;
+use GeorgRinger\Linkvalidator2\Extraction\CheckableFieldResolver;
+use GeorgRinger\Linkvalidator2\Repository\RecordStatusRepository;
+use GeorgRinger\Linkvalidator2\Service\PageRecordFinder;
+use GeorgRinger\Linkvalidator2\Service\ReferencingRecordFinder;
+use GeorgRinger\Linkvalidator2\Service\RecordCheckService;
 
 /**
  * Keeps the results up to date with changes made in the backend: records are checked again

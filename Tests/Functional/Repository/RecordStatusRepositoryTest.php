@@ -15,15 +15,15 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace TYPO3\CMS\Linkvalidator2\Tests\Functional\Repository;
+namespace GeorgRinger\Linkvalidator2\Tests\Functional\Repository;
 
 use PHPUnit\Framework\Attributes\Test;
-use TYPO3\CMS\Linkvalidator2\Repository\RecordStatusRepository;
+use GeorgRinger\Linkvalidator2\Repository\RecordStatusRepository;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 final class RecordStatusRepositoryTest extends FunctionalTestCase
 {
-    protected array $testExtensionsToLoad = ['typo3/cms-linkvalidator2'];
+    protected array $testExtensionsToLoad = ['georgringer/linkvalidator2'];
 
     #[Test]
     public function lastCheckOfPagesNeverCheckedIsZero(): void

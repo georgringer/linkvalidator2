@@ -15,16 +15,16 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace TYPO3\CMS\Linkvalidator2\Tests\Functional\Service;
+namespace GeorgRinger\Linkvalidator2\Tests\Functional\Service;
 
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\LinkHandling\LinkService;
-use TYPO3\CMS\Linkvalidator2\Check\CheckResult;
-use TYPO3\CMS\Linkvalidator2\Repository\TargetRepository;
-use TYPO3\CMS\Linkvalidator2\Service\PageCheckService;
-use TYPO3\CMS\Linkvalidator2\Target\LinkTarget;
-use TYPO3\CMS\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
+use GeorgRinger\Linkvalidator2\Check\CheckResult;
+use GeorgRinger\Linkvalidator2\Repository\TargetRepository;
+use GeorgRinger\Linkvalidator2\Service\PageCheckService;
+use GeorgRinger\Linkvalidator2\Target\LinkTarget;
+use GeorgRinger\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 final class PageCheckServiceTest extends FunctionalTestCase
@@ -33,7 +33,7 @@ final class PageCheckServiceTest extends FunctionalTestCase
 
     private const BROKEN_LINK_TABLE = 'tx_linkvalidator2_broken_link';
 
-    protected array $testExtensionsToLoad = ['typo3/cms-linkvalidator2'];
+    protected array $testExtensionsToLoad = ['georgringer/linkvalidator2'];
 
     protected array $configurationToUseInTestInstance = [
         'EXTENSIONS' => [

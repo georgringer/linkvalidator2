@@ -15,7 +15,7 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace TYPO3\CMS\Linkvalidator2\Tests\Unit\Check;
+namespace GeorgRinger\Linkvalidator2\Tests\Unit\Check;
 
 use GuzzleHttp\Exception\ConnectException;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -26,11 +26,11 @@ use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Http\Request;
 use TYPO3\CMS\Core\Http\RequestFactory;
 use TYPO3\CMS\Core\LinkHandling\LinkService;
-use TYPO3\CMS\Linkvalidator2\Check\Checker\ExternalUrlChecker;
-use TYPO3\CMS\Linkvalidator2\Check\CheckStatus;
-use TYPO3\CMS\Linkvalidator2\Configuration\ExtensionSettings;
-use TYPO3\CMS\Linkvalidator2\Extraction\LinkCandidate;
-use TYPO3\CMS\Linkvalidator2\Target\LinkTarget;
+use GeorgRinger\Linkvalidator2\Check\Checker\ExternalUrlChecker;
+use GeorgRinger\Linkvalidator2\Check\CheckStatus;
+use GeorgRinger\Linkvalidator2\Configuration\ExtensionSettings;
+use GeorgRinger\Linkvalidator2\Extraction\LinkCandidate;
+use GeorgRinger\Linkvalidator2\Target\LinkTarget;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 final class ExternalUrlCheckerTest extends UnitTestCase

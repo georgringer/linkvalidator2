@@ -29,6 +29,9 @@ class CheckLinks {
     this.progress = progress;
     this.progressBar = progress.querySelector('typo3-backend-progress-bar');
     this.cancelButton = progress.querySelector('[data-linkvalidator2-check-cancel]');
+    // Screen readers get the progress in steps of 10 %, not per page
+    this.status = progress.querySelector('[data-linkvalidator2-check-status]');
+    this.announcedStep = -1;
     this.cancelled = false;
     button.addEventListener('click', () => this.run());
     document.querySelectorAll('[data-linkvalidator2-check-depth]').forEach((item) => {
@@ -38,6 +41,7 @@ class CheckLinks {
       this.cancelled = true;
       this.cancelButton.disabled = true;
       this.progressBar.label = labels.get('check.cancelling');
+      this.announce(labels.get('check.cancelling'));
     });
   }
 
@@ -46,6 +50,9 @@ class CheckLinks {
     this.button.disabled = true;
     this.cancelButton.disabled = false;
     this.progress.hidden = false;
+    this.announcedStep = -1;
+    // The check button is disabled now, keep the focus in reach
+    this.cancelButton.focus();
     this.update(0, 1, labels.get('check.starting'));
     try {
       const start = await (await new AjaxRequest(TYPO3.settings.ajaxUrls.linkvalidator2_check_start)
@@ -92,6 +99,7 @@ class CheckLinks {
       Notification.error(labels.get('check.failed'), message);
       this.progress.hidden = true;
       this.button.disabled = false;
+      this.button.focus();
     }
   }
 
@@ -120,6 +128,17 @@ class CheckLinks {
     this.progressBar.max = max;
     this.progressBar.value = value;
     this.progressBar.label = label;
+    const step = Math.floor(value / max * 10);
+    if (step !== this.announcedStep) {
+      this.announcedStep = step;
+      this.announce(label);
+    }
+  }
+
+  announce(message) {
+    if (this.status) {
+      this.status.textContent = message;
+    }
   }
 
 }

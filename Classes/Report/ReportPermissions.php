@@ -14,7 +14,7 @@ declare(strict_types=1);
  *
  * The TYPO3 project - inspiring people to share!
  */
-namespace TYPO3\CMS\Linkvalidator2\Report;
+namespace GeorgRinger\Linkvalidator2\Report;
 
 /**
  * What a non-admin backend user may fix, applied to the report in SQL: tables to modify, fields

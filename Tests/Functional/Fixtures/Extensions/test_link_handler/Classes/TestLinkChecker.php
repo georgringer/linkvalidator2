@@ -16,10 +16,10 @@ declare(strict_types=1);
  */
 namespace TYPO3Tests\TestLinkHandler;
 
-use TYPO3\CMS\Linkvalidator2\Check\CheckResult;
-use TYPO3\CMS\Linkvalidator2\Check\LinkCheckerInterface;
-use TYPO3\CMS\Linkvalidator2\Extraction\LinkCandidate;
-use TYPO3\CMS\Linkvalidator2\Target\LinkTarget;
+use GeorgRinger\Linkvalidator2\Check\CheckResult;
+use GeorgRinger\Linkvalidator2\Check\LinkCheckerInterface;
+use GeorgRinger\Linkvalidator2\Extraction\LinkCandidate;
+use GeorgRinger\Linkvalidator2\Target\LinkTarget;
 
 /**
  * Registered only through autoconfiguration of LinkCheckerInterface, no tag configured here.

@@ -14,7 +14,7 @@ declare(strict_types=1);
  *
  * The TYPO3 project - inspiring people to share!
  */
-namespace TYPO3\CMS\Linkvalidator2\Extraction;
+namespace GeorgRinger\Linkvalidator2\Extraction;
 
 use TYPO3\CMS\Core\DataHandling\TableColumnType;
 use TYPO3\CMS\Core\Schema\Capability\TcaSchemaCapability;
@@ -23,7 +23,7 @@ use TYPO3\CMS\Core\Schema\Field\FieldTypeInterface;
 use TYPO3\CMS\Core\Schema\Field\TextFieldType;
 use TYPO3\CMS\Core\Schema\TcaSchema;
 use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
-use TYPO3\CMS\Linkvalidator2\Configuration\ExtensionSettings;
+use GeorgRinger\Linkvalidator2\Configuration\ExtensionSettings;
 
 /**
  * Decides which fields may contain links, derived from the schema.

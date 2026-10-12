@@ -1,7 +1,7 @@
 <?php
 
-use TYPO3\CMS\Linkvalidator2\Controller\ExclusionController;
-use TYPO3\CMS\Linkvalidator2\Controller\ReportController;
+use GeorgRinger\Linkvalidator2\Controller\ExclusionController;
+use GeorgRinger\Linkvalidator2\Controller\ReportController;
 
 /**
  * Definitions for modules provided by EXT:linkvalidator2

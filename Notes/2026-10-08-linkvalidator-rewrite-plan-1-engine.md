@@ -22,7 +22,7 @@ Symfony Console/DI, DDEV-Instanz `t3-main` (Classic Mode, `typo3conf/PackageStat
 ## Global Constraints
 
 - Ort: `typo3conf/ext/linkvalidator2`, eigenes Git-Repo; im Core-Repo nichts committen.
-- Naming **konsequent `linkvalidator2`**: Namespace `TYPO3\CMS\Linkvalidator2`, Tabellen
+- Naming **konsequent `linkvalidator2`**: Namespace `GeorgRinger\Linkvalidator2`, Tabellen
   `tx_linkvalidator2_*`, Service-Tag `linkvalidator2.checker`, Command `linkvalidator2:check`.
   Der String `linkvalidator2` darf nur als Bezeichner vorkommen (späteres stumpfes Ersetzen).
 - Core-Regeln: `declare(strict_types=1);`, GPL-Header des TYPO3-Projekts, PSR-12,
@@ -136,7 +136,7 @@ cp ../../../typo3/sysext/linkvalidator/Resources/Public/Icons/Extension.svg Reso
 
 ```json
 {
-	"name": "typo3/cms-linkvalidator2",
+	"name": "georgringer/linkvalidator2",
 	"type": "typo3-cms-extension",
 	"description": "TYPO3 CMS LinkValidator (rewrite) - Checks links in records and reports broken ones.",
 	"license": [
@@ -147,7 +147,7 @@ cp ../../../typo3/sysext/linkvalidator/Resources/Public/Icons/Extension.svg Reso
 	},
 	"autoload": {
 		"psr-4": {
-			"TYPO3\\CMS\\Linkvalidator2\\": "Classes/"
+			"GeorgRinger\\Linkvalidator2\\": "Classes/"
 		}
 	},
 	"extra": {
@@ -184,7 +184,7 @@ $EM_CONF[$_EXTKEY] = [
     ],
     'autoload' => [
         'psr-4' => [
-            'TYPO3\\CMS\\Linkvalidator2\\' => 'Classes/',
+            'GeorgRinger\\Linkvalidator2\\' => 'Classes/',
         ],
     ],
 ];
@@ -270,7 +270,7 @@ services:
     autoconfigure: true
     public: false
 
-  TYPO3\CMS\Linkvalidator2\:
+  GeorgRinger\Linkvalidator2\:
     resource: '../Classes/*'
 ```
 
@@ -327,7 +327,7 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Check;
+namespace GeorgRinger\Linkvalidator2\Check;
 
 enum CheckStatus: string
 {
@@ -346,7 +346,7 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Check;
+namespace GeorgRinger\Linkvalidator2\Check;
 
 final readonly class CheckResult
 {
@@ -387,7 +387,7 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Extraction;
+namespace GeorgRinger\Linkvalidator2\Extraction;
 
 /**
  * A link found in a field of a record, before it is resolved.
@@ -413,7 +413,7 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Target;
+namespace GeorgRinger\Linkvalidator2\Target;
 
 /**
  * A resolved link target. The identifier is normalized, so equal targets
@@ -450,10 +450,10 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Check;
+namespace GeorgRinger\Linkvalidator2\Check;
 
-use TYPO3\CMS\Linkvalidator2\Extraction\LinkCandidate;
-use TYPO3\CMS\Linkvalidator2\Target\LinkTarget;
+use GeorgRinger\Linkvalidator2\Extraction\LinkCandidate;
+use GeorgRinger\Linkvalidator2\Target\LinkTarget;
 
 interface LinkCheckerInterface
 {
@@ -473,7 +473,7 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Check;
+namespace GeorgRinger\Linkvalidator2\Check;
 
 final class CheckerRegistry
 {
@@ -509,13 +509,13 @@ services:
     public: false
 
   _instanceof:
-    TYPO3\CMS\Linkvalidator2\Check\LinkCheckerInterface:
+    GeorgRinger\Linkvalidator2\Check\LinkCheckerInterface:
       tags: ['linkvalidator2.checker']
 
-  TYPO3\CMS\Linkvalidator2\:
+  GeorgRinger\Linkvalidator2\:
     resource: '../Classes/*'
 
-  TYPO3\CMS\Linkvalidator2\Check\CheckerRegistry:
+  GeorgRinger\Linkvalidator2\Check\CheckerRegistry:
     arguments:
       $checkers: !tagged_iterator linkvalidator2.checker
 ```
@@ -529,7 +529,7 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Command;
+namespace GeorgRinger\Linkvalidator2\Command;
 
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -625,7 +625,7 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Configuration;
+namespace GeorgRinger\Linkvalidator2\Configuration;
 
 use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationExtensionNotConfiguredException;
 use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationPathDoesNotExistException;
@@ -668,7 +668,7 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Extraction;
+namespace GeorgRinger\Linkvalidator2\Extraction;
 
 enum ExtractionMode
 {
@@ -686,7 +686,7 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Extraction;
+namespace GeorgRinger\Linkvalidator2\Extraction;
 
 final readonly class CheckableField
 {
@@ -706,14 +706,14 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Extraction;
+namespace GeorgRinger\Linkvalidator2\Extraction;
 
 use TYPO3\CMS\Core\DataHandling\TableColumnType;
 use TYPO3\CMS\Core\Schema\Field\FieldTypeInterface;
 use TYPO3\CMS\Core\Schema\Field\TextFieldType;
 use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
 use TYPO3\CMS\Core\Schema\VisibleSchemaFieldsCollector;
-use TYPO3\CMS\Linkvalidator2\Configuration\ExtensionSettings;
+use GeorgRinger\Linkvalidator2\Configuration\ExtensionSettings;
 
 /**
  * Decides which fields may contain links, derived from the schema.
@@ -789,7 +789,7 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Extraction;
+namespace GeorgRinger\Linkvalidator2\Extraction;
 
 use TYPO3\CMS\Core\Domain\Repository\PageRepository;
 use TYPO3\CMS\Core\Html\HtmlParser;
@@ -898,7 +898,7 @@ final readonly class LinkExtractor
             return Command::SUCCESS;
 ```
 
-(Imports: `TYPO3\CMS\Backend\Utility\BackendUtility`, `TYPO3\CMS\Linkvalidator2\Extraction\LinkExtractor`.)
+(Imports: `TYPO3\CMS\Backend\Utility\BackendUtility`, `GeorgRinger\Linkvalidator2\Extraction\LinkExtractor`.)
 
 - [ ] **Step 7: Smoke**
 
@@ -944,7 +944,7 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Target;
+namespace GeorgRinger\Linkvalidator2\Target;
 
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\LinkHandling\Exception\UnknownLinkHandlerException;
@@ -953,7 +953,7 @@ use TYPO3\CMS\Core\LinkHandling\LinkService;
 use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\Folder;
 use TYPO3\CMS\Core\Utility\MathUtility;
-use TYPO3\CMS\Linkvalidator2\Extraction\LinkCandidate;
+use GeorgRinger\Linkvalidator2\Extraction\LinkCandidate;
 
 final readonly class LinkTargetFactory
 {
@@ -1074,12 +1074,12 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Check\Checker;
+namespace GeorgRinger\Linkvalidator2\Check\Checker;
 
-use TYPO3\CMS\Linkvalidator2\Check\CheckResult;
-use TYPO3\CMS\Linkvalidator2\Check\LinkCheckerInterface;
-use TYPO3\CMS\Linkvalidator2\Extraction\LinkCandidate;
-use TYPO3\CMS\Linkvalidator2\Target\LinkTarget;
+use GeorgRinger\Linkvalidator2\Check\CheckResult;
+use GeorgRinger\Linkvalidator2\Check\LinkCheckerInterface;
+use GeorgRinger\Linkvalidator2\Extraction\LinkCandidate;
+use GeorgRinger\Linkvalidator2\Target\LinkTarget;
 
 final readonly class InvalidLinkChecker implements LinkCheckerInterface
 {
@@ -1104,17 +1104,17 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Check\Checker;
+namespace GeorgRinger\Linkvalidator2\Check\Checker;
 
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Domain\Repository\PageRepository;
 use TYPO3\CMS\Core\LinkHandling\LinkService;
-use TYPO3\CMS\Linkvalidator2\Check\CheckResult;
-use TYPO3\CMS\Linkvalidator2\Check\LinkCheckerInterface;
-use TYPO3\CMS\Linkvalidator2\Extraction\LinkCandidate;
-use TYPO3\CMS\Linkvalidator2\Target\LinkTarget;
+use GeorgRinger\Linkvalidator2\Check\CheckResult;
+use GeorgRinger\Linkvalidator2\Check\LinkCheckerInterface;
+use GeorgRinger\Linkvalidator2\Extraction\LinkCandidate;
+use GeorgRinger\Linkvalidator2\Target\LinkTarget;
 
 final readonly class PageChecker implements LinkCheckerInterface
 {
@@ -1172,7 +1172,7 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Check\Checker;
+namespace GeorgRinger\Linkvalidator2\Check\Checker;
 
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Database\Connection;
@@ -1180,10 +1180,10 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\LinkHandling\LinkService;
 use TYPO3\CMS\Core\Schema\Capability\TcaSchemaCapability;
 use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
-use TYPO3\CMS\Linkvalidator2\Check\CheckResult;
-use TYPO3\CMS\Linkvalidator2\Check\LinkCheckerInterface;
-use TYPO3\CMS\Linkvalidator2\Extraction\LinkCandidate;
-use TYPO3\CMS\Linkvalidator2\Target\LinkTarget;
+use GeorgRinger\Linkvalidator2\Check\CheckResult;
+use GeorgRinger\Linkvalidator2\Check\LinkCheckerInterface;
+use GeorgRinger\Linkvalidator2\Extraction\LinkCandidate;
+use GeorgRinger\Linkvalidator2\Target\LinkTarget;
 
 final readonly class RecordChecker implements LinkCheckerInterface
 {
@@ -1253,15 +1253,15 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Check\Checker;
+namespace GeorgRinger\Linkvalidator2\Check\Checker;
 
 use TYPO3\CMS\Core\LinkHandling\LinkService;
 use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\Folder;
-use TYPO3\CMS\Linkvalidator2\Check\CheckResult;
-use TYPO3\CMS\Linkvalidator2\Check\LinkCheckerInterface;
-use TYPO3\CMS\Linkvalidator2\Extraction\LinkCandidate;
-use TYPO3\CMS\Linkvalidator2\Target\LinkTarget;
+use GeorgRinger\Linkvalidator2\Check\CheckResult;
+use GeorgRinger\Linkvalidator2\Check\LinkCheckerInterface;
+use GeorgRinger\Linkvalidator2\Extraction\LinkCandidate;
+use GeorgRinger\Linkvalidator2\Target\LinkTarget;
 
 final readonly class FileChecker implements LinkCheckerInterface
 {
@@ -1353,11 +1353,11 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Repository;
+namespace GeorgRinger\Linkvalidator2\Repository;
 
 use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Linkvalidator2\Check\CheckResult;
-use TYPO3\CMS\Linkvalidator2\Target\LinkTarget;
+use GeorgRinger\Linkvalidator2\Check\CheckResult;
+use GeorgRinger\Linkvalidator2\Target\LinkTarget;
 
 final readonly class TargetRepository
 {
@@ -1401,11 +1401,11 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Repository;
+namespace GeorgRinger\Linkvalidator2\Repository;
 
 use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Linkvalidator2\Check\CheckResult;
-use TYPO3\CMS\Linkvalidator2\Extraction\LinkCandidate;
+use GeorgRinger\Linkvalidator2\Check\CheckResult;
+use GeorgRinger\Linkvalidator2\Extraction\LinkCandidate;
 
 final readonly class BrokenLinkRepository
 {
@@ -1464,7 +1464,7 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Repository;
+namespace GeorgRinger\Linkvalidator2\Repository;
 
 use TYPO3\CMS\Core\Database\ConnectionPool;
 
@@ -1533,11 +1533,11 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Service;
+namespace GeorgRinger\Linkvalidator2\Service;
 
-use TYPO3\CMS\Linkvalidator2\Check\CheckResult;
-use TYPO3\CMS\Linkvalidator2\Extraction\LinkCandidate;
-use TYPO3\CMS\Linkvalidator2\Target\LinkTarget;
+use GeorgRinger\Linkvalidator2\Check\CheckResult;
+use GeorgRinger\Linkvalidator2\Extraction\LinkCandidate;
+use GeorgRinger\Linkvalidator2\Target\LinkTarget;
 
 final readonly class CheckedLink
 {
@@ -1558,19 +1558,19 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Service;
+namespace GeorgRinger\Linkvalidator2\Service;
 
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Schema\Capability\TcaSchemaCapability;
 use TYPO3\CMS\Core\Schema\TcaSchema;
 use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
-use TYPO3\CMS\Linkvalidator2\Check\CheckerRegistry;
-use TYPO3\CMS\Linkvalidator2\Extraction\LinkExtractor;
-use TYPO3\CMS\Linkvalidator2\Repository\BrokenLinkRepository;
-use TYPO3\CMS\Linkvalidator2\Repository\RecordStatusRepository;
-use TYPO3\CMS\Linkvalidator2\Repository\TargetRepository;
-use TYPO3\CMS\Linkvalidator2\Target\LinkTargetFactory;
+use GeorgRinger\Linkvalidator2\Check\CheckerRegistry;
+use GeorgRinger\Linkvalidator2\Extraction\LinkExtractor;
+use GeorgRinger\Linkvalidator2\Repository\BrokenLinkRepository;
+use GeorgRinger\Linkvalidator2\Repository\RecordStatusRepository;
+use GeorgRinger\Linkvalidator2\Repository\TargetRepository;
+use GeorgRinger\Linkvalidator2\Target\LinkTargetFactory;
 
 final readonly class RecordCheckService
 {
@@ -1743,14 +1743,14 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Service;
+namespace GeorgRinger\Linkvalidator2\Service;
 
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Linkvalidator2\Extraction\CheckableFieldResolver;
+use GeorgRinger\Linkvalidator2\Extraction\CheckableFieldResolver;
 
 final readonly class RecordQueue
 {
@@ -1950,7 +1950,7 @@ Root-`composer.json`, kein Wächter nötig – Steps 1–2 entfallen. Erste Test
 Zusätzlich zu den Tests unten je ein Regressionstest pro Forge-Issue, das als gelöst gilt
 (`Resources/Private/Issues/done/`, Abschnitt „Test“ der jeweiligen Datei) und für Task 8d.
 
-Erst jetzt. Plan aus der Spec: PSR-4 für `TYPO3\CMS\Linkvalidator2\` und `…\Tests\` als
+Erst jetzt. Plan aus der Spec: PSR-4 für `GeorgRinger\Linkvalidator2\` und `…\Tests\` als
 **lokale, nie committete** Änderung an der Root-`composer.json` von t3-main, Wächter-Eintrag
 in `CLAUDE.local.md`, runTests mit explizitem Pfad.
 
@@ -1964,8 +1964,8 @@ in `CLAUDE.local.md`, runTests mit explizitem Pfad.
 - [ ] **Step 1: Autoload eintragen**
 
 In t3-main `composer.json` unter `autoload.psr-4`:
-`"TYPO3\\CMS\\Linkvalidator2\\": "typo3conf/ext/linkvalidator2/Classes/"`, unter
-`autoload-dev.psr-4`: `"TYPO3\\CMS\\Linkvalidator2\\Tests\\": "typo3conf/ext/linkvalidator2/Tests/"`.
+`"GeorgRinger\\Linkvalidator2\\": "typo3conf/ext/linkvalidator2/Classes/"`, unter
+`autoload-dev.psr-4`: `"GeorgRinger\\Linkvalidator2\\Tests\\": "typo3conf/ext/linkvalidator2/Tests/"`.
 
 ```bash
 ./Build/Scripts/runTests.sh -s composer -- dump-autoload
@@ -1977,7 +1977,7 @@ In t3-main `composer.json` unter `autoload.psr-4`:
 ## linkvalidator2: Autoload-Zeilen nie committen
 
 Die Root-`composer.json` enthält lokal PSR-4-Einträge für
-`TYPO3\CMS\Linkvalidator2\` (typo3conf/ext/linkvalidator2). Vor jedem Commit im
+`GeorgRinger\Linkvalidator2\` (typo3conf/ext/linkvalidator2). Vor jedem Commit im
 Core-Repo prüfen, dass `composer.json` diese Zeilen **nicht** im Commit hat.
 ```
 
@@ -1990,16 +1990,16 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Tests\Unit\Extraction;
+namespace GeorgRinger\Linkvalidator2\Tests\Unit\Extraction;
 
 use PHPUnit\Framework\Attributes\Test;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use TYPO3\CMS\Core\Html\HtmlParser;
 use TYPO3\CMS\Core\LinkHandling\TypoLinkCodecService;
-use TYPO3\CMS\Linkvalidator2\Extraction\CheckableField;
-use TYPO3\CMS\Linkvalidator2\Extraction\CheckableFieldResolver;
-use TYPO3\CMS\Linkvalidator2\Extraction\ExtractionMode;
-use TYPO3\CMS\Linkvalidator2\Extraction\LinkExtractor;
+use GeorgRinger\Linkvalidator2\Extraction\CheckableField;
+use GeorgRinger\Linkvalidator2\Extraction\CheckableFieldResolver;
+use GeorgRinger\Linkvalidator2\Extraction\ExtractionMode;
+use GeorgRinger\Linkvalidator2\Extraction\LinkExtractor;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 final class LinkExtractorTest extends UnitTestCase
@@ -2093,12 +2093,12 @@ declare(strict_types=1);
 
 // GPL header
 
-namespace TYPO3\CMS\Linkvalidator2\Tests\Functional\Service;
+namespace GeorgRinger\Linkvalidator2\Tests\Functional\Service;
 
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Linkvalidator2\Service\RecordCheckService;
-use TYPO3\CMS\Linkvalidator2\Service\RecordQueue;
+use GeorgRinger\Linkvalidator2\Service\RecordCheckService;
+use GeorgRinger\Linkvalidator2\Service\RecordQueue;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 final class RecordCheckServiceTest extends FunctionalTestCase

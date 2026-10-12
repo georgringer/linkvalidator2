@@ -7,7 +7,7 @@
     <select id="linkvalidator2-filter-{name}" name="{name}" class="form-select">
         <option value=""><f:translate key="linkvalidator2.messages:filter.all" /></option>
         <f:for each="{options}" as="option">
-            <option value="{option.value}" {f:if(condition: option.selected, then: 'selected')}>{option.label}</option>
+            <option value="{option.value}" {f:if(condition: option.selected, then: 'selected')}>{option.label} ({option.count})</option>
         </f:for>
     </select>
 </div>

@@ -1,6 +1,6 @@
 <?php
 
-use TYPO3\CMS\Linkvalidator2\Exclusion\ExclusionLabel;
+use GeorgRinger\Linkvalidator2\Exclusion\ExclusionLabel;
 
 return [
     'ctrl' => [

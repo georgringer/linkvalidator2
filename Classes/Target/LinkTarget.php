@@ -15,7 +15,7 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace TYPO3\CMS\Linkvalidator2\Target;
+namespace GeorgRinger\Linkvalidator2\Target;
 
 /**
  * A resolved link target. The identifier is normalized, so equal targets

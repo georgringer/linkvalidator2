@@ -12,6 +12,7 @@
             <h1><f:translate key="linkvalidator2.messages:report.headlineWithPageTitle" arguments="{0: pageTitle}" /></h1>
             <div class="mb-3" data-linkvalidator2-check-progress hidden>
                 <typo3-backend-progress-bar value="0" max="1"></typo3-backend-progress-bar>
+                <div class="visually-hidden" role="status" aria-live="polite" data-linkvalidator2-check-status></div>
                 <button type="button" class="btn btn-sm btn-default mt-1" data-linkvalidator2-check-cancel>
                     <f:translate key="linkvalidator2.messages:check.cancel" />
                 </button>

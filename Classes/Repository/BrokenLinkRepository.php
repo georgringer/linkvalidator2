@@ -14,16 +14,16 @@ declare(strict_types=1);
  *
  * The TYPO3 project - inspiring people to share!
  */
-namespace TYPO3\CMS\Linkvalidator2\Repository;
+namespace GeorgRinger\Linkvalidator2\Repository;
 
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
-use TYPO3\CMS\Linkvalidator2\Check\CheckResult;
-use TYPO3\CMS\Linkvalidator2\Extraction\LinkCandidate;
-use TYPO3\CMS\Linkvalidator2\Report\ReportFilter;
-use TYPO3\CMS\Linkvalidator2\Report\ReportOrdering;
-use TYPO3\CMS\Linkvalidator2\Report\ReportPermissions;
+use GeorgRinger\Linkvalidator2\Check\CheckResult;
+use GeorgRinger\Linkvalidator2\Extraction\LinkCandidate;
+use GeorgRinger\Linkvalidator2\Report\ReportFilter;
+use GeorgRinger\Linkvalidator2\Report\ReportOrdering;
+use GeorgRinger\Linkvalidator2\Report\ReportPermissions;
 
 final readonly class BrokenLinkRepository
 {
@@ -111,10 +111,11 @@ final readonly class BrokenLinkRepository
     }
 
     /**
-     * Values present among the broken links of the given pages, to offer only filter options with results.
+     * Values present among the broken links of the given pages with their number of results, to offer
+     * only filter options with results. Not narrowed by the other filters.
      *
      * @param list<int> $pids
-     * @return array{status: list<string>, linkType: list<string>, table: list<string>, language: list<int>}
+     * @return array{status: array<string, int>, linkType: array<string, int>, table: array<string, int>, language: array<int, int>}
      */
     public function findFilterValues(array $pids, ?ReportPermissions $permissions = null): array
     {
@@ -122,21 +123,18 @@ final readonly class BrokenLinkRepository
         if ($pids === []) {
             return $values;
         }
-        $rows = $this->createQueryBuilderForPids($pids, $permissions)
-            ->select('b.status', 't.link_type', 'b.table_name', 'b.language')
-            ->distinct()
-            ->executeQuery()
-            ->fetchAllAssociative();
-        foreach ($rows as $row) {
-            $values['status'][] = (string)$row['status'];
-            $values['linkType'][] = (string)$row['link_type'];
-            $values['table'][] = (string)$row['table_name'];
-            $values['language'][] = (int)$row['language'];
-        }
-        foreach ($values as $key => $list) {
-            $list = array_values(array_unique($list));
-            sort($list);
-            $values[$key] = $list;
+        $columns = ['status' => 'b.status', 'linkType' => 't.link_type', 'table' => 'b.table_name', 'language' => 'b.language'];
+        foreach ($columns as $key => $column) {
+            $rows = $this->createQueryBuilderForPids($pids, $permissions)
+                ->select($column . ' AS value')
+                ->addSelectLiteral('COUNT(b.uid) AS amount')
+                ->groupBy($column)
+                ->orderBy($column)
+                ->executeQuery()
+                ->fetchAllAssociative();
+            foreach ($rows as $row) {
+                $values[$key][$key === 'language' ? (int)$row['value'] : (string)$row['value']] = (int)$row['amount'];
+            }
         }
         return $values;
     }

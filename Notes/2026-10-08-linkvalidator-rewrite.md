@@ -12,7 +12,7 @@
 
 ## Entwicklungsumgebung / Naming
 - Entwicklung in `typo3conf/ext/linkvalidator2` (gitignored im Core-Repo).
-- **Konsequent `linkvalidator2`**: Namespace `TYPO3\CMS\Linkvalidator2`, Tabellen
+- **Konsequent `linkvalidator2`**: Namespace `GeorgRinger\Linkvalidator2`, Tabellen
   `tx_linkvalidator2_*`, Ext-Key-abgeleitetes alles. Alt + neu parallel aktiv →
   direkter Vergleich. Beim Einzug stumpfes Ersetzen `linkvalidator2` → `linkvalidator`
   (String darf nirgends absichtlich vorkommen).
@@ -20,7 +20,7 @@
 - Tabellennamen unten ohne „2“ notiert = Zielnamen.
 - Eigenes Git-Repo in typo3conf/ext/linkvalidator2 (wie andere Exts dort).
 - Tests/Autoload erst beim ersten Test klären. Plan: PSR-4 für
-  `TYPO3\CMS\Linkvalidator2\(Tests\)` lokal in Root-composer.json (nie committen,
+  `GeorgRinger\Linkvalidator2\(Tests\)` lokal in Root-composer.json (nie committen,
   Wächter in CLAUDE.local.md), runTests mit explizitem Pfad, cgl -n / phpstan per Pfad.
 - Vor Gerrit-Einzug: volle Testabdeckung (Unit + Functional) Pflicht.
 

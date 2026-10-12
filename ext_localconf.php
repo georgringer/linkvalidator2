@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use TYPO3\CMS\Linkvalidator2\Hook\DataHandlerHook;
+use GeorgRinger\Linkvalidator2\Hook\DataHandlerHook;
 
 defined('TYPO3') or die();
 
