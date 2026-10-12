@@ -45,6 +45,10 @@ forgotten.
   `externalTimeout`, `externalUserAgent`, `allowManualCheck`.
 - No Page TSconfig any more (`mod.linkvalidator.*`), migration table in the breaking
   changelog.
+- Message queue: `linkvalidator2:fillqueue <page>` fills the core's messenger queue, `messenger:consume
+  doctrine` works it off (cron or systemd, not the scheduler without `--time-limit`); messages are routed
+  to `doctrine` by `ext_localconf.php`, route to `default` to check synchronously; records of `pid = 0`
+  are not checked; several workers are possible, per-domain politeness is not solved yet.
 - Scheduler: task "Execute console commands" with `linkvalidator2:check` and e.g.
   `--time-limit=300`. Each run checks records never checked first, then records marked due
   (saved with external URLs not checked yet), then records checked longer ago than

@@ -1,0 +1,159 @@
+# Queue mit Symfony Messenger (Entwurf)
+
+Status: Entwurf aus der Diskussion vom 2026-10-12. Umgesetzt (2026-10-12): `fillqueue`,
+`CheckRecordsMessage`, `CheckRecordsHandler`, Routing auf `doctrine`. Abweichung vom Entwurf: es
+gibt nur noch Nachrichten pro Tabelle mit bis zu `--chunk-size` Records (kein `CheckPageMessage`),
+das Aufräumen verschwundener Records macht `fillqueue` selbst beim Durchlaufen. Der Handler leert den Runtime-Cache pro Nachricht (siehe unten). Offen sind
+`--only-if-empty`, der Hook, `CheckCommand` ohne Optionen und die Messung mit großen Beständen.
+
+## Ausgangslage
+
+- `RecordQueue` berechnet bei jedem Lauf, welche Records dran sind: nie geprüft
+  (LEFT JOIN auf `tx_linkvalidator2_record_status`), dann nach `last_checked`
+  (Keyset-Paging). `CheckCommand` führt das aus, mit eigenem Lock.
+- `tx_linkvalidator2_record_status` hat eine Zeile pro geprüftem Record, **auch für
+  Records ohne einen einzigen Link**. Sonst gälte ein Record ohne Links ewig als
+  "nie geprüft". Die Tabelle wächst mit allen prüfbaren Records.
+- Alles läuft in einem Prozess nacheinander. Keine Parallelität.
+- `$checked[$table:$uid]` im Queue-Lauf wächst linear mit der Zahl der Records
+  (grob 100 Byte pro Eintrag). Es verhindert nur doppelte Prüfungen im selben Lauf.
+
+## Idee
+
+Der Core bringt seit 14.2 `messenger:consume` mit (Symfony Messenger, Doctrine-
+Transport). Die Queue wird zur Nachrichten-Queue des Core, die Extension liefert
+Producer und Handler. Es gibt **keine Erkennung, welche Records dran sind**: ein
+Command füllt die Queue für eine Seite samt Teilbaum mit allem, was dort liegt.
+
+Drei Einstiegspunkte, eine Prüflogik (`RecordCheckService::checkRecord()`):
+
+1. **Backend**: Seitenweise per AJAX wie bisher (`CheckController`). Unverändert.
+2. **CLI mit Queue**: `fillqueue` reiht ein, `messenger:consume` arbeitet ab.
+3. **CLI ohne Queue**: `--record` / `--page` prüfen direkt, ohne Messenger. Bleibt
+   für Skripte, Debugging und kleine Installationen.
+
+## Queue füllen
+
+`linkvalidator2:fillqueue <pageId>` (optional `--depth`, Standard: der ganze Teilbaum):
+
+1. Ab der angegebenen Seite den Seitenbaum nach unten laufen, **schrittweise** (Ebene
+   für Ebene, nicht alle IDs auf einmal im Speicher).
+2. Je Seite die prüfbaren Tabellen (`CheckableFieldResolver::getCheckableTables()`)
+   mit `pid = Seite` ansehen und einreihen.
+3. Records ohne Seite im Baum (`pid = 0`, z. B. `sys_redirect`, `sys_webhook`,
+   `sys_news`) gehören zu keiner Seite und werden bewusst nicht geprüft.
+
+Es gibt keinen Begriff "Site" im Command: ob die Seite eine Site-Wurzel ist oder
+irgendeine Seite, ist egal. Wer mehrere Bereiche mit unterschiedlichem Rhythmus will,
+ruft das Command mehrmals auf (z. B. im Scheduler je Eintrag). **Überschneidungen sind
+Sache des Integrators** und harmlos: doppelt eingereihte Seiten kosten nur Zeit (siehe
+Dubletten), deshalb muss der Abstieg auch nicht an verschachtelten Site-Wurzeln
+anhalten.
+
+Wegen der Dubletten braucht der Producer kein Gedächtnis. Er sollte nur nicht
+schneller füllen, als abgearbeitet wird: bei nicht leerer Queue warnen oder mit
+`--only-if-empty` überspringen. Ob der Doctrine-Transport die Nachrichtenanzahl
+liefert (`MessageCountAwareInterface`), ist zu prüfen.
+
+## Nachrichten: pro Seite, große Seiten in Stücken
+
+Pro Seite eine Nachricht (`CheckPageMessage(pageUid)`), Handler ruft
+`PageCheckService::checkPage()` auf, wie das Backend-Modul. Die Queue hat so viele
+Nachrichten wie Seiten, nicht wie Records, und der Abgleich "Record gibt es nicht mehr"
+(`removeStaleResults`) liegt schon in `checkPage`.
+
+**Problem: Seiten mit sehr vielen Records**, z. B. ein News-Ordner mit 20.000 Records.
+`checkPage()` lädt bei jedem Aufruf alle Records der Seite (`findOnPage`) und alle
+schon geprüften (`findRecordsCheckedSince`). Eine Seite in vielen Fortsetzungs-
+Aufrufen mit Zeitbudget abzuarbeiten, wiederholt diese Arbeit jedes Mal (O(n) pro
+Aufruf), und ein einzelner Handler-Lauf wird sehr lang.
+
+Lösung: der Producer zählt je Seite und Tabelle (`COUNT` über den `pid`-Index) und
+teilt große Seiten auf:
+
+- Seite bis zu N Records (N etwa 200): eine `CheckPageMessage`.
+- Größer: je Tabelle Stücke zu N Records (`CheckRecordsMessage(table, uids[])`, die
+  uids per Keyset sortiert nach `uid`).
+
+Dafür braucht der Handler eine Methode "diese Records prüfen" neben `checkPage()`.
+Offen: der Abgleich verschwundener Records (`removeStaleResults`) gehört dann zu
+einer eigenen Nachricht je Seite, sonst läuft er bei Stücken nie.
+
+## Dubletten sind egal
+
+Ein Record oder eine Seite doppelt in der Queue ist harmlos: `checkRecord()` ersetzt die
+Ergebnisse eines Records komplett (`replaceForRecord`), externe URLs kommen aus dem
+Target-Cache. Es gibt keinen zweiten HTTP-Request, solange die Cache-Lebensdauer läuft.
+Damit entfallen das `$checked`-Array und jede Dubletten-Verwaltung.
+
+## Was verworfen wurde
+
+Geprüft mit `Notes/refindex-coverage.php` auf den DDEV-Daten (7967 prüfbare Records,
+5351 davon mit Links):
+
+- **Reference Index als Kandidatenquelle** taugt nicht. Der Core indexiert externe URLs
+  nicht (`sys_refindex` hat keine Zeile für den Parser `url`, `typolink` nur für
+  Seiten, Dateien, Records). 48 Records mit Links hatten keine Index-Zeile, 990 Records
+  hatten Index-Zeilen ohne Links. Der Index war außerdem veraltet (5231 Records laut
+  `referenceindex:update --check`).
+- **`tstamp`-Wasserstand pro Tabelle** wäre möglich, hätte aber Lücken bei direkten
+  DB-Änderungen und bräuchte eine Regel für Tabellen ohne `UpdatedAt`-Capability. Mit
+  `fillqueue` nicht nötig.
+
+## Rootline und Sichtbarkeit
+
+Die Rootline spielt beim Füllen nur als Seitenbaum eine Rolle (Abstieg ab der angegebenen Seite).
+Ob eine Quelle über eine Elternseite versteckt ist (`extendToSubpages`, "Schritt 7"),
+sollte der **Report** beim Anzeigen entscheiden, nicht die Prüfung. Eine versteckte
+Elternseite ändert nichts an den Records darunter, es muss also nichts neu geprüft
+werden.
+
+## Betrieb
+
+- `messenger:consume` blockiert im Scheduler andere Tasks (Changelog 14.2). Es braucht
+  `--time-limit` unter dem Cron-Intervall oder einen echten Cron bzw. systemd-Dienst.
+  `fillqueue` läuft problemlos über den Scheduler.
+- Retry und Failure-Transport kommen vom Messenger.
+- Mehrere Worker sind möglich. Das ist der größte Gewinn, bringt aber eine Frage mit:
+  zwei Worker können gleichzeitig dieselbe Domain abfragen. Eine Höflichkeitsregel
+  pro Domain (Forge #89287) braucht dann gemeinsamen Zustand (Cache oder Lock pro
+  Domain).
+- Default-Routing: Nachrichten ohne Routing verarbeitet der Messenger synchron. Die
+  Extension muss das Routing auf den Doctrine-Transport mitliefern oder in der Doku
+  verlangen. Offen.
+- Der DataHandler-Hook kann einreihen statt sofort zu prüfen. Offen, ob die Prüfung
+  interner Ziele weiter sofort läuft (so ist es heute) und nur externe URLs in die
+  Queue gehen.
+
+## Worker-Prozess: Runtime-Cache und Datenbankverbindung
+
+Der Core schließt nach jeder Nachricht die Datenbankverbindung
+(`DoctrineCloseConnectionMiddleware`). `BackendUtility::BEgetRootLine()` hält aber ein
+vorbereitetes Statement im Runtime-Cache. Die zweite Nachricht im selben Worker scheitert
+dann mit `MySQL server has gone away`, die Nachricht wird nach den Wiederholungen
+verworfen und es sieht aus, als hätte der Worker alles abgearbeitet. Der Handler leert
+deshalb den Runtime-Cache vor jeder Nachricht (das ist im langlebigen Worker auch aus
+Gründen der Aktualität richtig). Forge-Meldung dazu: `fileadmin/forge/`.
+
+## Was aus dem Bestand wird
+
+- `RecordQueue` und das Keyset-Paging entfallen, ebenso das eigene Lock und das
+  `$checked`-Array im Command.
+- `record_status` bleibt, aber nur noch für den Fortschritt innerhalb eines Laufs
+  (`findRecordsCheckedSince`), Zähler im Report und den Abgleich. Ob die Zeile für
+  Records ohne Links nötig bleibt, ist offen. `markChecked()` wird zum Upsert.
+- `CheckCommand` ohne Optionen: Alias für `fillqueue` oder entfällt. Offen.
+- README: Zeilen "Scheduler" und "CLI command" in der Feature-Tabelle anpassen, sobald
+  etwas davon gebaut ist.
+
+## Offen
+
+- Schwelle N und das Aufteilen großer Seiten (`CheckRecordsMessage`), Abgleich
+  verschwundener Records bei Stücken.
+- Queue-Länge abfragbar (`--only-if-empty`)?
+- Routing und Transport-Default.
+- Hook: sofort prüfen oder einreihen.
+- Lock-Verhalten und Abbruch mitten im Lauf in einem Test belegen.
+- Messung mit großem Datenbestand (Seed in `seed-bigtree.php`) mit einer Seite mit
+  20.000 Records, außerdem `removeResultsOfMissingPages()` und die Report-Abfrage mit
+  vielen Seiten (`IN (…)`).

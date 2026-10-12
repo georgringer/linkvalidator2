@@ -28,7 +28,18 @@ bin/typo3 linkvalidator2:check --record=tt_content:471
 bin/typo3 linkvalidator2:check --page=1287 --depth=1
 # background run (scheduler): records never checked, due ones, then those older than 24 h
 bin/typo3 linkvalidator2:check --time-limit=300 --interval=24
+# message queue: queue a page tree, a worker checks it (several workers may run in parallel)
+bin/typo3 linkvalidator2:fillqueue 1287
+bin/typo3 messenger:consume doctrine --time-limit=240
 ```
+
+`fillqueue` walks the page tree below the page, level by level, and queues the records of every
+page in messages of `--chunk-size` records (25). Queueing a record twice is harmless. Call it once
+per area with its own rhythm; overlapping areas only cost time. Records without a page (`pid = 0`)
+are not checked. The messages are routed to the `doctrine` transport, set
+`$GLOBALS['TYPO3_CONF_VARS']['SYS']['messenger']['routing']` to `default` to check synchronously.
+`messenger:consume` blocks the scheduler while it runs: use `--time-limit` below the cron interval
+or run it as a service.
 
 Backend: *Link Management → Check Links (new)* (editors see what they may fix), select a page,
 choose the levels and press *Check*.
@@ -108,6 +119,7 @@ solved ones in `done/`.
 | Accept a single occurrence | ❌ | ❌ | ❌ | 📋 later | |
 | **Running checks** | | | | | |
 | Scheduler | ✅ own scheduler task | ✅ schedulable command | ✅ queue command via "Execute console commands", lock against overlapping runs | | |
+| Message queue (parallel workers) | ❌ | ❌ | ✅ `linkvalidator2:fillqueue <page>` queues a page tree (level by level, in messages of `--chunk-size` records, vanished records cleaned up), `messenger:consume doctrine` checks them; several workers possible, large pages are split | 📋 `--only-if-empty`, per-domain politeness with several workers, hook queues instead of checking | #89266 |
 | Disable on staging (survives DB sync) | ❌ task lives in the DB | ❓ | ➖ not linkvalidator-specific: mail transport per environment (Mailpit, `null`) or no scheduler cron on staging; mail report recipients via `%env()%` in site settings | 📋 document | #110615 (closed) |
 | CLI command | ❌ | ✅ `brofix:checklinks` | ✅ `--record`, `--page`, `--depth`, `--no-external`; without them the queue: never checked, due, older than `--interval` (24 h), with `--limit` / `--time-limit` | 📋 `--site` | |
 | Link types to check | 🟡 TSconfig `linktypes`, report shows stale results of the other types | ✅ | ✅ always all links of a record, results replaced per record; link type is a report filter | | #92586 |
