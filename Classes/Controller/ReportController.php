@@ -111,6 +111,8 @@ final readonly class ReportController
 
         if ($pageRecord !== []) {
             $this->addDocHeaderButtons($view, $pageUid, $depth, $this->extensionSettings->isManualCheckAllowed());
+            $this->pageRenderer->loadJavaScriptModule('@typo3/backend/context-menu.js');
+            $this->pageRenderer->loadJavaScriptModule('@typo3/linkvalidator2/problem-details.js');
             if ($this->extensionSettings->isManualCheckAllowed()) {
                 $this->pageRenderer->loadJavaScriptModule('@typo3/linkvalidator2/check-links.js');
             }
@@ -265,15 +267,20 @@ final readonly class ReportController
         $result = [];
         $mayIgnore = $this->getBackendUser()->check('tables_modify', ExclusionRepository::TABLE);
         $pageTitles = [];
+        $pageRecords = [];
         $rows = $this->brokenLinkRepository->findByPids($pageIds, $filter, $ordering, self::ITEMS_PER_PAGE, $pagination['startRecord'] - 1, $permissions);
         foreach ($rows as $row) {
             $table = (string)$row['table_name'];
             $uid = (int)$row['record_uid'];
             $pid = (int)$row['pid'];
             $record = BackendUtility::getRecord($table, $uid) ?? [];
-            $pageTitles[$pid] ??= BackendUtility::getRecordTitle('pages', BackendUtility::getRecord('pages', $pid) ?? ['uid' => $pid]);
+            $pageRecords[$pid] ??= BackendUtility::getRecord('pages', $pid) ?? ['uid' => $pid];
+            $pageTitles[$pid] ??= BackendUtility::getRecordTitle('pages', $pageRecords[$pid]);
+            $row['pageRecord'] = $pageRecords[$pid];
+            $row['record'] = $record;
             $row['pageTitle'] = $pageTitles[$pid];
             $row['details'] = (array)json_decode((string)$row['error_details'], true);
+            $row['detailsJson'] = json_encode($row['details'] + ['target' => (string)$row['link_string']], JSON_THROW_ON_ERROR);
             $row['messageArguments'] = $this->getMessageArguments((string)$row['error_type'], $row['details'], $pageTitles);
             $row['targetUrl'] = $this->getTargetUrl((string)$row['link_string'], (int)$row['language']);
             $row['statusClass'] = match ((string)$row['status']) {
@@ -321,13 +328,23 @@ final readonly class ReportController
 
     /**
      * Table header: clicking a column sorts by it, clicking the sorted column reverses the direction.
+     * The link column (target and link text) is not offered for sorting, ReportOrdering still supports it.
      *
-     * @return list<array{label: string, url: string, active: bool, descending: bool}>
+     * @return list<array{label: string, url: ?string, active: bool, descending: bool}>
      */
     private function getColumns(int $pageUid, ReportOrdering $ordering): array
     {
         $columns = [];
-        foreach (array_keys(ReportOrdering::FIELDS) as $field) {
+        foreach (['page', 'record', 'link', 'problem', 'since'] as $field) {
+            if ($field === 'link') {
+                $columns[] = [
+                    'label' => $this->getLanguageService()->sL('linkvalidator2.messages:report.column.link'),
+                    'url' => null,
+                    'active' => false,
+                    'descending' => false,
+                ];
+                continue;
+            }
             $active = $ordering->field === $field;
             $columns[] = [
                 'label' => $this->getLanguageService()->sL('linkvalidator2.messages:report.column.' . $field),

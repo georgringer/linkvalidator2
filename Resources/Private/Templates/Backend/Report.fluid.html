@@ -60,12 +60,17 @@
                                 <tr>
                                     <f:for each="{columns}" as="column">
                                         <th>
-                                            <a href="{column.url}" class="text-nowrap">
-                                                {column.label}
-                                                <f:if condition="{column.active}">
-                                                    <core:icon identifier="{f:if(condition: column.descending, then: 'actions-sort-amount-down', else: 'actions-sort-amount-up')}" />
-                                                </f:if>
-                                            </a>
+                                            <f:if condition="{column.url}">
+                                                <f:then>
+                                                    <a href="{column.url}" class="text-nowrap">
+                                                        {column.label}
+                                                        <f:if condition="{column.active}">
+                                                            <core:icon identifier="{f:if(condition: column.descending, then: 'actions-sort-amount-down', else: 'actions-sort-amount-up')}" />
+                                                        </f:if>
+                                                    </a>
+                                                </f:then>
+                                                <f:else>{column.label}</f:else>
+                                            </f:if>
                                         </th>
                                     </f:for>
                                     <th><span class="visually-hidden"><f:translate key="linkvalidator2.messages:report.column.actions" /></span></th>
@@ -74,27 +79,33 @@
                             <tbody>
                                 <f:for each="{brokenLinks}" as="brokenLink">
                                     <tr>
-                                        <td>{brokenLink.pageTitle}<br><small>{brokenLink.pid}</small></td>
                                         <td>
-                                            <a href="{brokenLink.editUrl}">{brokenLink.recordTitle}</a>
-                                            <br><small>{brokenLink.table_name}:{brokenLink.record_uid}</small>
+                                            <a href="#" data-contextmenu-trigger="click" data-contextmenu-table="pages" data-contextmenu-uid="{brokenLink.pid}"><core:iconForRecord table="pages" row="{brokenLink.pageRecord}" /></a>
+                                            {brokenLink.pageTitle}<br><small>{brokenLink.pid}</small>
                                         </td>
-                                        <td>{brokenLink.field}</td>
-                                        <td>{brokenLink.link_text}</td>
+                                        <td>
+                                            <f:if condition="{brokenLink.record}"><a href="#" data-contextmenu-trigger="click" data-contextmenu-table="{brokenLink.table_name}" data-contextmenu-uid="{brokenLink.record_uid}"><core:iconForRecord table="{brokenLink.table_name}" row="{brokenLink.record}" /></a></f:if>
+                                            <a href="{brokenLink.editUrl}">{brokenLink.recordTitle}</a>
+                                            <br><small>{brokenLink.table_name}:{brokenLink.record_uid} · {brokenLink.field}</small>
+                                        </td>
                                         <td>
                                             <f:if condition="{brokenLink.targetUrl}">
                                                 <f:then><a href="{brokenLink.targetUrl}" target="_blank" rel="noopener noreferrer"><code>{brokenLink.link_string}</code></a></f:then>
                                                 <f:else><code>{brokenLink.link_string}</code></f:else>
+                                            </f:if>
+                                            <f:if condition="{brokenLink.link_text}">
+                                                <br><small>{brokenLink.link_text}</small>
                                             </f:if>
                                         </td>
                                         <td>
                                             <span class="badge {brokenLink.statusClass}"><f:translate key="linkvalidator2.messages:status.{brokenLink.status}" /></span>
                                             <f:translate key="linkvalidator2.messages:error.{brokenLink.error_type}" arguments="{brokenLink.messageArguments}" default="{brokenLink.error_type}" />
                                             <f:if condition="{brokenLink.details.message}">
-                                                <details class="mt-1">
-                                                    <summary class="small text-body-secondary"><f:translate key="linkvalidator2.messages:report.details" /></summary>
-                                                    <small class="text-body-secondary text-break">{brokenLink.details.message}</small>
-                                                </details>
+                                                <div>
+                                                    <button type="button" class="btn btn-link btn-sm p-0" data-linkvalidator2-details="{brokenLink.detailsJson}">
+                                                        <f:translate key="linkvalidator2.messages:report.details" />
+                                                    </button>
+                                                </div>
                                             </f:if>
                                         </td>
                                         <td><f:format.date format="d.m.Y H:i">{brokenLink.first_detected}</f:format.date></td>

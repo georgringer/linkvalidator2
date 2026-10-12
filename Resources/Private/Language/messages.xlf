@@ -45,14 +45,8 @@
       <trans-unit id="report.column.record">
         <source>Record</source>
       </trans-unit>
-      <trans-unit id="report.column.field">
-        <source>Field</source>
-      </trans-unit>
-      <trans-unit id="report.column.linkText">
-        <source>Link text</source>
-      </trans-unit>
-      <trans-unit id="report.column.target">
-        <source>Link target</source>
+      <trans-unit id="report.column.link">
+        <source>Link</source>
       </trans-unit>
       <trans-unit id="report.column.problem">
         <source>Problem</source>
@@ -251,6 +245,24 @@
       </trans-unit>
       <trans-unit id="error.url.requestFailed">
         <source>Request failed</source>
+      </trans-unit>
+      <trans-unit id="details.title">
+        <source>Details of the check</source>
+      </trans-unit>
+      <trans-unit id="details.target">
+        <source>Link target</source>
+      </trans-unit>
+      <trans-unit id="details.message">
+        <source>Message</source>
+      </trans-unit>
+      <trans-unit id="details.errno">
+        <source>Error code</source>
+      </trans-unit>
+      <trans-unit id="details.httpStatus">
+        <source>HTTP status</source>
+      </trans-unit>
+      <trans-unit id="details.close">
+        <source>Close</source>
       </trans-unit>
       <trans-unit id="report.details">
         <source>Details</source>

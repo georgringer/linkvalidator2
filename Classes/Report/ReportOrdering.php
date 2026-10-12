@@ -30,8 +30,7 @@ final readonly class ReportOrdering
      */
     public const FIELDS = [
         'page' => ['pid'],
-        'record' => ['table_name', 'record_uid'],
-        'field' => ['field'],
+        'record' => ['table_name', 'record_uid', 'field'],
         'linkText' => ['link_text'],
         'target' => ['link_string'],
         'problem' => ['error_type'],
