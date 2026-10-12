@@ -145,11 +145,10 @@ solved ones in `done/`.
 | Access for editors | ✅ filtered by permissions | ✅ | ✅ only what the user may fix: page/content edit permission, tables, exclude fields, authMode, languages (SQL, pagination correct) | | #105413, #104004 |
 | Links in page properties below a page without edit permission | ❌ hidden: stored pid is the parent page | ❓ | ✅ `pid` of a page is the page itself, edit permission checked on it | | #105413, #105873 |
 | `authMode` restrictions | 🟡 type field only, empty list = no restriction | ❓ | ✅ every `select` field with `authMode` (values from `items`) | | #104004 |
-| Workspace users | ❌ live users only | ❓ | ❌ `workspaces => live` | 📋 module in workspaces, hint "results show the live state" | #107983 |
+| Workspace users | ❌ live users only | ❓ | ❌ `workspaces => live` | 📋 part of the workspace support, which is required, see the row Workspaces | #107983 |
 | **Visibility elsewhere** | | | | | |
 | Markers in the rich text editor | 🟡 page missing/hidden, file, known external | 🟡 similar | ✅ same checkers as the report, external from cache; page of the edited record from the form request (Page TSconfig `TCEMAIN.linkHandler`), record links to an unknown table never marked | | |
 | Page module callout | ❌ | ✅ with EXT:page_callouts | ❌ | 📋 later | |
-| Dashboard widget | ❌ | ❌ | ❌ | 💭 | |
 | **Reporting** | | | | | |
 | E-mail report | ✅ full list after each run | ✅ | ❌ | 📋 later: changes since last report, per site | |
 | Site name in the mail, links to edit / to the module | ❌ no absolute backend URLs in CLI | ❓ | ❌ | 📋 with the mail report: per site, base URL from site / settings | #106487, #106677 |
