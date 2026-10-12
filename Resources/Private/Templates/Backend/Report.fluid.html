@@ -53,6 +53,7 @@
             </f:if>
             <f:if condition="{brokenLinks}">
                 <f:then>
+                    <div data-linkvalidator2-results>
                     <f:render partial="Pagination" arguments="{pagination: pagination, pageUid: pageUid}" />
                     <div class="recordlist mt-3">
                         <div class="recordlist-heading">
@@ -120,7 +121,7 @@
                                         <td class="col-control">
                                             <div class="btn-group">
                                                 <f:if condition="{manualCheckAllowed}">
-                                                    <button type="button" class="btn btn-default btn-sm" data-linkvalidator2-recheck="{brokenLink.uid}" title="{f:translate(key: 'linkvalidator2.messages:report.recheck')}">
+                                                    <button type="button" class="btn btn-default btn-sm" data-linkvalidator2-recheck data-table="{brokenLink.table_name}" data-record="{brokenLink.record_uid}" data-field="{brokenLink.field}" data-target="{brokenLink.target}" title="{f:translate(key: 'linkvalidator2.messages:report.recheck')}">
                                                         <core:icon identifier="actions-refresh" />
                                                         <span class="visually-hidden"><f:translate key="linkvalidator2.messages:report.recheck" /></span>
                                                     </button>
@@ -153,6 +154,7 @@
                         </div>
                     </div>
                     <f:render partial="Pagination" arguments="{pagination: pagination, pageUid: pageUid}" />
+                    </div>
                 </f:then>
                 <f:else>
                     <div class="mt-3">

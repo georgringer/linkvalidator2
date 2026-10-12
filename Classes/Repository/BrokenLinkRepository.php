@@ -276,24 +276,24 @@ final readonly class BrokenLinkRepository
     }
 
     /**
-     * A result the user may see in the report
+     * A result the user may see in the report, found by what identifies it. The uid of a row is
+     * not used: checking a record replaces its results, and the report may be older than that.
      *
      * @return array<string, mixed>|null The row with the identifier of its target
      */
-    public function findOneVisible(int $uid, ?ReportPermissions $permissions): ?array
+    public function findOneVisible(string $table, int $recordUid, string $field, int $targetUid, ?ReportPermissions $permissions): ?array
     {
-        $pid = $this->connectionPool->getConnectionForTable(self::TABLE)
-            ->select(['pid'], self::TABLE, ['uid' => $uid, 'workspace' => 0])
-            ->fetchOne();
+        $identity = ['table_name' => $table, 'record_uid' => $recordUid, 'field' => $field, 'target' => $targetUid, 'workspace' => 0];
+        $pid = $this->connectionPool->getConnectionForTable(self::TABLE)->select(['pid'], self::TABLE, $identity)->fetchOne();
         if ($pid === false) {
             return null;
         }
         $queryBuilder = $this->createQueryBuilderForPids([(int)$pid], $permissions);
-        $row = $queryBuilder
-            ->select('b.*', 't.identifier')
-            ->andWhere($queryBuilder->expr()->eq('b.uid', $queryBuilder->createNamedParameter($uid, Connection::PARAM_INT)))
-            ->executeQuery()
-            ->fetchAssociative();
+        $queryBuilder->select('b.*', 't.identifier');
+        foreach ($identity as $column => $value) {
+            $queryBuilder->andWhere($queryBuilder->expr()->eq('b.' . $column, $queryBuilder->createNamedParameter($value, is_int($value) ? Connection::PARAM_INT : Connection::PARAM_STR)));
+        }
+        $row = $queryBuilder->executeQuery()->fetchAssociative();
         return $row === false ? null : $row;
     }
 

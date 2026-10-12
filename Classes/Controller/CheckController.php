@@ -117,7 +117,13 @@ final readonly class CheckController
         }
         $body = (array)$request->getParsedBody();
         $permissions = $this->reportPermissionsFactory->createForUser($this->getBackendUser());
-        $row = $this->brokenLinkRepository->findOneVisible((int)($body['uid'] ?? 0), $permissions);
+        $row = $this->brokenLinkRepository->findOneVisible(
+            (string)($body['table'] ?? ''),
+            (int)($body['record'] ?? 0),
+            (string)($body['field'] ?? ''),
+            (int)($body['target'] ?? 0),
+            $permissions
+        );
         if ($row === null || !$this->hasPageAccess((int)$row['pid'])) {
             return $this->error('Result not found', 404);
         }

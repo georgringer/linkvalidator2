@@ -166,6 +166,21 @@ final class RecheckTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function aResultIsFoundAlthoughTheRecordWasCheckedAgainSinceTheReportWasLoaded(): void
+    {
+        $row = $this->getConnectionPool()->getConnectionForTable(self::BROKEN_LINK_TABLE)
+            ->select(['uid', 'table_name', 'record_uid', 'field', 'target'], self::BROKEN_LINK_TABLE, ['record_uid' => 31])
+            ->fetchAssociative();
+        // A worker or an editor checks the record: its results are replaced and get new uids
+        $this->get(RecordCheckService::class)->checkRecord('tt_content', 31);
+
+        $response = $this->recheckByKey($row);
+
+        self::assertNotSame($row['uid'], $this->getResultUid(31));
+        self::assertSame(200, $response->getStatusCode());
+    }
+
+    #[Test]
     public function anUnknownResultIsNotFound(): void
     {
         self::assertSame(404, $this->recheck(4711)->getStatusCode());
@@ -188,10 +203,29 @@ final class RecheckTest extends FunctionalTestCase
         self::assertSame(1, TestCacheableLinkChecker::$checks);
     }
 
+    /**
+     * @param int $uid Uid of the result; the request carries what identifies it, as the report does
+     */
     private function recheck(int $uid): ResponseInterface
     {
+        $row = $this->getConnectionPool()->getConnectionForTable(self::BROKEN_LINK_TABLE)
+            ->select(['table_name', 'record_uid', 'field', 'target'], self::BROKEN_LINK_TABLE, ['uid' => $uid])
+            ->fetchAssociative();
+        return $this->recheckByKey($row === false ? ['table_name' => 'tt_content', 'record_uid' => 0, 'field' => 'bodytext', 'target' => 0] : $row);
+    }
+
+    /**
+     * @param array{table_name: string, record_uid: int, field: string, target: int} $row
+     */
+    private function recheckByKey(array $row): ResponseInterface
+    {
         return $this->get(CheckController::class)->recheckAction(
-            (new ServerRequest('https://typo3-testing.local/', 'POST'))->withParsedBody(['uid' => $uid])
+            (new ServerRequest('https://typo3-testing.local/', 'POST'))->withParsedBody([
+                'table' => $row['table_name'],
+                'record' => $row['record_uid'],
+                'field' => $row['field'],
+                'target' => $row['target'],
+            ])
         );
     }
 

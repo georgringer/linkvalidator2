@@ -17,11 +17,14 @@ import labels from '~labels/linkvalidator2.messages';
 
 /**
  * "Check this link again" in the report: checks the link of the result again, with a new
- * request for an external URL, and reloads the report. The outcome is shown after the reload.
+ * request for an external URL, and shows the outcome. The results of the report are replaced
+ * without reloading the page, so the position in the list stays. If nothing is left to show,
+ * the report is reloaded and the outcome is shown after that.
  *
  * @todo Move to Build/Sources/TypeScript/linkvalidator/ when replacing the core extension.
  */
 const STORAGE_KEY = 'linkvalidator2-recheck';
+const RESULTS = '[data-linkvalidator2-results]';
 const notificationByStatus = {
   ok: ['success', 'recheck.ok'],
   broken: ['warning', 'recheck.broken'],
@@ -30,18 +33,39 @@ const notificationByStatus = {
   gone: ['success', 'recheck.gone'],
 };
 
-const showStoredNotification = () => {
-  let status = null;
-  try {
-    status = window.sessionStorage.getItem(STORAGE_KEY);
-    window.sessionStorage.removeItem(STORAGE_KEY);
-  } catch {
-    return;
-  }
+const notify = (status) => {
   const [severity, label] = notificationByStatus[status] ?? [];
   if (severity) {
     Notification[severity](labels.get('recheck.title'), labels.get(label));
   }
+};
+
+const showStoredNotification = () => {
+  try {
+    const status = window.sessionStorage.getItem(STORAGE_KEY);
+    window.sessionStorage.removeItem(STORAGE_KEY);
+    notify(status);
+  } catch {
+    // No storage, no notification
+  }
+};
+
+/**
+ * Replaces the results with the ones of the current report. Returns false if there is nothing
+ * to replace them with.
+ */
+const refreshResults = async () => {
+  const current = document.querySelector(RESULTS);
+  if (current === null) {
+    return false;
+  }
+  const response = await fetch(window.location.href, { credentials: 'same-origin' });
+  const fresh = new DOMParser().parseFromString(await response.text(), 'text/html').querySelector(RESULTS);
+  if (!response.ok || fresh === null) {
+    return false;
+  }
+  current.replaceWith(document.importNode(fresh, true));
+  return true;
 };
 
 showStoredNotification();
@@ -54,8 +78,15 @@ document.addEventListener('click', async (event) => {
   button.disabled = true;
   try {
     const result = await (await new AjaxRequest(TYPO3.settings.ajaxUrls.linkvalidator2_check_recheck).post({
-      uid: button.dataset.linkvalidator2Recheck,
+      table: button.dataset.table,
+      record: button.dataset.record,
+      field: button.dataset.field,
+      target: button.dataset.target,
     })).resolve();
+    if (await refreshResults()) {
+      notify(result.status);
+      return;
+    }
     try {
       window.sessionStorage.setItem(STORAGE_KEY, result.status);
     } catch {
