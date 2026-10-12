@@ -123,6 +123,37 @@ final class RecheckTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function everyTypeOfLinkCanBeChecked(): void
+    {
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/tt_content.csv');
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/tt_content_custom_link_handler.csv');
+        $recordCheckService = $this->get(RecordCheckService::class);
+        // Page links, files, folders, an unknown handler, a checker of an extension, one with cached results
+        foreach ([10, 30, 33, 35] as $uid) {
+            $recordCheckService->checkRecord('tt_content', $uid, true);
+        }
+        $connection = $this->getConnectionPool()->getConnectionForTable(self::BROKEN_LINK_TABLE);
+        $results = $connection->select(['record_uid', 'field', 'target'], self::BROKEN_LINK_TABLE)->fetchAllAssociative();
+        self::assertGreaterThan(8, count($results));
+        foreach ($results as $result) {
+            // Checking a record replaces its results, the uid of a row is only valid until then
+            $uid = $connection->select(['uid'], self::BROKEN_LINK_TABLE, $result)->fetchOne();
+            if ($uid === false) {
+                continue;
+            }
+            $response = $this->recheck((int)$uid);
+            self::assertSame(200, $response->getStatusCode(), 'Result of record ' . $result['record_uid'] . ', field ' . $result['field']);
+            self::assertContains($this->decode($response)['status'], ['broken', 'unknown', 'info', 'ok']);
+        }
+        $types = $this->getConnectionPool()->getConnectionForTable('tx_linkvalidator2_target')
+            ->select(['link_type'], 'tx_linkvalidator2_target')
+            ->fetchFirstColumn();
+        foreach (['page', 'file', 'folder', 'invalid', 'checked'] as $type) {
+            self::assertContains($type, $types, 'Type ' . $type . ' was part of the test');
+        }
+    }
+
+    #[Test]
     public function aLinkThatIsGoneFromTheRecordIsReportedAsGoneAndItsResultRemoved(): void
     {
         $uid = $this->getResultUid(31);
