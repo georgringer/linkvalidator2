@@ -60,6 +60,15 @@ final readonly class RecordStatusRepository
         ], ['table_name' => $table, 'record_uid' => $recordUid, 'workspace' => 0]);
     }
 
+    public function adjustBrokenCount(string $table, int $recordUid, int $delta): void
+    {
+        $connection = $this->connectionPool->getConnectionForTable(self::TABLE);
+        $count = $connection->select(['broken_count'], self::TABLE, ['table_name' => $table, 'record_uid' => $recordUid, 'workspace' => 0])->fetchOne();
+        if ($count !== false) {
+            $connection->update(self::TABLE, ['broken_count' => max(0, (int)$count + $delta)], ['table_name' => $table, 'record_uid' => $recordUid, 'workspace' => 0]);
+        }
+    }
+
     public function remove(string $table, int $recordUid): void
     {
         $this->connectionPool->getConnectionForTable(self::TABLE)

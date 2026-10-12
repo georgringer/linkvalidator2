@@ -267,6 +267,30 @@
       <trans-unit id="details.close">
         <source>Close</source>
       </trans-unit>
+      <trans-unit id="report.recheck">
+        <source>Check this link again</source>
+      </trans-unit>
+      <trans-unit id="recheck.ok">
+        <source>The link works now, the result is removed</source>
+      </trans-unit>
+      <trans-unit id="recheck.broken">
+        <source>The link is still broken</source>
+      </trans-unit>
+      <trans-unit id="recheck.unknown">
+        <source>The link could not be checked reliably</source>
+      </trans-unit>
+      <trans-unit id="recheck.info">
+        <source>The link is reachable, but restricted</source>
+      </trans-unit>
+      <trans-unit id="recheck.gone">
+        <source>The record does not contain this link any more, the result is removed</source>
+      </trans-unit>
+      <trans-unit id="recheck.failed">
+        <source>Checking the link failed</source>
+      </trans-unit>
+      <trans-unit id="recheck.title">
+        <source>Check again</source>
+      </trans-unit>
       <trans-unit id="report.details">
         <source>Details</source>
       </trans-unit>

@@ -138,7 +138,7 @@ solved ones in `done/`.
 | Sort | ❌ | ✅ | ✅ by every column | | #96447 |
 | Edit record from the report | ✅ | ✅ | ✅ | | |
 | Open the link target from the report | ❓ | ❓ | ✅ new tab: external URL, page in the frontend preview (hidden/scheduled pages included), file by its public URL | | |
-| Recheck a single URL | ❌ | ✅ | ❌ | 💭 | #96447 |
+| Recheck a single URL | ❌ | ✅ | ✅ button "Check this link again" next to "Ignore" in every row: checks the record at once (a new request for an external URL, the stored result of the target is skipped) and applies the result to every stored result of the same target, so the report is up to date without checking the other records; the outcome is shown as a notification; off with `allowManualCheck` | | #96447 |
 | "First detected" (also for notices and "cannot be checked") | ❌ | ❌ | ✅ | | |
 | Empty report explained | ❌ | ❓ | ✅ "not checked yet" vs. "no broken links found" with the time of the last check vs. "nothing matches the filter" | | |
 | Which records were checked | ❌ | ❌ | ❌ only a count | 📋 module step | |

@@ -28,6 +28,6 @@ Restricting manual checks
 
 If links should only be checked in the background, switch off
 :ref:`allowManualCheck <confval-linkvalidator2-allowmanualcheck>`. The
-level selection and the button :guilabel:`Check links` disappear from the
-module and the AJAX routes answer with HTTP 403. The report itself stays
-available.
+level selection, the button :guilabel:`Check links` and the button to check
+a single link again disappear from the module and the AJAX routes answer
+with HTTP 403. The report itself stays available.

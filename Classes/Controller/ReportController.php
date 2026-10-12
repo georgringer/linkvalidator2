@@ -115,11 +115,13 @@ final readonly class ReportController
             $this->pageRenderer->loadJavaScriptModule('@typo3/linkvalidator2/problem-details.js');
             if ($this->extensionSettings->isManualCheckAllowed()) {
                 $this->pageRenderer->loadJavaScriptModule('@typo3/linkvalidator2/check-links.js');
+                $this->pageRenderer->loadJavaScriptModule('@typo3/linkvalidator2/recheck-link.js');
             }
             $this->pageRenderer->loadJavaScriptModule('@typo3/linkvalidator2/ignore-link.js');
         }
 
         $view->assignMultiple([
+            'manualCheckAllowed' => $this->extensionSettings->isManualCheckAllowed(),
             'pageUid' => $pageUid,
             'pageTitle' => (string)($pageRecord['title'] ?? ''),
             'moduleUrl' => $moduleUrl,

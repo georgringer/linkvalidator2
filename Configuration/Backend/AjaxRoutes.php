@@ -17,6 +17,11 @@ return [
         'methods' => ['POST'],
         'target' => CheckController::class . '::pageAction',
     ],
+    'linkvalidator2_check_recheck' => [
+        'path' => '/linkvalidator2/check/recheck',
+        'methods' => ['POST'],
+        'target' => CheckController::class . '::recheckAction',
+    ],
     'linkvalidator2_exclusion_create' => [
         'path' => '/linkvalidator2/exclusion/create',
         'methods' => ['POST'],

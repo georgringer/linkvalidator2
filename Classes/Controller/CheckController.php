@@ -30,6 +30,7 @@ use GeorgRinger\Linkvalidator2\Configuration\ExtensionSettings;
 use GeorgRinger\Linkvalidator2\Report\ReportFilter;
 use GeorgRinger\Linkvalidator2\Report\ReportPermissionsFactory;
 use GeorgRinger\Linkvalidator2\Repository\BrokenLinkRepository;
+use GeorgRinger\Linkvalidator2\Service\LinkRechecker;
 use GeorgRinger\Linkvalidator2\Service\PageCheckService;
 use GeorgRinger\Linkvalidator2\Service\PageRecordFinder;
 
@@ -55,6 +56,7 @@ final readonly class CheckController
         private ReportPermissionsFactory $reportPermissionsFactory,
         private BrokenLinkRepository $brokenLinkRepository,
         private ExtensionSettings $extensionSettings,
+        private LinkRechecker $linkRechecker,
     ) {}
 
     public function startAction(ServerRequestInterface $request): ResponseInterface
@@ -102,6 +104,25 @@ final readonly class CheckController
             'newBrokenLinkCount' => $permissions === null ? $result->newBrokenLinkCount : $this->brokenLinkRepository->countDetectedSince($pageId, $runStartedAt, $permissions),
             'noticeCount' => $permissions === null ? $result->noticeCount : $this->brokenLinkRepository->countByPids([$pageId], new ReportFilter(CheckStatus::Info->value), $permissions),
         ]);
+    }
+
+    /**
+     * AJAX: checks the link of one result in the report again, with a new request for an external
+     * URL.
+     */
+    public function recheckAction(ServerRequestInterface $request): ResponseInterface
+    {
+        if (!$this->hasModuleAccess()) {
+            return $this->error('Access denied', 403);
+        }
+        $body = (array)$request->getParsedBody();
+        $permissions = $this->reportPermissionsFactory->createForUser($this->getBackendUser());
+        $row = $this->brokenLinkRepository->findOneVisible((int)($body['uid'] ?? 0), $permissions);
+        if ($row === null || !$this->hasPageAccess((int)$row['pid'])) {
+            return $this->error('Result not found', 404);
+        }
+        $status = $this->linkRechecker->recheck($row);
+        return new JsonResponse(['status' => $status]);
     }
 
     private function hasModuleAccess(): bool

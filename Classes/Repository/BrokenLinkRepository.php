@@ -275,6 +275,60 @@ final readonly class BrokenLinkRepository
         }
     }
 
+    /**
+     * A result the user may see in the report
+     *
+     * @return array<string, mixed>|null The row with the identifier of its target
+     */
+    public function findOneVisible(int $uid, ?ReportPermissions $permissions): ?array
+    {
+        $pid = $this->connectionPool->getConnectionForTable(self::TABLE)
+            ->select(['pid'], self::TABLE, ['uid' => $uid, 'workspace' => 0])
+            ->fetchOne();
+        if ($pid === false) {
+            return null;
+        }
+        $queryBuilder = $this->createQueryBuilderForPids([(int)$pid], $permissions);
+        $row = $queryBuilder
+            ->select('b.*', 't.identifier')
+            ->andWhere($queryBuilder->expr()->eq('b.uid', $queryBuilder->createNamedParameter($uid, Connection::PARAM_INT)))
+            ->executeQuery()
+            ->fetchAssociative();
+        return $row === false ? null : $row;
+    }
+
+    /**
+     * The result of a target changed: every stored result for it takes the new status. A target
+     * that is fine now has no results any more.
+     *
+     * @return array<string, array{table: string, uid: int, brokenDelta: int}> Records whose number of broken links changed, by "table:uid"
+     */
+    public function applyResultToTarget(int $targetUid, CheckResult $result): array
+    {
+        $connection = $this->connectionPool->getConnectionForTable(self::TABLE);
+        $rows = $connection->select(['uid', 'table_name', 'record_uid', 'status'], self::TABLE, ['target' => $targetUid])->fetchAllAssociative();
+        $newCounts = in_array($result->status->value, self::BROKEN_STATUSES, true) ? 1 : 0;
+        $records = [];
+        foreach ($rows as $row) {
+            $delta = ($result->isOk() ? 0 : $newCounts) - (in_array($row['status'], self::BROKEN_STATUSES, true) ? 1 : 0);
+            if ($delta !== 0) {
+                $key = $row['table_name'] . ':' . $row['record_uid'];
+                $records[$key] ??= ['table' => (string)$row['table_name'], 'uid' => (int)$row['record_uid'], 'brokenDelta' => 0];
+                $records[$key]['brokenDelta'] += $delta;
+            }
+        }
+        if ($result->isOk()) {
+            $connection->delete(self::TABLE, ['target' => $targetUid]);
+        } else {
+            $connection->update(self::TABLE, [
+                'status' => $result->status->value,
+                'error_type' => $result->errorType,
+                'error_details' => json_encode($result->details, JSON_THROW_ON_ERROR),
+            ], ['target' => $targetUid]);
+        }
+        return $records;
+    }
+
     public function removeForRecord(string $table, int $recordUid): void
     {
         $this->connectionPool->getConnectionForTable(self::TABLE)

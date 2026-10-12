@@ -40,6 +40,17 @@ The reference index does not know external URLs. An external URL that turns
 broken is therefore only noticed by a regular run, when the cache lifetime of
 its result has passed.
 
+Checking a single link again
+============================
+
+Every result in the report has a button :guilabel:`Check this link again`
+next to :guilabel:`Ignore`. It checks the record of the result at once, for an
+external URL with a new request even if the stored result would still be
+valid. The result of the target is stored once, so every stored result for
+the same target takes it, without checking the other records. The editor
+sees the outcome as a notification. The button is only there if
+:ref:`allowManualCheck <confval-linkvalidator2-allowmanualcheck>` is on.
+
 External requests
 =================
 

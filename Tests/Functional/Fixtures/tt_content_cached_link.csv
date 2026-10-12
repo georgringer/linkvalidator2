@@ -1,0 +1,6 @@
+"tt_content"
+,"uid","pid","CType","header","header_link","bodytext","hidden","deleted","endtime","sys_language_uid","l18n_parent"
+,31,1,"text","Cached","","<p><a href=""t3://cached?id=slow"">slow</a></p>",0,0,0,0,0
+,32,2,"text","Same target","","<p><a href=""t3://cached?id=slow"">slow</a></p>",0,0,0,0,0
+,33,1,"text","Checked","","<p><a href=""t3://checked?id=missing"">gone</a></p>",0,0,0,0,0
+,34,2,"text","Same checked target","","<p><a href=""t3://checked?id=missing"">gone</a></p>",0,0,0,0,0

@@ -58,9 +58,11 @@ final readonly class RecordCheckService
      *                         checks run in batches.
      * @param int $freshSince Stored results checked since this timestamp are reused regardless of the cache
      *                        lifetime, so a run requests each URL once
+     * @param list<string> $refreshIdentifiers Targets that are requested again although a stored result
+     *                                        would still be valid
      * @return list<CheckedLink>
      */
-    public function checkRecord(string $table, int $uid, bool $cachedOnly = false, int $freshSince = 0): array
+    public function checkRecord(string $table, int $uid, bool $cachedOnly = false, int $freshSince = 0, array $refreshIdentifiers = []): array
     {
         $row = $this->tcaSchemaFactory->has($table) ? BackendUtility::getRecord($table, $uid) : null;
         if ($row === null) {
@@ -103,7 +105,7 @@ final readonly class RecordCheckService
                 continue;
             }
             $stored = $checker instanceof CacheableLinkCheckerInterface ? $this->targetRepository->findStored($target) : null;
-            if ($stored !== null && (
+            if ($stored !== null && !in_array($target->identifier, $refreshIdentifiers, true) && (
                 $cachedOnly
                 || $stored['lastChecked'] + $checker->getCacheLifetime() > $now
                 || ($freshSince > 0 && $stored['lastChecked'] >= $freshSince)

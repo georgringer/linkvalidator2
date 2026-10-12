@@ -24,8 +24,11 @@ use GeorgRinger\Linkvalidator2\Target\LinkTarget;
 /**
  * Registered only through autoconfiguration of LinkCheckerInterface, no tag configured here.
  */
-final readonly class TestLinkChecker implements LinkCheckerInterface
+final class TestLinkChecker implements LinkCheckerInterface
 {
+    /** Everything is found, like after the target was repaired */
+    public static bool $repaired = false;
+
     public function getSupportedTypes(): array
     {
         return ['checked'];
@@ -33,7 +36,7 @@ final readonly class TestLinkChecker implements LinkCheckerInterface
 
     public function check(LinkTarget $target, LinkCandidate $source): CheckResult
     {
-        return $target->resolved['id'] === 'missing'
+        return !self::$repaired && $target->resolved['id'] === 'missing'
             ? CheckResult::broken('checked.missing', ['id' => $target->resolved['id']])
             : CheckResult::ok();
     }
