@@ -111,25 +111,26 @@ final readonly class BrokenLinkRepository
     }
 
     /**
-     * Number of broken links (not notices) per page
+     * Number of broken links (not notices) per type of link
      *
      * @param list<int> $pids
-     * @return array<int, int> Pages with at least one broken link, by uid
+     * @return array<string, int> By link type, only types with broken links
      */
-    public function countBrokenGroupedByPid(array $pids, ?ReportPermissions $permissions = null): array
+    public function countBrokenGroupedByLinkType(array $pids, ?ReportPermissions $permissions = null): array
     {
         $counts = [];
         foreach (array_chunk($pids, 1000) as $chunk) {
             $queryBuilder = $this->createQueryBuilderForPids($chunk, $permissions);
             $rows = $queryBuilder
-                ->select('b.pid')
+                ->select('t.link_type')
                 ->addSelectLiteral('COUNT(b.uid) AS amount')
                 ->andWhere($queryBuilder->expr()->in('b.status', $queryBuilder->createNamedParameter(self::BROKEN_STATUSES, Connection::PARAM_STR_ARRAY)))
-                ->groupBy('b.pid')
+                ->groupBy('t.link_type')
                 ->executeQuery()
                 ->fetchAllAssociative();
             foreach ($rows as $row) {
-                $counts[(int)$row['pid']] = (int)$row['amount'];
+                $type = (string)$row['link_type'];
+                $counts[$type] = ($counts[$type] ?? 0) + (int)$row['amount'];
             }
         }
         return $counts;

@@ -7,7 +7,7 @@
         <source>Broken links</source>
       </trans-unit>
       <trans-unit id="widget.description">
-        <source>The pages below a page with the most broken links. Choose the page and the levels in the settings of the widget.</source>
+        <source>The broken links below a page by type of link, with a button to the report. Choose the page and the levels in the settings of the widget.</source>
       </trans-unit>
       <trans-unit id="setting.label.label">
         <source>Title</source>
@@ -45,15 +45,6 @@
       <trans-unit id="setting.depth.99">
         <source>All levels</source>
       </trans-unit>
-      <trans-unit id="setting.limit.label">
-        <source>Pages shown</source>
-      </trans-unit>
-      <trans-unit id="setting.limit.description">
-        <source>Number of pages in the list, the ones with most broken links first</source>
-      </trans-unit>
-      <trans-unit id="state.noModule">
-        <source>You do not have access to the module Check Links.</source>
-      </trans-unit>
       <trans-unit id="state.noPage">
         <source>Choose a page in the settings of the widget.</source>
       </trans-unit>
@@ -61,16 +52,13 @@
         <source>You do not have access to the selected page.</source>
       </trans-unit>
       <trans-unit id="summary">
-        <source>%1$d broken links on %2$d pages below "%3$s"</source>
+        <source>%1$d broken links below "%2$s"</source>
       </trans-unit>
-      <trans-unit id="column.page">
-        <source>Page</source>
+      <trans-unit id="column.type">
+        <source>Type of link</source>
       </trans-unit>
       <trans-unit id="column.amount">
         <source>Broken links</source>
-      </trans-unit>
-      <trans-unit id="more">
-        <source>and %1$d more pages</source>
       </trans-unit>
       <trans-unit id="empty">
         <source>No broken links below "%1$s".</source>

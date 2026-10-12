@@ -8,9 +8,6 @@
 
 <f:section name="main">
     <f:switch expression="{state}">
-        <f:case value="noModule">
-            <p><f:translate key="linkvalidator2.widget:state.noModule" /></p>
-        </f:case>
         <f:case value="noPage">
             <p><f:translate key="linkvalidator2.widget:state.noPage" /></p>
         </f:case>
@@ -21,13 +18,13 @@
             <f:if condition="{rows}">
                 <f:then>
                     <p>
-                        <f:translate key="linkvalidator2.widget:summary" arguments="{0: total, 1: pagesWithBrokenLinks, 2: pageTitle}" />
+                        <f:translate key="linkvalidator2.widget:summary" arguments="{0: total, 1: pageTitle}" />
                     </p>
                     <div class="widget-table-wrapper">
                         <table class="widget-table table table-striped table-hover">
                             <thead>
                                 <tr>
-                                    <th><f:translate key="linkvalidator2.widget:column.page" /></th>
+                                    <th><f:translate key="linkvalidator2.widget:column.type" /></th>
                                     <th class="text-end"><f:translate key="linkvalidator2.widget:column.amount" /></th>
                                 </tr>
                             </thead>
@@ -35,8 +32,10 @@
                                 <f:for each="{rows}" as="row">
                                     <tr>
                                         <td>
-                                            <core:iconForRecord table="pages" row="{row.record}" />
-                                            <a href="{row.url}">{row.title}</a>
+                                            <f:if condition="{row.url}">
+                                                <f:then><a href="{row.url}">{row.label}</a></f:then>
+                                                <f:else>{row.label}</f:else>
+                                            </f:if>
                                         </td>
                                         <td class="text-end"><span class="badge badge-danger">{row.amount}</span></td>
                                     </tr>
@@ -44,11 +43,6 @@
                             </tbody>
                         </table>
                     </div>
-                    <f:if condition="{moreCount}">
-                        <p class="text-body-secondary mt-2">
-                            <f:translate key="linkvalidator2.widget:more" arguments="{0: moreCount}" />
-                        </p>
-                    </f:if>
                 </f:then>
                 <f:else>
                     <p><f:translate key="linkvalidator2.widget:empty" arguments="{0: pageTitle}" /></p>
@@ -59,7 +53,7 @@
 </f:section>
 
 <f:section name="footer">
-    <f:if condition="{state} == 'list'">
+    <f:if condition="{reportUrl}">
         <a href="{reportUrl}" class="widget-cta btn btn-default">
             <f:translate key="linkvalidator2.widget:openReport" />
         </a>

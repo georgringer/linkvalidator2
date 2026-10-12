@@ -7,8 +7,10 @@ Dashboard widget
 ================
 
 With EXT:dashboard installed, the widget :guilabel:`Broken links` can be added
-to a dashboard. It lists the pages below a page with the most broken links,
-with their number, and a button that opens the report for the page.
+to a dashboard. It lists the broken links below a page by type of link
+(external URLs, pages, files and so on) with their number. Every type links to
+the report, filtered by that type, and a button opens the report for the page.
+Both are only there for users who have access to the module.
 
 The widget is optional. It is registered in `Configuration/Services.php` only
 if the dashboard is there, the extension works without it.
@@ -42,18 +44,11 @@ cog icon of the widget, like the ones of the RSS widget.
     Levels of subpages below the page: only the page, one to four levels or
     all levels.
 
-.. confval:: Pages shown
-    :name: linkvalidator2-widget-limit
-    :type: integer
-    :Default: 10
-
-    Number of pages in the list, the ones with the most broken links first.
-    The widget tells how many more pages have broken links.
-
 Permissions
 ===========
 
-Users need access to the module :guilabel:`Check Links` and to the selected
-page. The widget counts what the user may fix, like the report does:
-:ref:`permissions <permissions>`. Notices and results that need no fixing are
-not counted as broken links.
+The widget counts what the user may fix, like the report does:
+:ref:`permissions <permissions>`. Users need access to the selected page.
+Users without access to the module :guilabel:`Check Links` see the numbers,
+but no links and no button. Notices and results that need no fixing are not
+counted as broken links.

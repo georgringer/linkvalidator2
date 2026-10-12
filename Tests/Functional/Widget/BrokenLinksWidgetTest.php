@@ -25,6 +25,7 @@ use TYPO3\CMS\Core\Core\SystemEnvironmentBuilder;
 use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
 use TYPO3\CMS\Core\Settings\Settings;
+use TYPO3\CMS\Core\Type\Bitmask\Permission;
 use TYPO3\CMS\Dashboard\WidgetRegistry;
 use TYPO3\CMS\Dashboard\Widgets\WidgetConfiguration;
 use TYPO3\CMS\Dashboard\Widgets\WidgetContext;
@@ -43,6 +44,7 @@ final class BrokenLinksWidgetTest extends FunctionalTestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/be_groups.csv');
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/be_users.csv');
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/pages.csv');
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/tt_content.csv');
@@ -62,43 +64,64 @@ final class BrokenLinksWidgetTest extends FunctionalTestCase
     }
 
     #[Test]
-    public function brokenLinksAreCountedPerPage(): void
+    public function brokenLinksAreCountedPerTypeOfLink(): void
     {
-        $counts = $this->get(BrokenLinkRepository::class)->countBrokenGroupedByPid([1, 2, 3]);
+        $counts = $this->get(BrokenLinkRepository::class)->countBrokenGroupedByLinkType([1, 2, 3]);
 
-        // Records 10 and 14 are on page 1, a page without broken links is not listed
-        self::assertSame([1], array_keys($counts));
-        self::assertGreaterThan(7, $counts[1]);
+        // Records 10 and 14 link to pages, one link of record 10 is not resolvable
+        self::assertArrayHasKey('page', $counts);
+        self::assertArrayHasKey('invalid', $counts);
+        self::assertSame(8, array_sum($counts));
     }
 
     #[Test]
-    public function theWidgetListsThePagesWithTheNumberOfBrokenLinks(): void
+    public function aPageWithoutBrokenLinksIsNotCounted(): void
     {
-        $html = $this->render(['page' => 1, 'depth' => 1, 'limit' => 10, 'label' => '']);
+        self::assertSame([], $this->get(BrokenLinkRepository::class)->countBrokenGroupedByLinkType([2]));
+    }
 
-        self::assertStringContainsString('8 broken links on 1 pages below &quot;Root&quot;', $html);
+    #[Test]
+    public function theWidgetListsTheTypesOfLinkWithTheirNumberAndLinksToTheReport(): void
+    {
+        $html = $this->render(['page' => 1, 'depth' => 1, 'label' => '']);
+
+        self::assertStringContainsString('8 broken links below &quot;Root&quot;', $html);
+        self::assertStringContainsString('>Page</a>', $html);
         self::assertStringContainsString('badge-danger', $html);
         self::assertStringContainsString('Open the report', $html);
+        self::assertStringContainsString('linkType=page', $html);
     }
 
     #[Test]
     public function withoutAPageTheWidgetAsksForOne(): void
     {
-        self::assertStringContainsString('Choose a page in the settings', $this->render(['page' => 0, 'depth' => 1, 'limit' => 10, 'label' => '']));
+        $html = $this->render(['page' => 0, 'depth' => 1, 'label' => '']);
+
+        self::assertStringContainsString('Choose a page in the settings', $html);
+        self::assertStringNotContainsString('Open the report', $html);
     }
 
     #[Test]
     public function aPageWithoutBrokenLinksSaysSo(): void
     {
-        self::assertStringContainsString('No broken links below &quot;Visible&quot;', $this->render(['page' => 2, 'depth' => 0, 'limit' => 10, 'label' => '']));
+        self::assertStringContainsString('No broken links below &quot;Visible&quot;', $this->render(['page' => 2, 'depth' => 0, 'label' => '']));
     }
 
     #[Test]
-    public function aUserWithoutModuleAccessSeesNoList(): void
+    public function aUserWithoutTheModuleSeesTheNumbersButNoButtonAndNoLinks(): void
     {
+        // The page is the mount of the editor, who may edit its content but has no access to the module
+        $this->getConnectionPool()->getConnectionForTable('pages')->update('pages', ['perms_everybody' => Permission::CONTENT_EDIT | Permission::PAGE_SHOW], ['uid' => 1]);
+        $this->getConnectionPool()->getConnectionForTable('be_users')->update('be_users', ['db_mountpoints' => '1'], ['uid' => 2]);
         $this->setUpBackendUser(2);
 
-        self::assertStringContainsString('do not have access to the module', $this->render(['page' => 1, 'depth' => 1, 'limit' => 10, 'label' => '']));
+        $html = $this->render(['page' => 1, 'depth' => 1, 'label' => '']);
+
+        // Only what the editor may fix is counted, which is less than the 8 of the admin
+        self::assertMatchesRegularExpression('/[1-7] broken links below &quot;Root&quot;/', $html);
+        self::assertStringContainsString('badge-danger', $html);
+        self::assertStringNotContainsString('Open the report', $html);
+        self::assertStringNotContainsString('linkType=', $html);
     }
 
     /**
