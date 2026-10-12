@@ -143,6 +143,25 @@ final class FillQueueCommandTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function aPageWithTwentyThousandRecordsIsSplitIntoMessagesWithoutLosingAnyRecord(): void
+    {
+        $this->insertContentElements(2, 20000);
+
+        $this->fill('2', ['--depth' => '0', '--chunk-size' => '25']);
+
+        $uids = [];
+        foreach ($this->getQueuedMessages() as $message) {
+            self::assertLessThanOrEqual(25, count($message->uids));
+            if ($message->table === 'tt_content') {
+                array_push($uids, ...$message->uids);
+            }
+        }
+        // The 20,000 new elements on top of the content element of the fixtures, each of them once
+        self::assertCount(20000, array_unique($uids));
+        self::assertGreaterThanOrEqual(800, count(array_filter($this->getQueuedMessages(), static fn(CheckRecordsMessage $message): bool => $message->table === 'tt_content')));
+    }
+
+    #[Test]
     public function missingPageFails(): void
     {
         $tester = new CommandTester($this->get(FillQueueCommand::class));
@@ -151,6 +170,18 @@ final class FillQueueCommandTest extends FunctionalTestCase
 
         self::assertSame(1, $tester->getStatusCode());
         self::assertSame(0, $this->countQueuedUids());
+    }
+
+    private function insertContentElements(int $pid, int $count): void
+    {
+        $connection = $this->getConnectionPool()->getConnectionForTable('tt_content');
+        for ($start = 1; $start <= $count; $start += 1000) {
+            $rows = [];
+            for ($i = $start; $i < $start + 1000 && $i <= $count; $i++) {
+                $rows[] = [$pid, 'text', 'Bulk ' . $i];
+            }
+            $connection->bulkInsert('tt_content', $rows, ['pid', 'CType', 'header']);
+        }
     }
 
     private function fill(string $page, array $options = []): string

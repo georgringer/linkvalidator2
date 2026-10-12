@@ -59,6 +59,35 @@ final class PageRecordFinderTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function aLevelWithMoreThanOneThousandPagesIsWalkedCompletely(): void
+    {
+        // 2,500 subpages of page 2, one subpage each: the parents are asked for in chunks of 1,000
+        $connection = $this->getConnectionPool()->getConnectionForTable('pages');
+        for ($start = 1; $start <= 2500; $start += 500) {
+            $rows = [];
+            for ($i = $start; $i < $start + 500; $i++) {
+                $rows[] = [2, 'Child ' . $i, 1];
+            }
+            $connection->bulkInsert('pages', $rows, ['pid', 'title', 'doktype']);
+        }
+        $children = $connection->executeQuery('SELECT uid FROM pages WHERE title LIKE ?', ['Child %'])->fetchFirstColumn();
+        foreach (array_chunk($children, 500) as $chunk) {
+            $rows = array_map(static fn($uid): array => [(int)$uid, 'Grandchild of ' . $uid, 1], $chunk);
+            $connection->bulkInsert('pages', $rows, ['pid', 'title', 'doktype']);
+        }
+        $finder = $this->get(PageRecordFinder::class);
+
+        $batches = iterator_to_array($finder->iteratePageIdBatches(2, 2), false);
+        $pageIds = array_merge(...$batches);
+
+        // Page 2, 2,500 children and 2,500 grandchildren, each of them once, in batches of at most 200
+        self::assertCount(5001, $pageIds);
+        self::assertCount(5001, array_unique($pageIds));
+        self::assertLessThanOrEqual(200, max(array_map(count(...), $batches)));
+        self::assertSame($pageIds, $finder->findPageIds(2, 2));
+    }
+
+    #[Test]
     public function recordsOfSeveralPagesAreFoundWithTheirPage(): void
     {
         $found = $this->get(PageRecordFinder::class)->findOnPages([1, 2, 11]);
