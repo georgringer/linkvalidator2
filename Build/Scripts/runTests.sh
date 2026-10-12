@@ -6,6 +6,19 @@
 
 trap 'cleanUp;exit 2' SIGINT
 
+cleanComposer() {
+    rm -rf .Build/vendor .Build/bin composer.lock
+}
+
+# Pins the TYPO3 core packages (and what the testing framework needs) for -t
+composerRequireCore() {
+    if [ "${TYPO3_VERSION}" -eq 14 ]; then
+        echo "composer require --no-ansi --no-interaction --no-progress --no-install typo3/cms-core:^14.3 typo3/cms-install:^14.3 typo3/testing-framework:dev-main || exit 1"
+    else
+        echo "composer require --no-ansi --no-interaction --no-progress --no-install typo3/cms-core:15.0.*@dev typo3/cms-install:15.0.*@dev typo3/testing-framework:dev-main || exit 1"
+    fi
+}
+
 waitFor() {
     local HOST=${1}
     local PORT=${2}
@@ -45,7 +58,10 @@ Options:
         Specifies which test suite to run
             - composer: "composer" with all remaining arguments, e.g. -s composer -- install
             - composerInstall: "composer install"
+            - composerInstallHighest: "composer update" with the highest dependencies of the TYPO3 version given by -t
+            - composerInstallLowest: "composer update --prefer-lowest" with the TYPO3 version given by -t
             - functional: functional tests
+            - lint: PHP lint of all PHP files
             - unit (default): unit tests
             - update: pull the latest core-testing images
 
@@ -58,7 +74,13 @@ Options:
     -i <version>
         Only with -d mariadb|mysql|postgres: database version.
 
-    -p <8.5>
+    -t <14|15>
+        Only with -s composerInstallHighest|composerInstallLowest.
+        TYPO3 core version to install, default: 15.
+            - 14: TYPO3 v14.3 (PHP 8.2 - 8.5)
+            - 15: TYPO3 v15 (main, PHP 8.4 - 8.5)
+
+    -p <8.2|8.3|8.4|8.5>
         PHP version, default: 8.5.
 
     -x
@@ -91,6 +113,7 @@ TEST_SUITE="unit"
 DBMS="sqlite"
 DBMS_VERSION=""
 PHP_VERSION="8.5"
+TYPO3_VERSION="15"
 PHP_XDEBUG_ON=0
 PHP_XDEBUG_PORT=9003
 CONTAINER_BIN=""
@@ -105,7 +128,7 @@ IS_CI=0
 
 OPTIND=1
 INVALID_OPTIONS=()
-while getopts "b:s:d:i:p:xy:h" OPT; do
+while getopts "b:s:d:i:p:t:xy:h" OPT; do
     case ${OPT} in
         s)
             TEST_SUITE=${OPTARG}
@@ -124,8 +147,14 @@ while getopts "b:s:d:i:p:xy:h" OPT; do
             ;;
         p)
             PHP_VERSION=${OPTARG}
-            if ! [[ ${PHP_VERSION} =~ ^(8.5)$ ]]; then
+            if ! [[ ${PHP_VERSION} =~ ^(8.2|8.3|8.4|8.5)$ ]]; then
                 INVALID_OPTIONS+=("-p ${OPTARG}")
+            fi
+            ;;
+        t)
+            TYPO3_VERSION=${OPTARG}
+            if ! [[ ${TYPO3_VERSION} =~ ^(14|15)$ ]]; then
+                INVALID_OPTIONS+=("-t ${OPTARG}")
             fi
             ;;
         x)
@@ -231,6 +260,35 @@ case ${TEST_SUITE} in
         ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-install-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer ${IMAGE_PHP} "${COMMAND[@]}"
         SUITE_EXIT_CODE=$?
         ;;
+    composerInstallHighest)
+        cleanComposer
+        cp composer.json composer.json.orig
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-install-highest-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer ${IMAGE_PHP} /bin/bash -c "
+            composer config minimum-stability dev
+            $(composerRequireCore)
+            composer update --no-ansi --no-interaction --no-progress || exit 1
+            composer show || exit 1
+        "
+        SUITE_EXIT_CODE=$?
+        mv composer.json.orig composer.json
+        ;;
+    composerInstallLowest)
+        cleanComposer
+        cp composer.json composer.json.orig
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name composer-install-lowest-${SUFFIX} -e COMPOSER_CACHE_DIR=.cache/composer ${IMAGE_PHP} /bin/bash -c "
+            composer config minimum-stability dev
+            $(composerRequireCore)
+            composer update --no-ansi --no-interaction --no-progress --with-dependencies --prefer-lowest || exit 1
+            composer show || exit 1
+        "
+        SUITE_EXIT_CODE=$?
+        mv composer.json.orig composer.json
+        ;;
+    lint)
+        COMMAND="find . -name '*.php' -not -path './.Build/*' -not -path './var/*' -not -path './.cache/*' -print0 | xargs -0 -n1 -P4 php -n -l > /dev/null"
+        ${CONTAINER_BIN} run ${CONTAINER_COMMON_PARAMS} --name lint-${SUFFIX} ${IMAGE_PHP} /bin/sh -c "${COMMAND}"
+        SUITE_EXIT_CODE=$?
+        ;;
     functional)
         COMMAND=(.Build/bin/phpunit -c Build/phpunit/FunctionalTests.xml --exclude-group not-${DBMS} "$@")
         case ${DBMS} in
@@ -281,7 +339,7 @@ cleanUp
 echo "" >&2
 echo "###########################################################################" >&2
 echo "Result of ${TEST_SUITE}" >&2
-echo "PHP: ${PHP_VERSION}, container: ${CONTAINER_BIN}" >&2
+echo "TYPO3: ${TYPO3_VERSION}, PHP: ${PHP_VERSION}, container: ${CONTAINER_BIN}" >&2
 if [[ ${TEST_SUITE} == "functional" ]]; then
     echo "DBMS: ${DBMS} ${DBMS_VERSION}" >&2
 fi
