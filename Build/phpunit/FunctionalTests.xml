@@ -30,6 +30,11 @@
          failOnWarning="true"
          requireCoverageMetadata="false"
 >
+    <source ignoreIndirectDeprecations="true">
+        <include>
+            <directory>../../Classes</directory>
+        </include>
+    </source>
     <testsuites>
         <testsuite name="Functional tests">
             <!--
