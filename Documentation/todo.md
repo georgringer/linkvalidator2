@@ -4,6 +4,10 @@ Notes for the documentation (`Documentation/*.rst`) that is written once the ext
 replaces the core linkvalidator. Collect here what needs to be explained, so nothing is
 forgotten.
 
+The chapter "For integrators" is written (`Documentation/ForIntegrators/`, render with
+`docker run --rm -v "$PWD":/project ghcr.io/typo3-documentation/render-guides:latest
+--config=Documentation`). Chapters for editors and developers are still to do, collect here.
+
 ## For editors
 
 - Checking from the module: levels in the doc header define what is checked, the levels in

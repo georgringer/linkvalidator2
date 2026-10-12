@@ -1,0 +1,1 @@
+.. This file is included by all pages, it holds what they share.

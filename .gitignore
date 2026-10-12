@@ -5,3 +5,4 @@
 /typo3temp/
 /var/
 .phpunit.cache/
+Documentation-GENERATED-temp/
