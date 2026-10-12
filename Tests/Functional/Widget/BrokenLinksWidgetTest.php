@@ -87,7 +87,7 @@ final class BrokenLinksWidgetTest extends FunctionalTestCase
 
         self::assertStringContainsString('8 broken links below &quot;Root&quot;', $html);
         self::assertStringContainsString('>Page</a>', $html);
-        self::assertStringContainsString('badge-danger', $html);
+        self::assertMatchesRegularExpression('/<td class="text-end">\d+<\/td>/', $html, 'The number is plain, no badge');
         self::assertStringContainsString('Open the report', $html);
         self::assertStringContainsString('linkType=page', $html);
     }
@@ -119,7 +119,7 @@ final class BrokenLinksWidgetTest extends FunctionalTestCase
 
         // Only what the editor may fix is counted, which is less than the 8 of the admin
         self::assertMatchesRegularExpression('/[1-7] broken links below &quot;Root&quot;/', $html);
-        self::assertStringContainsString('badge-danger', $html);
+        self::assertMatchesRegularExpression('/<td class="text-end">\d+<\/td>/', $html, 'The number is plain, no badge');
         self::assertStringNotContainsString('Open the report', $html);
         self::assertStringNotContainsString('linkType=', $html);
     }
