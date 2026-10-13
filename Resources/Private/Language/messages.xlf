@@ -24,6 +24,12 @@
       <trans-unit id="check.starting">
         <source>Collecting pages…</source>
       </trans-unit>
+      <trans-unit id="check.ignoreStored">
+        <source>Request external URLs again</source>
+      </trans-unit>
+      <trans-unit id="check.ignoreStored.description">
+        <source>Ignore the stored results of external URLs for the next check. Each URL is still requested only once per check.</source>
+      </trans-unit>
       <trans-unit id="check.cancel">
         <source>Cancel</source>
       </trans-unit>

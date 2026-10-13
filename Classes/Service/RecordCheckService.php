@@ -59,9 +59,11 @@ final readonly class RecordCheckService
      *                        lifetime, so a run requests each URL once
      * @param list<string> $refreshIdentifiers Targets that are requested again although a stored result
      *                                        would still be valid
+     * @param bool $ignoreStored Stored results are not reused because they are within the cache lifetime, only
+     *                           because they were checked since $freshSince
      * @return list<CheckedLink>
      */
-    public function checkRecord(string $table, int $uid, bool $cachedOnly = false, int $freshSince = 0, array $refreshIdentifiers = []): array
+    public function checkRecord(string $table, int $uid, bool $cachedOnly = false, int $freshSince = 0, array $refreshIdentifiers = [], bool $ignoreStored = false): array
     {
         $row = $this->tcaSchemaFactory->has($table) ? BackendUtility::getRecord($table, $uid) : null;
         if ($row === null) {
@@ -106,7 +108,7 @@ final readonly class RecordCheckService
             $stored = $cacheLifetime !== null ? $this->targetRepository->findStored($target) : null;
             if ($stored !== null && !in_array($target->identifier, $refreshIdentifiers, true) && (
                 $cachedOnly
-                || $stored['lastChecked'] + $cacheLifetime > $now
+                || (!$ignoreStored && $stored['lastChecked'] + $cacheLifetime > $now)
                 || ($freshSince > 0 && $stored['lastChecked'] >= $freshSince)
             )) {
                 // Reused results keep their check time, so they expire after the cache lifetime

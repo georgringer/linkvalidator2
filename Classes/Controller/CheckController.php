@@ -93,7 +93,7 @@ final readonly class CheckController
         if (!$this->hasPageAccess($pageId)) {
             return $this->error('Page not found', 404);
         }
-        $result = $this->pageCheckService->checkPage($pageId, $runStartedAt, self::TIME_BUDGET);
+        $result = $this->pageCheckService->checkPage($pageId, $runStartedAt, self::TIME_BUDGET, ignoreStored: filter_var($body['ignoreStored'] ?? false, FILTER_VALIDATE_BOOLEAN));
         // All records are checked, but counted is only what the user sees in the report
         $permissions = $this->reportPermissionsFactory->createForUser($this->getBackendUser());
         return new JsonResponse([

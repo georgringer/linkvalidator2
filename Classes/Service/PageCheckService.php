@@ -40,7 +40,7 @@ final readonly class PageCheckService
      * @param float|null $timeBudget Seconds; the budget is checked between records, at least one record
      *                               is checked per call. Null checks the whole page.
      */
-    public function checkPage(int $pageUid, int $runStartedAt, ?float $timeBudget = null, bool $cachedOnly = false): PageCheckResult
+    public function checkPage(int $pageUid, int $runStartedAt, ?float $timeBudget = null, bool $cachedOnly = false, bool $ignoreStored = false): PageCheckResult
     {
         $start = microtime(true);
         $records = $this->pageRecordFinder->findOnPage($pageUid);
@@ -56,7 +56,7 @@ final readonly class PageCheckService
                 $done = false;
                 break;
             }
-            $this->recordCheckService->checkRecord($table, $uid, $cachedOnly, $runStartedAt);
+            $this->recordCheckService->checkRecord($table, $uid, $cachedOnly, $runStartedAt, ignoreStored: $ignoreStored);
             $checkedCount++;
         }
         return new PageCheckResult(

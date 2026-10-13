@@ -71,6 +71,24 @@ final class RecheckTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function checkWithoutStoredResultsRequestsTheTargetAgain(): void
+    {
+        $this->get(RecordCheckService::class)->checkRecord('tt_content', 31, ignoreStored: true);
+
+        self::assertSame(2, TestCacheableLinkChecker::$checks);
+    }
+
+    #[Test]
+    public function checkWithoutStoredResultsStillRequestsATargetOncePerRun(): void
+    {
+        $storedResultIsFromThisRun = time() - 60;
+
+        $this->get(RecordCheckService::class)->checkRecord('tt_content', 31, freshSince: $storedResultIsFromThisRun, ignoreStored: true);
+
+        self::assertSame(1, TestCacheableLinkChecker::$checks);
+    }
+
+    #[Test]
     public function recheckChecksTheTargetAgainDespiteTheStoredResult(): void
     {
         $response = $this->recheck($this->getResultUid(31));

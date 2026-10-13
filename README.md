@@ -102,7 +102,7 @@ solved ones in `done/`.
 | Unresolvable `t3://` links | 🟡 | 🟡 | ✅ reported as invalid | | |
 | **Checking external URLs** | | | | | |
 | External checking | 🟡 off by default | ✅ | ✅ CLI and module; each URL requested once per run | | |
-| Cache across runs | ❌ only within one run | ✅ link target cache with expiry | ✅ per target, configurable lifetime (default 7 days), cache-only mode | | #92700 |
+| Cache across runs | ❌ only within one run | ✅ link target cache with expiry | ✅ per target, configurable lifetime (default 7 days), cache-only mode, checkbox "Request external URLs again" in the module to ignore it for one check | | #92700 |
 | HEAD with GET fallback, redirects | ✅ | ✅ | ✅ GET on 405/501, max. 5 redirects | | |
 | 401/403/429/5xx/999/TLS/timeouts as "unknown" instead of broken | ❌ | ❌ | ✅ broken only 404, 410, unknown host; status filter; cURL error from Guzzle 7 and 8; timeout message names the seconds | 📋 escalation after 3 checks / 7 days | #96525, #85006 |
 | Full error message (e.g. cURL TLS details) | 🟡 one localised text per cURL code | ❓ | ✅ short localised text, the cURL message in a "Details" modal (target, HTTP status, error code, message), `errno` stored; `details.message` shown for every checker | | #101935 |

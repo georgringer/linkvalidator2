@@ -28,6 +28,7 @@ class CheckLinks {
     this.button = button;
     this.progress = progress;
     this.progressBar = progress.querySelector('typo3-backend-progress-bar');
+    this.ignoreStored = document.querySelector('[data-linkvalidator2-check-ignore-stored]');
     this.cancelButton = progress.querySelector('[data-linkvalidator2-check-cancel]');
     // Screen readers get the progress in steps of 10 %, not per page
     this.status = progress.querySelector('[data-linkvalidator2-check-status]');
@@ -67,7 +68,7 @@ class CheckLinks {
         let result;
         do {
           result = await (await new AjaxRequest(TYPO3.settings.ajaxUrls.linkvalidator2_check_page)
-            .post({ pageId: pageIds[checkedPages], runStartedAt: start.runStartedAt })).resolve();
+            .post({ pageId: pageIds[checkedPages], runStartedAt: start.runStartedAt, ignoreStored: this.ignoreStored?.checked ?? false })).resolve();
         } while (!result.done && !this.cancelled);
         if (!result.done) {
           break;

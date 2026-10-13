@@ -51,6 +51,19 @@ the same target takes it, without checking the other records. The editor
 sees the outcome as a notification. The button is only there if
 :ref:`allowManualCheck <confval-linkvalidator2-allowmanualcheck>` is on.
 
+Checking again from the module
+==============================
+
+A check started with :guilabel:`Check links` reuses the stored result of an
+external URL as long as it is younger than the cache lifetime. The checkbox
+:guilabel:`Request external URLs again` above the progress bar ignores the
+stored results for that check. Each URL is still requested once per check,
+however many records link to it.
+
+Nothing is deleted beforehand. The results are replaced while the pages are
+checked, so a check that is cancelled leaves the old results of the pages it
+did not reach.
+
 External requests
 =================
 
