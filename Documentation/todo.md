@@ -119,9 +119,16 @@ final readonly class ProductLinkChecker implements LinkCheckerInterface
   link type – e.g. the cURL message of external URLs. Put the technical cause there, not
   in the label.
 - Expensive checks (HTTP) implement `CacheableLinkCheckerInterface`: results are stored per
-  target and reused for `getCacheLifetime()` seconds, and once per run regardless.
-- A checker registered for a core type (e.g. `url`) replaces the core checker – the last
-  registered checker for a type wins.
+  target and reused for `getCacheLifetime()` seconds, and once per run regardless. The first
+  cacheable checker of a type decides the lifetime for the whole chain.
+- Several checkers can be registered for a type (e.g. `url`). They are asked in the order of
+  the `priority` of the service tag `linkvalidator2.checker` (highest first, the core
+  `ExternalUrlChecker` has the default 0). A result of `ok`, `broken` or `info` ends the
+  chain. `unknown` hands over to the next checker (the last unknown result is kept if nobody
+  decides), `CheckResult::skip()` means "not responsible or not available" and is never
+  stored. If every checker skips, the link is neither checked nor reported.
+  Example: an external service for URLs the cURL check cannot decide (Cloudflare) is a
+  checker for `url` with a lower priority than `ExternalUrlChecker`.
 - Test: `Tests/Functional/Target/CustomLinkHandlerTest.php` with the fixture extension
   `Tests/Functional/Fixtures/Extensions/test_link_handler`.
 

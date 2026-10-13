@@ -45,6 +45,11 @@ final readonly class CheckResult
         return new self(CheckStatus::Info, $errorType, $details);
     }
 
+    public static function skip(): self
+    {
+        return new self(CheckStatus::Skipped);
+    }
+
     public function isOk(): bool
     {
         return $this->status === CheckStatus::Ok;

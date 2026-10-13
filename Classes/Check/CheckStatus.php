@@ -24,4 +24,6 @@ enum CheckStatus: string
     case Unknown = 'unknown';
     /** Reachable, but with a restriction an editor should know about */
     case Info = 'info';
+    /** Not decided by this checker, the next one of the chain is asked. Never stored */
+    case Skipped = 'skipped';
 }

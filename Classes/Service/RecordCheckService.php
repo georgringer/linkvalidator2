@@ -25,7 +25,6 @@ use TYPO3\CMS\Core\Schema\Capability\TcaSchemaCapability;
 use TYPO3\CMS\Core\Schema\TcaSchema;
 use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use GeorgRinger\Linkvalidator2\Check\CacheableLinkCheckerInterface;
 use GeorgRinger\Linkvalidator2\Check\CheckerRegistry;
 use GeorgRinger\Linkvalidator2\Check\CheckStatus;
 use GeorgRinger\Linkvalidator2\Exclusion\ExclusionMatcher;
@@ -89,8 +88,7 @@ final readonly class RecordCheckService
         $excludedCount = 0;
         foreach ($this->linkExtractor->extract($table, $row, $pid, $language) as $candidate) {
             $target = $this->linkTargetFactory->create($candidate);
-            $checker = $target !== null ? $this->checkerRegistry->getChecker($target->type) : null;
-            if ($target === null || $checker === null) {
+            if ($target === null || !$this->checkerRegistry->hasChecker($target->type)) {
                 continue;
             }
             // @todo Deduplicated per field only: the same target in two fields of a record yields
@@ -104,19 +102,23 @@ final readonly class RecordCheckService
                 $excludedCount++;
                 continue;
             }
-            $stored = $checker instanceof CacheableLinkCheckerInterface ? $this->targetRepository->findStored($target) : null;
+            $cacheLifetime = $this->checkerRegistry->getCacheLifetime($target->type);
+            $stored = $cacheLifetime !== null ? $this->targetRepository->findStored($target) : null;
             if ($stored !== null && !in_array($target->identifier, $refreshIdentifiers, true) && (
                 $cachedOnly
-                || $stored['lastChecked'] + $checker->getCacheLifetime() > $now
+                || $stored['lastChecked'] + $cacheLifetime > $now
                 || ($freshSince > 0 && $stored['lastChecked'] >= $freshSince)
             )) {
                 // Reused results keep their check time, so they expire after the cache lifetime
                 ['uid' => $targetUid, 'result' => $result] = $stored;
-            } elseif ($cachedOnly && $checker instanceof CacheableLinkCheckerInterface) {
+            } elseif ($cachedOnly && $cacheLifetime !== null) {
                 $skippedUnchecked = true;
                 continue;
             } else {
-                $result = $checker->check($target, $candidate);
+                $result = $this->checkerRegistry->check($target, $candidate);
+                if ($result === null) {
+                    continue;
+                }
                 $targetUid = $this->targetRepository->store($target, $result, $now);
             }
             $checkedLinks[] = new CheckedLink($candidate, $target, $result);

@@ -45,7 +45,7 @@ and large installations are checked in the background by several workers.
     .. card:: For integrators
 
         Set up the extension: permissions, configuration, checking in the
-        background and exclusions.
+        background, checkers and exclusions.
 
         .. card-footer:: :ref:`Read more <for-integrators>`
             :button-style: btn btn-secondary stretched-link

@@ -17,9 +17,17 @@ declare(strict_types=1);
 
 namespace GeorgRinger\Linkvalidator2\Check;
 
+use GeorgRinger\Linkvalidator2\Extraction\LinkCandidate;
+use GeorgRinger\Linkvalidator2\Target\LinkTarget;
+
+/**
+ * Checkers of a type are asked in the order they are registered, which is the order of their
+ * "priority" in the service tag (highest first). The chain ends with the first result that
+ * is not skipped and not unknown.
+ */
 final class CheckerRegistry
 {
-    /** @var array<string, LinkCheckerInterface> */
+    /** @var array<string, list<LinkCheckerInterface>> */
     private array $checkersByType = [];
 
     /**
@@ -29,13 +37,45 @@ final class CheckerRegistry
     {
         foreach ($checkers as $checker) {
             foreach ($checker->getSupportedTypes() as $type) {
-                $this->checkersByType[$type] = $checker;
+                $this->checkersByType[$type][] = $checker;
             }
         }
     }
 
-    public function getChecker(string $type): ?LinkCheckerInterface
+    public function hasChecker(string $type): bool
     {
-        return $this->checkersByType[$type] ?? null;
+        return isset($this->checkersByType[$type]);
+    }
+
+    /**
+     * @return CheckResult|null Null if every checker skipped the target
+     */
+    public function check(LinkTarget $target, LinkCandidate $source): ?CheckResult
+    {
+        $result = null;
+        foreach ($this->checkersByType[$target->type] ?? [] as $checker) {
+            $current = $checker->check($target, $source);
+            if ($current->status === CheckStatus::Skipped) {
+                continue;
+            }
+            $result = $current;
+            if ($current->status !== CheckStatus::Unknown) {
+                break;
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * @return int|null Seconds results of the type are reused, null if they are not stored
+     */
+    public function getCacheLifetime(string $type): ?int
+    {
+        foreach ($this->checkersByType[$type] ?? [] as $checker) {
+            if ($checker instanceof CacheableLinkCheckerInterface) {
+                return $checker->getCacheLifetime();
+            }
+        }
+        return null;
     }
 }

@@ -31,6 +31,7 @@ How the extension works, in short:
     Permissions
     Configuration
     BackgroundChecking
+    Checkers
     Exclusions
     KeepingResultsCurrent
     DashboardWidget

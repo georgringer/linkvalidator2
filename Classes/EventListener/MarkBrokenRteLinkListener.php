@@ -59,11 +59,10 @@ final readonly class MarkBrokenRteLinkListener
         if ($target->type === LinkService::TYPE_URL) {
             $result = $this->targetRepository->findResult($target);
         } else {
-            $checker = $this->checkerRegistry->getChecker($target->type);
-            if ($checker === null) {
+            $result = $this->checkerRegistry->check($target, $source);
+            if ($result === null) {
                 return;
             }
-            $result = $checker->check($target, $source);
         }
         $event->markAsCheckedLink();
         // Without the right Page TSconfig the identifier is taken as table: not reliable
