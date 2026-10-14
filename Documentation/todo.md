@@ -19,6 +19,8 @@ The chapter "For integrators" is written (`Documentation/ForIntegrators/`, rende
   parent page with "extend to subpages". Typical case: the target page was changed after
   linking it. Notices are listed with their own badge and can be filtered by status;
   they are not counted as broken links.
+- Status "notice" for external URLs that a TYPO3 redirect (`sys_redirect`, header `X-Redirect-By`)
+  forwards: the link works, but should point to the new target. Other redirects are not reported.
 - Links in hidden or expired records are never reported.
 - Anchors (`#…`) are not checked, only the page they point to. A link to a removed
   content element (`#c123`) is therefore not reported (unlike the old linkvalidator).
@@ -118,9 +120,9 @@ final readonly class ProductLinkChecker implements LinkCheckerInterface
 - The detail `message` (string) is shown below that label, collapsed ("Details"), for every
   link type – e.g. the cURL message of external URLs. Put the technical cause there, not
   in the label.
-- Expensive checks (HTTP) implement `CacheableLinkCheckerInterface`: results are stored per
-  target and reused for `getCacheLifetime()` seconds, and once per run regardless. The first
-  cacheable checker of a type decides the lifetime for the whole chain.
+- Results of external URLs (type `url`) are stored per target and reused for
+  `externalCacheLifetime` hours, and once per run regardless, whichever checker produced them.
+  Other types are checked every time.
 - Several checkers can be registered for a type (e.g. `url`). They are asked in the order of
   the `priority` of the service tag `linkvalidator2.checker` (highest first, the core
   `ExternalUrlChecker` has the default 0). A result of `ok`, `broken` or `info` ends the

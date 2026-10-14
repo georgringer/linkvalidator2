@@ -16,6 +16,8 @@ declare(strict_types=1);
  */
 namespace GeorgRinger\Linkvalidator2\Tests\Functional\Widget;
 
+use GeorgRinger\Linkvalidator2\Repository\BrokenLinkGroup;
+use GeorgRinger\Linkvalidator2\Repository\BrokenLinkQuery;
 use GeorgRinger\Linkvalidator2\Repository\BrokenLinkRepository;
 use GeorgRinger\Linkvalidator2\Service\RecordCheckService;
 use GeorgRinger\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
@@ -66,7 +68,7 @@ final class BrokenLinksWidgetTest extends FunctionalTestCase
     #[Test]
     public function brokenLinksAreCountedPerTypeOfLink(): void
     {
-        $counts = $this->get(BrokenLinkRepository::class)->countBrokenGroupedByLinkType([1, 2, 3]);
+        $counts = $this->get(BrokenLinkRepository::class)->countGroupedBy(new BrokenLinkQuery([1, 2, 3], onlyBroken: true), BrokenLinkGroup::LinkType);
 
         // Records 10 and 14 link to pages, one link of record 10 is not resolvable
         self::assertArrayHasKey('page', $counts);
@@ -77,7 +79,7 @@ final class BrokenLinksWidgetTest extends FunctionalTestCase
     #[Test]
     public function aPageWithoutBrokenLinksIsNotCounted(): void
     {
-        self::assertSame([], $this->get(BrokenLinkRepository::class)->countBrokenGroupedByLinkType([2]));
+        self::assertSame([], $this->get(BrokenLinkRepository::class)->countGroupedBy(new BrokenLinkQuery([2], onlyBroken: true), BrokenLinkGroup::LinkType));
     }
 
     #[Test]

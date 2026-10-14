@@ -63,6 +63,9 @@
       <trans-unit id="error.link.invalid">
         <source>The link cannot be resolved</source>
       </trans-unit>
+      <trans-unit id="error.link.empty">
+        <source>The link has no target</source>
+      </trans-unit>
       <trans-unit id="error.page.linksToItself">
         <source>Link page points to itself</source>
       </trans-unit>
@@ -252,6 +255,9 @@
       <trans-unit id="error.url.tooManyRedirects">
         <source>Too many redirects</source>
       </trans-unit>
+      <trans-unit id="error.url.redirectedByTypo3">
+        <source>Redirected by a TYPO3 redirect</source>
+      </trans-unit>
       <trans-unit id="error.url.requestFailed">
         <source>Request failed</source>
       </trans-unit>
@@ -260,6 +266,12 @@
       </trans-unit>
       <trans-unit id="details.target">
         <source>Link target</source>
+      </trans-unit>
+      <trans-unit id="details.redirectBy">
+        <source>Redirect</source>
+      </trans-unit>
+      <trans-unit id="details.redirectTarget">
+        <source>Redirects to</source>
       </trans-unit>
       <trans-unit id="details.message">
         <source>Message</source>
@@ -298,7 +310,7 @@
         <source>Check again</source>
       </trans-unit>
       <trans-unit id="report.details">
-        <source>Details</source>
+        <source>Show details of the check</source>
       </trans-unit>
       <trans-unit id="report.column.actions">
         <source>Actions</source>

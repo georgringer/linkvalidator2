@@ -15,7 +15,7 @@ declare(strict_types=1);
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace GeorgRinger\Linkvalidator2\Exclusion;
+namespace GeorgRinger\Linkvalidator2\Backend;
 
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 

@@ -25,10 +25,13 @@ use GeorgRinger\Linkvalidator2\Repository\TargetRepository;
 use GeorgRinger\Linkvalidator2\Service\PageCheckService;
 use GeorgRinger\Linkvalidator2\Target\LinkTarget;
 use GeorgRinger\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
+use GeorgRinger\Linkvalidator2\Tests\Functional\BrokenLinkResultsTrait;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 final class PageCheckServiceTest extends FunctionalTestCase
 {
+    use BrokenLinkResultsTrait;
+
     use SiteConfigurationTrait;
 
     private const BROKEN_LINK_TABLE = 'tx_linkvalidator2_broken_link';
@@ -157,9 +160,7 @@ final class PageCheckServiceTest extends FunctionalTestCase
 
         $this->get(PageCheckService::class)->checkPage(2, $runStartedAt);
 
-        $errorType = $this->getConnectionPool()->getConnectionForTable(self::BROKEN_LINK_TABLE)
-            ->select(['error_type'], self::BROKEN_LINK_TABLE, ['table_name' => 'tt_content', 'record_uid' => 20])
-            ->fetchOne();
+        $errorType = $this->selectBrokenLinks(['t.error_type'], ['table_name' => 'tt_content', 'record_uid' => 20])[0]['error_type'] ?? null;
         // Requesting the URL would have reported the .invalid host as unknown
         self::assertSame('url.notFound', $errorType);
     }

@@ -21,6 +21,7 @@ use PHPUnit\Framework\Attributes\Test;
 use GeorgRinger\Linkvalidator2\Service\CheckedLink;
 use GeorgRinger\Linkvalidator2\Service\RecordCheckService;
 use GeorgRinger\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
+use GeorgRinger\Linkvalidator2\Tests\Functional\BrokenLinkResultsTrait;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 /**
@@ -28,6 +29,8 @@ use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
  */
 final class CustomLinkHandlerTest extends FunctionalTestCase
 {
+    use BrokenLinkResultsTrait;
+
     use SiteConfigurationTrait;
 
     protected array $testExtensionsToLoad = [
@@ -77,10 +80,7 @@ final class CustomLinkHandlerTest extends FunctionalTestCase
     #[Test]
     public function onlyBrokenLinksAreStored(): void
     {
-        $errorTypes = $this->getConnectionPool()->getConnectionForTable('tx_linkvalidator2_broken_link')
-            ->select(['error_type'], 'tx_linkvalidator2_broken_link', ['record_uid' => 30])
-            ->fetchFirstColumn();
-        sort($errorTypes);
+        $errorTypes = $this->selectErrorTypes(['record_uid' => 30]);
 
         self::assertSame(['checked.missing', 'link.invalid'], $errorTypes);
     }

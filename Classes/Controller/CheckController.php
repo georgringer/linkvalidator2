@@ -29,6 +29,7 @@ use GeorgRinger\Linkvalidator2\Check\CheckStatus;
 use GeorgRinger\Linkvalidator2\Configuration\ExtensionSettings;
 use GeorgRinger\Linkvalidator2\Report\ReportFilter;
 use GeorgRinger\Linkvalidator2\Report\ReportPermissionsFactory;
+use GeorgRinger\Linkvalidator2\Repository\BrokenLinkQuery;
 use GeorgRinger\Linkvalidator2\Repository\BrokenLinkRepository;
 use GeorgRinger\Linkvalidator2\Service\LinkRechecker;
 use GeorgRinger\Linkvalidator2\Service\PageCheckService;
@@ -100,9 +101,9 @@ final readonly class CheckController
             'done' => $result->done,
             'recordCount' => $result->recordCount,
             'checkedCount' => $result->checkedCount,
-            'brokenLinkCount' => $permissions === null ? $result->brokenLinkCount : $this->brokenLinkRepository->countBrokenByPid($pageId, $permissions),
-            'newBrokenLinkCount' => $permissions === null ? $result->newBrokenLinkCount : $this->brokenLinkRepository->countDetectedSince($pageId, $runStartedAt, $permissions),
-            'noticeCount' => $permissions === null ? $result->noticeCount : $this->brokenLinkRepository->countByPids([$pageId], new ReportFilter(CheckStatus::Info->value), $permissions),
+            'brokenLinkCount' => $permissions === null ? $result->brokenLinkCount : $this->brokenLinkRepository->count(new BrokenLinkQuery([$pageId], permissions: $permissions, onlyBroken: true)),
+            'newBrokenLinkCount' => $permissions === null ? $result->newBrokenLinkCount : $this->brokenLinkRepository->count(new BrokenLinkQuery([$pageId], permissions: $permissions, onlyBroken: true, detectedSince: $runStartedAt)),
+            'noticeCount' => $permissions === null ? $result->noticeCount : $this->brokenLinkRepository->count(new BrokenLinkQuery([$pageId], new ReportFilter(CheckStatus::Info->value), $permissions)),
         ]);
     }
 

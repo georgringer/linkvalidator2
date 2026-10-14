@@ -6,3 +6,10 @@ services:
 
   TYPO3Tests\TestLinkHandler\:
     resource: '../Classes/*'
+
+  # Asked before the checker of the extension, which has the priority 0
+  TYPO3Tests\TestLinkHandler\TestUrlChecker:
+    autoconfigure: false
+    tags:
+      - name: linkvalidator2.checker
+        priority: 100

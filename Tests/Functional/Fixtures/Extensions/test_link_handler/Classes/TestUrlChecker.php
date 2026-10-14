@@ -16,34 +16,35 @@ declare(strict_types=1);
  */
 namespace TYPO3Tests\TestLinkHandler;
 
-use GeorgRinger\Linkvalidator2\Check\CacheableLinkCheckerInterface;
 use GeorgRinger\Linkvalidator2\Check\CheckResult;
+use GeorgRinger\Linkvalidator2\Check\LinkCheckerInterface;
 use GeorgRinger\Linkvalidator2\Extraction\LinkCandidate;
 use GeorgRinger\Linkvalidator2\Target\LinkTarget;
+use TYPO3\CMS\Core\LinkHandling\LinkService;
 
 /**
- * Stands for the check of an external URL: its result is stored and reused, the number of
- * checks that really ran can be read.
+ * Stands for the request to an external URL, asked before the real checker (priority in
+ * Services.yaml): the number of checks that really ran can be read. Other URLs are skipped.
  */
-final class TestCacheableLinkChecker implements CacheableLinkCheckerInterface
+final class TestUrlChecker implements LinkCheckerInterface
 {
+    public const URL = 'https://slow.example.org/';
+
     public static int $checks = 0;
     /** What the next check finds */
     public static bool $working = false;
 
     public function getSupportedTypes(): array
     {
-        return ['cached'];
-    }
-
-    public function getCacheLifetime(): int
-    {
-        return 3600;
+        return [LinkService::TYPE_URL];
     }
 
     public function check(LinkTarget $target, LinkCandidate $source): CheckResult
     {
+        if (($target->resolved['url'] ?? '') !== self::URL) {
+            return CheckResult::skip();
+        }
         self::$checks++;
-        return self::$working ? CheckResult::ok() : CheckResult::broken('cached.broken');
+        return self::$working ? CheckResult::ok() : CheckResult::broken('url.test');
     }
 }

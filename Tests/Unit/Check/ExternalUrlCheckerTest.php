@@ -24,6 +24,8 @@ use Psr\Http\Client\NetworkExceptionInterface;
 use Psr\Http\Message\RequestInterface;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Http\Request;
+use TYPO3\CMS\Core\Http\Response;
+use TYPO3\CMS\Core\Http\Uri;
 use TYPO3\CMS\Core\Http\RequestFactory;
 use TYPO3\CMS\Core\LinkHandling\LinkService;
 use GeorgRinger\Linkvalidator2\Check\Checker\ExternalUrlChecker;
@@ -92,6 +94,55 @@ final class ExternalUrlCheckerTest extends UnitTestCase
         $subject = $this->createSubject(new ConnectException('cURL error 28: Operation timed out', new Request('https://example.org/')), '7');
 
         self::assertSame(7, $subject->check(...$this->createLink())->details['seconds'] ?? null);
+    }
+
+    #[Test]
+    public function redirectByTypo3IsReportedAsNoticeWithTheRedirectHeader(): void
+    {
+        $subject = $this->createSubjectFollowingRedirects(200, ['X-Redirect-By' => 'TYPO3 Redirect 42']);
+
+        $result = $subject->check(...$this->createLink());
+
+        self::assertSame([CheckStatus::Info, 'url.redirectedByTypo3'], [$result->status, $result->errorType]);
+        self::assertSame('TYPO3 Redirect 42', $result->details['redirectBy']);
+        self::assertSame('https://example.org/new', $result->details['redirectTarget']);
+    }
+
+    #[Test]
+    public function redirectByOtherSystemsIsNotReported(): void
+    {
+        $subject = $this->createSubjectFollowingRedirects(200, ['Location' => 'https://example.org/new']);
+
+        self::assertSame(CheckStatus::Ok, $subject->check(...$this->createLink())->status);
+    }
+
+    #[Test]
+    public function brokenTargetOfATypo3RedirectIsStillBroken(): void
+    {
+        $subject = $this->createSubjectFollowingRedirects(404, ['X-Redirect-By' => 'TYPO3 Redirect 42']);
+
+        $result = $subject->check(...$this->createLink());
+
+        self::assertSame([CheckStatus::Broken, 'url.notFound'], [$result->status, $result->errorType]);
+        self::assertSame('TYPO3 Redirect 42', $result->details['redirectBy']);
+        self::assertSame(404, $result->details['httpStatus']);
+    }
+
+    private function createSubjectFollowingRedirects(int $finalStatusCode, array $redirectHeaders): ExternalUrlChecker
+    {
+        $requestFactory = self::createStub(RequestFactory::class);
+        $requestFactory->method('request')->willReturnCallback(
+            static function (string $uri, string $method, array $options) use ($finalStatusCode, $redirectHeaders): Response {
+                $options['allow_redirects']['on_redirect'](
+                    new Request($uri),
+                    new Response('php://memory', 301, $redirectHeaders),
+                    new Uri('https://example.org/new'),
+                );
+                return new Response('php://memory', $finalStatusCode);
+            }
+        );
+        $extensionConfiguration = self::createStub(ExtensionConfiguration::class);
+        return new ExternalUrlChecker($requestFactory, new ExtensionSettings($extensionConfiguration));
     }
 
     private function createSubject(\Throwable $exception, string $timeout = '10'): ExternalUrlChecker

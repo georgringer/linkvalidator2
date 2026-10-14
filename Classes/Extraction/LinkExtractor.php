@@ -69,7 +69,8 @@ final readonly class LinkExtractor
     }
 
     /**
-     * Keyed by link, so a link used twice in the same field is reported once.
+     * Keyed by link, so a link used twice in the same field is reported once. The key of an empty
+     * href is an empty string.
      *
      * @return array<string, string> link => link text
      */
@@ -79,10 +80,13 @@ final readonly class LinkExtractor
         $blocks = $this->htmlParser->splitIntoBlock('a', $html);
         for ($i = 1, $count = count($blocks); $i < $count; $i += 2) {
             $attributes = $this->htmlParser->get_tag_attributes($this->htmlParser->getFirstTag($blocks[$i]), true)[0];
-            $href = trim((string)($attributes['href'] ?? ''));
-            // @todo Empty href (RTE transformation turns links to missing files/folders into
-            //       href="") is broken for visitors: report as link.empty? Decision open in spec.
-            if ($href === '' || isset($links[$href])) {
+            // An anchor without href attribute is no link. An empty one is: the RTE turns links to
+            // missing files and folders into href="", which visitors cannot follow.
+            if (!isset($attributes['href'])) {
+                continue;
+            }
+            $href = trim((string)$attributes['href']);
+            if (isset($links[$href])) {
                 continue;
             }
             $links[$href] = trim(strip_tags($this->htmlParser->removeFirstAndLastTag($blocks[$i])));

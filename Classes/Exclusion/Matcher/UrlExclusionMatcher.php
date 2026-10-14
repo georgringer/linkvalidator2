@@ -19,7 +19,7 @@ namespace GeorgRinger\Linkvalidator2\Exclusion\Matcher;
 
 use TYPO3\CMS\Core\LinkHandling\LinkService;
 use GeorgRinger\Linkvalidator2\Exclusion\Exclusion;
-use GeorgRinger\Linkvalidator2\Exclusion\PrefilterableExclusionMatcherInterface;
+use GeorgRinger\Linkvalidator2\Exclusion\ExclusionMatcherInterface;
 use GeorgRinger\Linkvalidator2\Target\LinkTarget;
 
 /**
@@ -27,17 +27,11 @@ use GeorgRinger\Linkvalidator2\Target\LinkTarget;
  * covers everything below it. Scheme and anchor do not matter, so editors can enter
  * "example.org", "example.org/blog" or paste a URL.
  */
-final readonly class UrlExclusionMatcher implements PrefilterableExclusionMatcherInterface
+final readonly class UrlExclusionMatcher implements ExclusionMatcherInterface
 {
     public function getType(): string
     {
         return 'url';
-    }
-
-    public function getLinkStringHint(Exclusion $exclusion): ?string
-    {
-        // The host is part of every URL below it
-        return $this->split((string)($exclusion->row['value'] ?? ''))[0] ?: null;
     }
 
     public function matches(Exclusion $exclusion, LinkTarget $target): bool

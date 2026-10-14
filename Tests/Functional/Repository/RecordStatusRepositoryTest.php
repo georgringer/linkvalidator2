@@ -35,11 +35,11 @@ final class RecordStatusRepositoryTest extends FunctionalTestCase
     public function lastCheckIsTheLatestOfTheRecordsOnThePages(): void
     {
         $subject = $this->get(RecordStatusRepository::class);
-        $subject->markChecked('tt_content', 1, 1, 0, 0, 1000);
-        $subject->markChecked('tt_content', 2, 2, 0, 0, 3000);
-        $subject->markChecked('tt_content', 3, 3, 0, 0, 5000);
+        $subject->markChecked('tt_content', 1, 1, 0, 1000);
+        $subject->markChecked('tt_content', 2, 2, 0, 3000);
+        $subject->markChecked('tt_content', 3, 3, 0, 5000);
         // Due records do not count as checked
-        $subject->markChecked('tt_content', 4, 2, 0, 0, 0);
+        $subject->markChecked('tt_content', 4, 2, 0, 0);
 
         self::assertSame(3000, $subject->findLastChecked([1, 2]));
         self::assertSame(0, $subject->findLastChecked([4]));

@@ -21,12 +21,13 @@ use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
+use TYPO3\CMS\Core\LinkHandling\LinkService;
 use TYPO3\CMS\Core\Schema\Capability\TcaSchemaCapability;
 use TYPO3\CMS\Core\Schema\TcaSchema;
 use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use GeorgRinger\Linkvalidator2\Check\CheckerRegistry;
-use GeorgRinger\Linkvalidator2\Check\CheckStatus;
+use GeorgRinger\Linkvalidator2\Configuration\ExtensionSettings;
 use GeorgRinger\Linkvalidator2\Exclusion\ExclusionMatcher;
 use GeorgRinger\Linkvalidator2\Exclusion\ExclusionRepository;
 use GeorgRinger\Linkvalidator2\Extraction\LinkExtractor;
@@ -49,6 +50,7 @@ final readonly class RecordCheckService
         private ConnectionPool $connectionPool,
         private ExclusionRepository $exclusionRepository,
         private ExclusionMatcher $exclusionMatcher,
+        private ExtensionSettings $extensionSettings,
     ) {}
 
     /**
@@ -78,7 +80,7 @@ final readonly class RecordCheckService
 
         if (!$this->isVisible($schema, $row, $now)) {
             $this->brokenLinkRepository->removeForRecord($table, $uid);
-            $this->recordStatusRepository->markChecked($table, $uid, $pid, $language, 0, $now);
+            $this->recordStatusRepository->markChecked($table, $uid, $pid, $language, $now);
             return [];
         }
 
@@ -93,8 +95,8 @@ final readonly class RecordCheckService
             if ($target === null || !$this->checkerRegistry->hasChecker($target->type)) {
                 continue;
             }
-            // @todo Deduplicated per field only: the same target in two fields of a record yields
-            //       two broken link rows. Confirm this is intended (each field is fixed separately).
+            // Deduplicated per field only: the same target in two fields of a record yields two
+            // broken link rows, as each field is fixed separately
             $key = $candidate->field . '|' . $target->identifier;
             if (isset($seen[$key])) {
                 continue;
@@ -104,7 +106,8 @@ final readonly class RecordCheckService
                 $excludedCount++;
                 continue;
             }
-            $cacheLifetime = $this->checkerRegistry->getCacheLifetime($target->type);
+            // Only requests to external URLs are expensive enough to reuse stored results
+            $cacheLifetime = $target->type === LinkService::TYPE_URL ? $this->extensionSettings->getExternalCacheLifetime() : null;
             $stored = $cacheLifetime !== null ? $this->targetRepository->findStored($target) : null;
             if ($stored !== null && !in_array($target->identifier, $refreshIdentifiers, true) && (
                 $cachedOnly
@@ -125,14 +128,12 @@ final readonly class RecordCheckService
             }
             $checkedLinks[] = new CheckedLink($candidate, $target, $result);
             if (!$result->isOk()) {
-                $brokenLinks[] = ['candidate' => $candidate, 'targetUid' => $targetUid, 'result' => $result];
+                $brokenLinks[] = ['candidate' => $candidate, 'targetUid' => $targetUid];
             }
         }
         $this->brokenLinkRepository->replaceForRecord($table, $uid, $brokenLinks, $now);
-        // Notices are stored for the report, but the record is not broken because of them
-        $brokenCount = count(array_filter($brokenLinks, static fn(array $brokenLink): bool => $brokenLink['result']->status !== CheckStatus::Info));
         // A link without stored result makes the record due: it is the first to be checked completely
-        $this->recordStatusRepository->markChecked($table, $uid, $pid, $language, $brokenCount, $skippedUnchecked ? 0 : $now, $excludedCount);
+        $this->recordStatusRepository->markChecked($table, $uid, $pid, $language, $skippedUnchecked ? 0 : $now, $excludedCount);
         return $checkedLinks;
     }
 
@@ -148,7 +149,7 @@ final readonly class RecordCheckService
         foreach ($foundRecords as ['table' => $table, 'uid' => $uid]) {
             $found[$table . ':' . $uid] = true;
         }
-        $stored = [...$this->recordStatusRepository->findRecordsByPid($pid), ...$this->brokenLinkRepository->findRecordsByPid($pid)];
+        $stored = $this->recordStatusRepository->findRecordsByPids([$pid]);
         foreach ($stored as ['table' => $table, 'uid' => $uid]) {
             if (!isset($found[$table . ':' . $uid])) {
                 $this->brokenLinkRepository->removeForRecord($table, $uid);
@@ -162,7 +163,7 @@ final readonly class RecordCheckService
      */
     public function removeResultsOfMissingPages(): void
     {
-        $pids = array_values(array_unique([...$this->recordStatusRepository->findPids(), ...$this->brokenLinkRepository->findPids()]));
+        $pids = $this->recordStatusRepository->findPids();
         $missing = array_diff($pids, $this->findExistingPages($pids), [0]);
         if ($missing !== []) {
             $this->brokenLinkRepository->removeByPids($missing);

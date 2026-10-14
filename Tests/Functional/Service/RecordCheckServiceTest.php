@@ -17,9 +17,12 @@ declare(strict_types=1);
 
 namespace GeorgRinger\Linkvalidator2\Tests\Functional\Service;
 
+use TYPO3\CMS\Core\Database\Connection;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use GeorgRinger\Linkvalidator2\Report\ReportFilter;
+use GeorgRinger\Linkvalidator2\Tests\Functional\BrokenLinkResultsTrait;
+use GeorgRinger\Linkvalidator2\Repository\BrokenLinkQuery;
 use GeorgRinger\Linkvalidator2\Repository\BrokenLinkRepository;
 use GeorgRinger\Linkvalidator2\Service\RecordCheckService;
 use GeorgRinger\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
@@ -27,6 +30,8 @@ use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 final class RecordCheckServiceTest extends FunctionalTestCase
 {
+    use BrokenLinkResultsTrait;
+
     use SiteConfigurationTrait;
 
     private const BROKEN_LINK_TABLE = 'tx_linkvalidator2_broken_link';
@@ -48,6 +53,19 @@ final class RecordCheckServiceTest extends FunctionalTestCase
         $this->get(RecordCheckService::class)->checkRecord('tt_content', 10);
 
         $this->assertCSVDataSet(__DIR__ . '/../Fixtures/expected_all_cases.csv');
+        $results = [];
+        foreach ($this->selectBrokenLinks(['b.field', 'b.link_string', 't.status', 't.error_type'], ['record_uid' => 10]) as $row) {
+            $results[] = [$row['field'], $row['link_string'], $row['status'], $row['error_type']];
+        }
+        self::assertSame([
+            ['header_link', 't3://page?uid=3', 'broken', 'page.hidden'],
+            ['bodytext', 't3://page?uid=3', 'broken', 'page.hidden'],
+            ['bodytext', 't3://page?uid=4', 'broken', 'page.missing'],
+            ['bodytext', 't3://page?uid=5', 'broken', 'page.expired'],
+            ['bodytext', 't3://page?uid=6', 'broken', 'page.noFrontend'],
+            ['bodytext', 't3://page?uid=999', 'broken', 'page.missing'],
+            ['bodytext', 't3://gibtsnicht?uid=1', 'broken', 'link.invalid'],
+        ], $results);
     }
 
     #[Test]
@@ -57,7 +75,6 @@ final class RecordCheckServiceTest extends FunctionalTestCase
 
         self::assertCount(2, $checkedLinks);
         self::assertSame(0, $this->countRows(self::BROKEN_LINK_TABLE));
-        self::assertSame(0, $this->getStatus('tt_content', 13)['broken_count']);
     }
 
     #[Test]
@@ -67,14 +84,12 @@ final class RecordCheckServiceTest extends FunctionalTestCase
 
         $this->get(RecordCheckService::class)->checkRecord('tt_content', 15);
 
-        $rows = $this->getConnectionPool()->getConnectionForTable(self::BROKEN_LINK_TABLE)
-            ->select(['status', 'error_type'], self::BROKEN_LINK_TABLE, ['record_uid' => 15], [], ['status' => 'ASC'])
-            ->fetchAllAssociative();
+        $rows = $this->selectBrokenLinks(['t.status', 't.error_type'], ['record_uid' => 15], 't.status');
         self::assertSame(
             [['status' => 'broken', 'error_type' => 'page.hidden'], ['status' => 'info', 'error_type' => 'page.accessRestricted']],
             $rows
         );
-        self::assertSame(1, $this->getStatus('tt_content', 15)['broken_count']);
+        self::assertSame(1, $this->getBrokenCount('tt_content', 15));
     }
 
     #[Test]
@@ -84,10 +99,10 @@ final class RecordCheckServiceTest extends FunctionalTestCase
         $this->get(RecordCheckService::class)->checkRecord('tt_content', 15);
         $repository = $this->get(BrokenLinkRepository::class);
 
-        self::assertSame(2, $repository->countByPids([2]));
-        self::assertSame(1, $repository->countByPids([2], new ReportFilter('info')));
-        self::assertSame(1, $repository->countByPids([2], new ReportFilter('broken')));
-        self::assertSame(1, $repository->countBrokenByPid(2));
+        self::assertSame(2, $repository->count(new BrokenLinkQuery([2])));
+        self::assertSame(1, $repository->count(new BrokenLinkQuery([2], new ReportFilter('info'))));
+        self::assertSame(1, $repository->count(new BrokenLinkQuery([2], new ReportFilter('broken'))));
+        self::assertSame(1, $repository->count(new BrokenLinkQuery([2], onlyBroken: true)));
     }
 
     #[Test]
@@ -106,7 +121,6 @@ final class RecordCheckServiceTest extends FunctionalTestCase
         $this->get(RecordCheckService::class)->checkRecord('tt_content', 11);
 
         self::assertSame(0, $this->countRows(self::BROKEN_LINK_TABLE));
-        self::assertSame(0, $this->getStatus('tt_content', 11)['broken_count']);
     }
 
     #[Test]
@@ -127,7 +141,7 @@ final class RecordCheckServiceTest extends FunctionalTestCase
         $subject->checkRecord('tt_content', 10);
 
         self::assertSame(0, $this->countRows(self::BROKEN_LINK_TABLE));
-        self::assertSame(0, $this->getStatus('tt_content', 10)['broken_count']);
+        self::assertSame(0, $this->getBrokenCount('tt_content', 10));
     }
 
     #[Test]
@@ -163,7 +177,8 @@ final class RecordCheckServiceTest extends FunctionalTestCase
     {
         $this->get(RecordCheckService::class)->checkRecord('tt_content', 14);
 
-        self::assertSame(['pid' => 1, 'language' => 1, 'broken_count' => 1], $this->getStatus('tt_content', 14));
+        self::assertSame(['pid' => 1, 'language' => 1], $this->getStatus('tt_content', 14));
+        self::assertSame(1, $this->getBrokenCount('tt_content', 14));
     }
 
     #[Test]
@@ -171,10 +186,9 @@ final class RecordCheckServiceTest extends FunctionalTestCase
     {
         $this->get(RecordCheckService::class)->checkRecord('pages', 9);
 
-        $row = $this->getConnectionPool()->getConnectionForTable(self::BROKEN_LINK_TABLE)
-            ->select(['field', 'pid', 'error_type'], self::BROKEN_LINK_TABLE, ['table_name' => 'pages', 'record_uid' => 9])
-            ->fetchAssociative();
-        self::assertSame(['field' => 'link', 'pid' => 9, 'error_type' => 'page.hidden'], $this->normalize($row));
+        $rows = $this->selectBrokenLinks(['b.field', 'b.pid', 't.error_type'], ['table_name' => 'pages', 'record_uid' => 9]);
+        self::assertCount(1, $rows);
+        self::assertSame(['field' => 'link', 'pid' => 9, 'error_type' => 'page.hidden'], $this->normalize($rows[0]));
     }
 
     #[Test]
@@ -182,7 +196,8 @@ final class RecordCheckServiceTest extends FunctionalTestCase
     {
         $this->get(RecordCheckService::class)->checkRecord('pages', 10);
 
-        self::assertSame(['pid' => 2, 'language' => 1, 'broken_count' => 0], $this->getStatus('pages', 10));
+        self::assertSame(['pid' => 2, 'language' => 1], $this->getStatus('pages', 10));
+        self::assertSame(0, $this->getBrokenCount('pages', 10));
     }
 
     #[Test]
@@ -212,7 +227,7 @@ final class RecordCheckServiceTest extends FunctionalTestCase
         $this->get(RecordCheckService::class)->checkRecord('tt_content', 17);
 
         self::assertSame(0, $this->countRows(self::BROKEN_LINK_TABLE));
-        self::assertSame(0, $this->getStatus('tt_content', 17)['broken_count']);
+        self::assertSame(0, $this->getBrokenCount('tt_content', 17));
     }
 
     #[Test]
@@ -225,7 +240,7 @@ final class RecordCheckServiceTest extends FunctionalTestCase
         self::assertCount(1, $checkedLinks);
         self::assertSame('link', $checkedLinks[0]->candidate->field);
         self::assertSame('page.linksToItself', $checkedLinks[0]->result->errorType);
-        self::assertSame(1, $this->getStatus('pages', 12)['broken_count']);
+        self::assertSame(1, $this->getBrokenCount('pages', 12));
     }
 
     public static function shortcutModeDataProvider(): \Generator
@@ -254,18 +269,39 @@ final class RecordCheckServiceTest extends FunctionalTestCase
         self::assertSame($expectedErrorType, $checkedLinks[0]->result->isOk() ? null : $checkedLinks[0]->result->errorType);
     }
 
+    #[Test]
+    public function emptyHrefIsBrokenBecauseVisitorsCannotFollowIt(): void
+    {
+        $this->getConnectionPool()->getConnectionForTable('tt_content')->update(
+            'tt_content',
+            ['header_link' => '', 'bodytext' => '<p><a href="">gone</a></p>'],
+            ['uid' => 13]
+        );
+
+        $checkedLinks = $this->get(RecordCheckService::class)->checkRecord('tt_content', 13);
+
+        self::assertCount(1, $checkedLinks);
+        self::assertSame('link.empty', $checkedLinks[0]->result->errorType);
+        self::assertSame(1, $this->getBrokenCount('tt_content', 13));
+    }
+
     private function countRows(string $table): int
     {
         return $this->getConnectionPool()->getConnectionForTable($table)->count('*', $table, []);
     }
 
+    private function getBrokenCount(string $table, int $uid): int
+    {
+        return $this->countBrokenResults($table, $uid);
+    }
+
     /**
-     * @return array{pid: int, language: int, broken_count: int}
+     * @return array{pid: int, language: int}
      */
     private function getStatus(string $table, int $uid): array
     {
         $row = $this->getConnectionPool()->getConnectionForTable(self::STATUS_TABLE)
-            ->select(['pid', 'language', 'broken_count'], self::STATUS_TABLE, ['table_name' => $table, 'record_uid' => $uid])
+            ->select(['pid', 'language'], self::STATUS_TABLE, ['table_name' => $table, 'record_uid' => $uid])
             ->fetchAssociative();
         self::assertIsArray($row, 'No status row for ' . $table . ':' . $uid);
         return $this->normalize($row);

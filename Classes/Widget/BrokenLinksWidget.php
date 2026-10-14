@@ -17,6 +17,8 @@ declare(strict_types=1);
 namespace GeorgRinger\Linkvalidator2\Widget;
 
 use GeorgRinger\Linkvalidator2\Report\ReportPermissionsFactory;
+use GeorgRinger\Linkvalidator2\Repository\BrokenLinkGroup;
+use GeorgRinger\Linkvalidator2\Repository\BrokenLinkQuery;
 use GeorgRinger\Linkvalidator2\Repository\BrokenLinkRepository;
 use GeorgRinger\Linkvalidator2\Service\PageRecordFinder;
 use TYPO3\CMS\Backend\Module\ModuleProvider;
@@ -131,7 +133,10 @@ final readonly class BrokenLinksWidget implements WidgetRendererInterface
         foreach ($this->pageRecordFinder->iteratePageIdBatches($pageUid, $depth, 1000) as $batch) {
             array_push($pids, ...$batch);
         }
-        $counts = $this->brokenLinkRepository->countBrokenGroupedByLinkType($pids, $this->reportPermissionsFactory->createForUser($backendUser));
+        $counts = $this->brokenLinkRepository->countGroupedBy(
+            new BrokenLinkQuery($pids, permissions: $this->reportPermissionsFactory->createForUser($backendUser), onlyBroken: true),
+            BrokenLinkGroup::LinkType
+        );
         // Most broken links first, then the type for a stable order
         uksort($counts, static fn(string $a, string $b): int => $counts[$b] <=> $counts[$a] ?: strcmp($a, $b));
         $languageService = $this->getLanguageService();

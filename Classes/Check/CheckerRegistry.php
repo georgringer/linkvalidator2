@@ -65,17 +65,4 @@ final class CheckerRegistry
         }
         return $result;
     }
-
-    /**
-     * @return int|null Seconds results of the type are reused, null if they are not stored
-     */
-    public function getCacheLifetime(string $type): ?int
-    {
-        foreach ($this->checkersByType[$type] ?? [] as $checker) {
-            if ($checker instanceof CacheableLinkCheckerInterface) {
-                return $checker->getCacheLifetime();
-            }
-        }
-        return null;
-    }
 }

@@ -19,11 +19,13 @@ namespace GeorgRinger\Linkvalidator2\Tests\Functional\Controller;
 use GeorgRinger\Linkvalidator2\Controller\CheckController;
 use GeorgRinger\Linkvalidator2\Service\RecordCheckService;
 use GeorgRinger\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
+use TYPO3\CMS\Core\Database\Connection;
 use PHPUnit\Framework\Attributes\Test;
 use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Core\Http\ServerRequest;
+use GeorgRinger\Linkvalidator2\Tests\Functional\BrokenLinkResultsTrait;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
-use TYPO3Tests\TestLinkHandler\TestCacheableLinkChecker;
+use TYPO3Tests\TestLinkHandler\TestUrlChecker;
 use TYPO3Tests\TestLinkHandler\TestLinkChecker;
 
 /**
@@ -31,6 +33,8 @@ use TYPO3Tests\TestLinkHandler\TestLinkChecker;
  */
 final class RecheckTest extends FunctionalTestCase
 {
+    use BrokenLinkResultsTrait;
+
     use SiteConfigurationTrait;
 
     private const BROKEN_LINK_TABLE = 'tx_linkvalidator2_broken_link';
@@ -47,8 +51,8 @@ final class RecheckTest extends FunctionalTestCase
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/pages.csv');
         $this->writeSiteConfiguration();
         $this->importCSVDataSet(__DIR__ . '/../Fixtures/tt_content_cached_link.csv');
-        TestCacheableLinkChecker::$checks = 0;
-        TestCacheableLinkChecker::$working = false;
+        TestUrlChecker::$checks = 0;
+        TestUrlChecker::$working = false;
         TestLinkChecker::$repaired = false;
         $this->setUpBackendUser(1);
         $this->get(RecordCheckService::class)->checkRecord('tt_content', 31);
@@ -57,7 +61,7 @@ final class RecheckTest extends FunctionalTestCase
     protected function tearDown(): void
     {
         // Static state of the test checkers must not reach other tests
-        TestCacheableLinkChecker::$working = false;
+        TestUrlChecker::$working = false;
         TestLinkChecker::$repaired = false;
         parent::tearDown();
     }
@@ -67,7 +71,7 @@ final class RecheckTest extends FunctionalTestCase
     {
         $this->get(RecordCheckService::class)->checkRecord('tt_content', 31);
 
-        self::assertSame(1, TestCacheableLinkChecker::$checks);
+        self::assertSame(1, TestUrlChecker::$checks);
     }
 
     #[Test]
@@ -75,7 +79,7 @@ final class RecheckTest extends FunctionalTestCase
     {
         $this->get(RecordCheckService::class)->checkRecord('tt_content', 31, ignoreStored: true);
 
-        self::assertSame(2, TestCacheableLinkChecker::$checks);
+        self::assertSame(2, TestUrlChecker::$checks);
     }
 
     #[Test]
@@ -85,7 +89,7 @@ final class RecheckTest extends FunctionalTestCase
 
         $this->get(RecordCheckService::class)->checkRecord('tt_content', 31, freshSince: $storedResultIsFromThisRun, ignoreStored: true);
 
-        self::assertSame(1, TestCacheableLinkChecker::$checks);
+        self::assertSame(1, TestUrlChecker::$checks);
     }
 
     #[Test]
@@ -95,14 +99,14 @@ final class RecheckTest extends FunctionalTestCase
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame(['status' => 'broken'], $this->decode($response));
-        self::assertSame(2, TestCacheableLinkChecker::$checks);
+        self::assertSame(2, TestUrlChecker::$checks);
     }
 
     #[Test]
     public function theResultOfAnExternalTargetIsAppliedToAllRecordsThatLinkToIt(): void
     {
         $this->get(RecordCheckService::class)->checkRecord('tt_content', 32);
-        TestCacheableLinkChecker::$working = true;
+        TestUrlChecker::$working = true;
 
         $response = $this->recheck($this->getResultUid(31));
 
@@ -218,7 +222,7 @@ final class RecheckTest extends FunctionalTestCase
         $GLOBALS['TYPO3_CONF_VARS']['EXTENSIONS']['linkvalidator2']['allowManualCheck'] = '0';
 
         self::assertSame(403, $this->recheck($this->getResultUid(31))->getStatusCode());
-        self::assertSame(1, TestCacheableLinkChecker::$checks);
+        self::assertSame(1, TestUrlChecker::$checks);
     }
 
     /**
@@ -255,9 +259,7 @@ final class RecheckTest extends FunctionalTestCase
 
     private function getBrokenCount(int $contentUid): int
     {
-        return (int)$this->getConnectionPool()->getConnectionForTable('tx_linkvalidator2_record_status')
-            ->select(['broken_count'], 'tx_linkvalidator2_record_status', ['table_name' => 'tt_content', 'record_uid' => $contentUid])
-            ->fetchOne();
+        return $this->countBrokenResults('tt_content', $contentUid);
     }
 
     private function countPriorityMessages(): int

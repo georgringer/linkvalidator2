@@ -17,7 +17,6 @@ declare(strict_types=1);
 namespace GeorgRinger\Linkvalidator2\Service;
 
 use GeorgRinger\Linkvalidator2\Repository\BrokenLinkRepository;
-use GeorgRinger\Linkvalidator2\Repository\RecordStatusRepository;
 
 /**
  * Checks the link of one stored result again, for "Check again" in the report.
@@ -30,7 +29,6 @@ final readonly class LinkRechecker
     public function __construct(
         private RecordCheckService $recordCheckService,
         private BrokenLinkRepository $brokenLinkRepository,
-        private RecordStatusRepository $recordStatusRepository,
     ) {}
 
     /**
@@ -55,8 +53,8 @@ final readonly class LinkRechecker
             if ($checkedLink->candidate->field !== (string)$result['field'] || $checkedLink->target->identifier !== $identifier) {
                 continue;
             }
-            foreach ($this->brokenLinkRepository->applyResultToTarget((int)$result['target'], $checkedLink->result) as $record) {
-                $this->recordStatusRepository->adjustBrokenCount($record['table'], $record['uid'], $record['brokenDelta']);
+            if ($checkedLink->result->isOk()) {
+                $this->brokenLinkRepository->removeByTarget((int)$result['target']);
             }
             return $checkedLink->result->status->value;
         }

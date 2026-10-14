@@ -45,6 +45,8 @@ use GeorgRinger\Linkvalidator2\Report\ReportFilter;
 use GeorgRinger\Linkvalidator2\Report\ReportOrdering;
 use GeorgRinger\Linkvalidator2\Report\ReportPermissions;
 use GeorgRinger\Linkvalidator2\Report\ReportPermissionsFactory;
+use GeorgRinger\Linkvalidator2\Repository\BrokenLinkGroup;
+use GeorgRinger\Linkvalidator2\Repository\BrokenLinkQuery;
 use GeorgRinger\Linkvalidator2\Repository\BrokenLinkRepository;
 use GeorgRinger\Linkvalidator2\Repository\RecordStatusRepository;
 use GeorgRinger\Linkvalidator2\Service\PageRecordFinder;
@@ -110,8 +112,9 @@ final readonly class ReportController
         $permissions = $this->reportPermissionsFactory->createForUser($this->getBackendUser());
         $filter = ReportFilter::fromModuleData($request->getAttribute('moduleData'));
         $ordering = ReportOrdering::fromModuleData($request->getAttribute('moduleData'));
+        $query = new BrokenLinkQuery($pageIds, $filter, $permissions);
         $pagination = $this->getPagination(
-            $this->brokenLinkRepository->countByPids($pageIds, $filter, $permissions),
+            $this->brokenLinkRepository->count($query),
             (int)($request->getQueryParams()['page'] ?? 1)
         );
 
@@ -134,14 +137,14 @@ final readonly class ReportController
             'depth' => $depth,
             'depthOptions' => $this->getDepthOptions(),
             'filter' => $filter,
-            'filterOptions' => $this->getFilterOptions($pageIds, $pageUid, $filter, $permissions),
+            'filterOptions' => $this->getFilterOptions($query, $pageUid),
             'resetFilterUrl' => (string)$this->uriBuilder->buildUriFromRoute(
                 'linkvalidator2_report',
                 ['id' => $pageUid, ...array_fill_keys(ReportFilter::PROPERTIES, '')]
             ),
             'pagination' => $pagination,
             'columns' => $this->getColumns($pageUid, $ordering),
-            'brokenLinks' => $this->getBrokenLinks($pageIds, $filter, $ordering, $pagination, $moduleUrl, $permissions, $mayManageExclusions),
+            'brokenLinks' => $this->getBrokenLinks($query, $ordering, $pagination, $moduleUrl, $mayManageExclusions),
             'excludedCount' => $this->recordStatusRepository->countExcluded($pageIds),
             'mayManageExclusions' => $mayManageExclusions,
             'exclusionsUrl' => (string)$this->uriBuilder->buildUriFromRoute('linkvalidator2_report.exclusions', ['id' => $pageUid]),
@@ -271,12 +274,12 @@ final readonly class ReportController
      * @param array{startRecord: int} $pagination
      * @return list<array<string, mixed>>
      */
-    private function getBrokenLinks(array $pageIds, ReportFilter $filter, ReportOrdering $ordering, array $pagination, string $returnUrl, ?ReportPermissions $permissions, bool $mayIgnore): array
+    private function getBrokenLinks(BrokenLinkQuery $query, ReportOrdering $ordering, array $pagination, string $returnUrl, bool $mayIgnore): array
     {
         $result = [];
         $pageTitles = [];
         $pageRecords = [];
-        $rows = $this->brokenLinkRepository->findByPids($pageIds, $filter, $ordering, self::ITEMS_PER_PAGE, $pagination['startRecord'] - 1, $permissions);
+        $rows = $this->brokenLinkRepository->find($query, $ordering, self::ITEMS_PER_PAGE, $pagination['startRecord'] - 1);
         foreach ($rows as $row) {
             $table = (string)$row['table_name'];
             $uid = (int)$row['record_uid'];
@@ -394,10 +397,18 @@ final readonly class ReportController
      * @param list<int> $pageIds
      * @return array<string, list<array{value: string, label: string, selected: bool}>>
      */
-    private function getFilterOptions(array $pageIds, int $pageUid, ReportFilter $filter, ?ReportPermissions $permissions): array
+    private function getFilterOptions(BrokenLinkQuery $query, int $pageUid): array
     {
         $languageService = $this->getLanguageService();
-        $values = $this->brokenLinkRepository->findFilterValues($pageIds, $permissions);
+        $filter = $query->filter;
+        // Offered are the values present, not narrowed by the other filters
+        $unfiltered = new BrokenLinkQuery($query->pids, permissions: $query->permissions);
+        $values = [
+            'status' => $this->brokenLinkRepository->countGroupedBy($unfiltered, BrokenLinkGroup::Status),
+            'linkType' => $this->brokenLinkRepository->countGroupedBy($unfiltered, BrokenLinkGroup::LinkType),
+            'table' => $this->brokenLinkRepository->countGroupedBy($unfiltered, BrokenLinkGroup::Table),
+            'language' => $this->brokenLinkRepository->countGroupedBy($unfiltered, BrokenLinkGroup::Language),
+        ];
         $labels = [];
         foreach (array_keys($values['status']) as $status) {
             $labels['status'][$status] = $languageService->sL('linkvalidator2.messages:status.' . $status) ?: $status;

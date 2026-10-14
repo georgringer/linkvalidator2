@@ -55,6 +55,16 @@ final class LinkExtractorTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function emptyHrefIsExtractedOncePerFieldAnchorsWithoutHrefAreNot(): void
+    {
+        $row = $this->contentRow([
+            'bodytext' => '<p><a href="">gone</a> <a href=" ">again</a> <a name="top">anchor</a> <a href="t3://page?uid=3">page</a></p>',
+        ]);
+
+        self::assertSame([['bodytext', '', 'gone'], ['bodytext', 't3://page?uid=3', 'page']], $this->extract('tt_content', $row));
+    }
+
+    #[Test]
     public function urlUsedAsLinkTextIsFoundAsLinkAndAsPlainUrl(): void
     {
         // Both share field and target, RecordCheckService checks and reports them once

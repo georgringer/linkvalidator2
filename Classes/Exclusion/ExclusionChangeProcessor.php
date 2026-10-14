@@ -64,8 +64,7 @@ final readonly class ExclusionChangeProcessor
         $subtree = $this->getSubtree($pid);
         $remove = [];
         foreach ($this->exclusionRepository->findOnPage($pid) as $exclusion) {
-            $hint = $this->exclusionMatcher->getLinkStringHint($exclusion);
-            foreach ($this->brokenLinkRepository->findForExclusion($subtree, $hint) as $row) {
+            foreach ($this->brokenLinkRepository->findForExclusion($subtree) as $row) {
                 if (isset($remove[(int)$row['uid']])) {
                     continue;
                 }
@@ -87,15 +86,14 @@ final readonly class ExclusionChangeProcessor
             return;
         }
         $this->brokenLinkRepository->removeByUids(array_keys($remove));
-        $records = [];
+        $removedByRecord = [];
         foreach ($remove as $row) {
             $key = $row['table_name'] . ':' . $row['record_uid'];
-            $records[$key] ??= ['table' => (string)$row['table_name'], 'uid' => (int)$row['record_uid'], 'broken' => 0, 'total' => 0];
-            $records[$key]['total']++;
-            $records[$key]['broken'] += in_array($row['status'], ['broken', 'unknown'], true) ? 1 : 0;
+            $removedByRecord[$key] ??= ['table' => (string)$row['table_name'], 'uid' => (int)$row['record_uid'], 'count' => 0];
+            $removedByRecord[$key]['count']++;
         }
-        foreach ($records as ['table' => $table, 'uid' => $uid, 'broken' => $broken, 'total' => $total]) {
-            $this->recordStatusRepository->markExcluded($table, $uid, $broken, $total);
+        foreach ($removedByRecord as ['table' => $table, 'uid' => $uid, 'count' => $count]) {
+            $this->recordStatusRepository->markExcluded($table, $uid, $count);
         }
     }
 

@@ -26,15 +26,15 @@ final readonly class ReportOrdering
     public const DEFAULT_FIELD = 'page';
 
     /**
-     * Report column => columns of the broken link table
+     * Report column => columns of the broken link table (b) and of the target (t)
      */
     public const FIELDS = [
-        'page' => ['pid'],
-        'record' => ['table_name', 'record_uid', 'field'],
-        'linkText' => ['link_text'],
-        'target' => ['link_string'],
-        'problem' => ['error_type'],
-        'since' => ['first_detected'],
+        'page' => ['b.pid'],
+        'record' => ['b.table_name', 'b.record_uid', 'b.field'],
+        'linkText' => ['b.link_text'],
+        'target' => ['b.link_string'],
+        'problem' => ['t.error_type'],
+        'since' => ['b.first_detected'],
     ];
 
     public function __construct(

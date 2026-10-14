@@ -20,10 +20,14 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\TooManyRedirectsException;
 use GuzzleHttp\RequestOptions;
 use Psr\Http\Client\NetworkExceptionInterface;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\UriInterface;
 use TYPO3\CMS\Core\Http\RequestFactory;
 use TYPO3\CMS\Core\LinkHandling\LinkService;
-use GeorgRinger\Linkvalidator2\Check\CacheableLinkCheckerInterface;
 use GeorgRinger\Linkvalidator2\Check\CheckResult;
+use GeorgRinger\Linkvalidator2\Check\CheckStatus;
+use GeorgRinger\Linkvalidator2\Check\LinkCheckerInterface;
 use GeorgRinger\Linkvalidator2\Configuration\ExtensionSettings;
 use GeorgRinger\Linkvalidator2\Extraction\LinkCandidate;
 use GeorgRinger\Linkvalidator2\Target\LinkTarget;
@@ -36,7 +40,7 @@ use GeorgRinger\Linkvalidator2\Target\LinkTarget;
  * @todo Escalate "unknown" to "broken" after repeated failures (failure_count/first_failed_at
  *       are already tracked by the target repository).
  */
-final readonly class ExternalUrlChecker implements CacheableLinkCheckerInterface
+final readonly class ExternalUrlChecker implements LinkCheckerInterface
 {
     private const MAX_REDIRECTS = 5;
     private const BROKEN_STATUS_CODES = [404 => 'url.notFound', 410 => 'url.gone'];
@@ -56,11 +60,6 @@ final readonly class ExternalUrlChecker implements CacheableLinkCheckerInterface
         return [LinkService::TYPE_URL];
     }
 
-    public function getCacheLifetime(): int
-    {
-        return $this->extensionSettings->getExternalCacheLifetime();
-    }
-
     public function check(LinkTarget $target, LinkCandidate $source): CheckResult
     {
         $url = (string)($target->resolved['url'] ?? '');
@@ -68,10 +67,12 @@ final readonly class ExternalUrlChecker implements CacheableLinkCheckerInterface
         if (!in_array($scheme, ['http', 'https'], true)) {
             return CheckResult::unknown('url.unsupportedScheme', ['scheme' => $scheme]);
         }
+        $redirects = new \ArrayObject();
         try {
-            $statusCode = $this->request($url, 'HEAD');
+            $statusCode = $this->request($url, 'HEAD', $redirects);
             if (in_array($statusCode, self::HEAD_NOT_SUPPORTED_STATUS_CODES, true)) {
-                $statusCode = $this->request($url, 'GET');
+                $redirects->exchangeArray([]);
+                $statusCode = $this->request($url, 'GET', $redirects);
             }
         } catch (TooManyRedirectsException) {
             return CheckResult::unknown('url.tooManyRedirects', ['maxRedirects' => self::MAX_REDIRECTS]);
@@ -80,14 +81,47 @@ final readonly class ExternalUrlChecker implements CacheableLinkCheckerInterface
         } catch (GuzzleException $e) {
             return CheckResult::unknown('url.requestFailed', ['message' => $e->getMessage()]);
         }
-        return $this->classifyStatusCode($statusCode);
+        $result = $this->classifyStatusCode($statusCode);
+        $typo3Redirect = $this->findTypo3Redirect($redirects);
+        if ($typo3Redirect === null) {
+            return $result;
+        }
+        // Shown in the details, so editors know the redirect record is the place to fix
+        $details = ['redirectBy' => $typo3Redirect['by'], 'redirectTarget' => $typo3Redirect['target']];
+        return $result->status === CheckStatus::Ok
+            ? CheckResult::info('url.redirectedByTypo3', $details)
+            : new CheckResult($result->status, $result->errorType, $result->details + $details);
     }
 
-    private function request(string $url, string $method): int
+    /**
+     * @param \ArrayObject<int, array{by: string, target: string}> $redirects
+     * @return array{by: string, target: string}|null
+     */
+    private function findTypo3Redirect(\ArrayObject $redirects): ?array
+    {
+        foreach ($redirects as $redirect) {
+            if (str_starts_with($redirect['by'], 'TYPO3 Redirect')) {
+                return $redirect;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @param \ArrayObject<int, array{by: string, target: string}> $redirects collects the hops
+     *        that were sent by a TYPO3 redirect (header X-Redirect-By)
+     */
+    private function request(string $url, string $method, \ArrayObject $redirects): int
     {
         return $this->requestFactory->request($url, $method, [
             RequestOptions::HTTP_ERRORS => false,
-            RequestOptions::ALLOW_REDIRECTS => ['max' => self::MAX_REDIRECTS, 'strict' => false, 'referer' => false],
+            RequestOptions::ALLOW_REDIRECTS => ['max' => self::MAX_REDIRECTS, 'strict' => false, 'referer' => false,
+                'on_redirect' => static function (RequestInterface $request, ResponseInterface $response, UriInterface $uri) use ($redirects): void {
+                    if ($response->hasHeader('X-Redirect-By')) {
+                        $redirects[] = ['by' => $response->getHeaderLine('X-Redirect-By'), 'target' => (string)$uri];
+                    }
+                },
+            ],
             RequestOptions::TIMEOUT => $this->extensionSettings->getExternalTimeout(),
             RequestOptions::HEADERS => ['User-Agent' => $this->extensionSettings->getExternalUserAgent()],
             // GET is only a fallback for HEAD and its body is never read. Streaming is limited to it,

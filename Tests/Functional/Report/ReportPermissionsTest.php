@@ -19,10 +19,10 @@ namespace GeorgRinger\Linkvalidator2\Tests\Functional\Report;
 
 use PHPUnit\Framework\Attributes\Test;
 use TYPO3\CMS\Core\Type\Bitmask\Permission;
-use GeorgRinger\Linkvalidator2\Report\ReportFilter;
-use GeorgRinger\Linkvalidator2\Report\ReportOrdering;
 use GeorgRinger\Linkvalidator2\Report\ReportPermissions;
 use GeorgRinger\Linkvalidator2\Report\ReportPermissionsFactory;
+use GeorgRinger\Linkvalidator2\Repository\BrokenLinkGroup;
+use GeorgRinger\Linkvalidator2\Repository\BrokenLinkQuery;
 use GeorgRinger\Linkvalidator2\Repository\BrokenLinkRepository;
 use GeorgRinger\Linkvalidator2\Service\RecordCheckService;
 use GeorgRinger\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
@@ -68,7 +68,7 @@ final class ReportPermissionsTest extends FunctionalTestCase
 
         self::assertNull($this->createPermissions());
         // 7 in content 10, 1 in 14, 2 in 15 (one notice), 1 in 16, 1 in page 9
-        self::assertSame(12, $this->get(BrokenLinkRepository::class)->countByPids(self::PAGE_IDS));
+        self::assertSame(12, $this->get(BrokenLinkRepository::class)->count(new BrokenLinkQuery(self::PAGE_IDS)));
     }
 
     #[Test]
@@ -112,14 +112,20 @@ final class ReportPermissionsTest extends FunctionalTestCase
         $permissions = $this->createPermissions();
         $repository = $this->get(BrokenLinkRepository::class);
 
-        self::assertSame(8, $repository->countByPids(self::PAGE_IDS, new ReportFilter(), $permissions));
-        $filterValues = $repository->findFilterValues(self::PAGE_IDS, $permissions);
+        $query = new BrokenLinkQuery(self::PAGE_IDS, permissions: $permissions);
+        self::assertSame(8, $repository->count($query));
+        $filterValues = [
+            'status' => $repository->countGroupedBy($query, BrokenLinkGroup::Status),
+            'linkType' => $repository->countGroupedBy($query, BrokenLinkGroup::LinkType),
+            'language' => $repository->countGroupedBy($query, BrokenLinkGroup::Language),
+            'table' => $repository->countGroupedBy($query, BrokenLinkGroup::Table),
+        ];
         self::assertSame([0 => 8], $filterValues['language']);
         self::assertSame(['pages', 'tt_content'], array_keys($filterValues['table']));
         self::assertSame(8, array_sum($filterValues['table']));
         self::assertSame(8, array_sum($filterValues['status']));
         self::assertSame(8, array_sum($filterValues['linkType']));
-        self::assertSame(7, $repository->countBrokenByPid(1, $permissions));
+        self::assertSame(7, $repository->count(new BrokenLinkQuery([1], permissions: $permissions, onlyBroken: true)));
     }
 
     private function createPermissions(): ?ReportPermissions
@@ -132,7 +138,7 @@ final class ReportPermissionsTest extends FunctionalTestCase
      */
     private function findVisible(): array
     {
-        $rows = $this->get(BrokenLinkRepository::class)->findByPids(self::PAGE_IDS, new ReportFilter(), new ReportOrdering(), 0, 0, $this->createPermissions());
+        $rows = $this->get(BrokenLinkRepository::class)->find(new BrokenLinkQuery(self::PAGE_IDS, permissions: $this->createPermissions()));
         $result = [];
         foreach ($rows as $row) {
             $key = $row['table_name'] . ':' . $row['record_uid'] . ':' . $row['field'];

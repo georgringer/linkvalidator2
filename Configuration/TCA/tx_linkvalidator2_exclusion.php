@@ -1,6 +1,6 @@
 <?php
 
-use GeorgRinger\Linkvalidator2\Exclusion\ExclusionLabel;
+use GeorgRinger\Linkvalidator2\Backend\ExclusionLabel;
 
 return [
     'ctrl' => [

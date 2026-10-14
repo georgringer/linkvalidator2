@@ -75,9 +75,3 @@ It is tagged automatically. The field :php:`type` of the table
 :php:`tx_linkvalidator2_exclusion` needs the new item and a TCA type with the
 fields of the exclusion. The scope (page and subpages) is handled for every
 type.
-
-A matcher can additionally implement
-:php:`PrefilterableExclusionMatcherInterface` and name a text that the link
-string of every link it matches contains. The database narrows the stored
-results down with it before the matcher decides. Without it, all results of
-the page tree are looked at.

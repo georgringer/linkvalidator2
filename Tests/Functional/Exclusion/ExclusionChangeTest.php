@@ -71,8 +71,6 @@ final class ExclusionChangeTest extends FunctionalTestCase
         $this->process([self::EXCLUSION_TABLE => ['NEW1' => ['pid' => 2, 'type' => 'page', 'target_page' => 3]]]);
 
         $status = $this->getStatus(15);
-        // The hidden page 3 was the only broken link, the notice for page 11 stays
-        self::assertSame(0, (int)$status['broken_count']);
         self::assertSame(1, (int)$status['excluded_count']);
         self::assertSame(12345, (int)$status['last_checked'], 'The record is not checked again');
     }
@@ -173,7 +171,7 @@ final class ExclusionChangeTest extends FunctionalTestCase
     private function getStatus(int $contentUid): array
     {
         return $this->getConnectionPool()->getConnectionForTable('tx_linkvalidator2_record_status')
-            ->select(['broken_count', 'excluded_count', 'last_checked'], 'tx_linkvalidator2_record_status', ['table_name' => 'tt_content', 'record_uid' => $contentUid])
+            ->select(['excluded_count', 'last_checked'], 'tx_linkvalidator2_record_status', ['table_name' => 'tt_content', 'record_uid' => $contentUid])
             ->fetchAssociative();
     }
 
@@ -185,6 +183,7 @@ final class ExclusionChangeTest extends FunctionalTestCase
             'identifier' => 'url:' . explode('#', $url)[0],
             'identifier_hash' => sha1($hash),
             'status' => 'broken',
+            'error_type' => 'url.notFound',
         ]);
         $this->getConnectionPool()->getConnectionForTable('tx_linkvalidator2_broken_link')->insert('tx_linkvalidator2_broken_link', [
             'target' => (int)$targets->lastInsertId(),
@@ -193,8 +192,6 @@ final class ExclusionChangeTest extends FunctionalTestCase
             'field' => 'bodytext',
             'pid' => 1,
             'link_string' => $url,
-            'status' => 'broken',
-            'error_type' => 'url.notFound',
         ]);
     }
 

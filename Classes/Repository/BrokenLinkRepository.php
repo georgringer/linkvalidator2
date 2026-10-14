@@ -19,9 +19,7 @@ namespace GeorgRinger\Linkvalidator2\Repository;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
-use GeorgRinger\Linkvalidator2\Check\CheckResult;
 use GeorgRinger\Linkvalidator2\Extraction\LinkCandidate;
-use GeorgRinger\Linkvalidator2\Report\ReportFilter;
 use GeorgRinger\Linkvalidator2\Report\ReportOrdering;
 use GeorgRinger\Linkvalidator2\Report\ReportPermissions;
 
@@ -36,7 +34,7 @@ final readonly class BrokenLinkRepository
     ) {}
 
     /**
-     * @param list<array{candidate: LinkCandidate, targetUid: int, result: CheckResult}> $brokenLinks
+     * @param list<array{candidate: LinkCandidate, targetUid: int}> $brokenLinks
      */
     public function replaceForRecord(string $table, int $recordUid, array $brokenLinks, int $now): void
     {
@@ -47,7 +45,7 @@ final readonly class BrokenLinkRepository
             $firstDetected[$row['field'] . '|' . $row['target']] = (int)$row['first_detected'];
         }
         $connection->delete(self::TABLE, ['table_name' => $table, 'record_uid' => $recordUid]);
-        foreach ($brokenLinks as ['candidate' => $candidate, 'targetUid' => $targetUid, 'result' => $result]) {
+        foreach ($brokenLinks as ['candidate' => $candidate, 'targetUid' => $targetUid]) {
             $connection->insert(self::TABLE, [
                 'target' => $targetUid,
                 'table_name' => $table,
@@ -58,9 +56,6 @@ final readonly class BrokenLinkRepository
                 'workspace' => 0,
                 'link_string' => $candidate->link,
                 'link_text' => $candidate->linkText,
-                'status' => $result->status->value,
-                'error_type' => $result->errorType,
-                'error_details' => json_encode($result->details, JSON_THROW_ON_ERROR),
                 'first_detected' => $firstDetected[$candidate->field . '|' . $targetUid] ?? $now,
                 'last_seen' => $now,
             ]);
@@ -68,23 +63,16 @@ final readonly class BrokenLinkRepository
     }
 
     /**
-     * @param list<int> $pids
-     * @return list<array<string, mixed>> rows of the broken link table plus "link_type" of the target
+     * @return list<array<string, mixed>> rows of the broken link table plus "link_type", "identifier", "status", "error_type" and "error_details" of the target
      */
-    public function findByPids(
-        array $pids,
-        ReportFilter $filter = new ReportFilter(),
-        ReportOrdering $ordering = new ReportOrdering(),
-        int $limit = 0,
-        int $offset = 0,
-        ?ReportPermissions $permissions = null,
-    ): array {
-        if ($pids === []) {
+    public function find(BrokenLinkQuery $query, ReportOrdering $ordering = new ReportOrdering(), int $limit = 0, int $offset = 0): array
+    {
+        if ($query->pids === []) {
             return [];
         }
-        $queryBuilder = $this->createFilteredQueryBuilder($pids, $filter, $permissions)->select('b.*', 't.link_type', 't.identifier');
+        $queryBuilder = $this->createQueryBuilder($query)->select('b.*', 't.link_type', 't.identifier', 't.status', 't.error_type', 't.error_details');
         foreach ($ordering->getColumns() as $column) {
-            $queryBuilder->addOrderBy('b.' . $column, $ordering->getDirection());
+            $queryBuilder->addOrderBy($column, $ordering->getDirection());
         }
         // Stable order within equal values, so pagination does not skip or repeat rows
         foreach (['pid', 'table_name', 'record_uid', 'field', 'uid'] as $column) {
@@ -96,123 +84,81 @@ final readonly class BrokenLinkRepository
         return $queryBuilder->executeQuery()->fetchAllAssociative();
     }
 
-    /**
-     * @param list<int> $pids
-     */
-    public function countByPids(array $pids, ReportFilter $filter = new ReportFilter(), ?ReportPermissions $permissions = null): int
+    public function count(BrokenLinkQuery $query): int
     {
-        if ($pids === []) {
+        if ($query->pids === []) {
             return 0;
         }
-        return (int)$this->createFilteredQueryBuilder($pids, $filter, $permissions)
+        return (int)$this->createQueryBuilder($query)
             ->count('b.uid')
             ->executeQuery()
             ->fetchOne();
     }
 
     /**
-     * Number of broken links (not notices) per type of link
-     *
-     * @param list<int> $pids
-     * @return array<string, int> By link type, only types with broken links
+     * @return array<string|int, int> Number of results by value, only values with results. The language is an integer.
      */
-    public function countBrokenGroupedByLinkType(array $pids, ?ReportPermissions $permissions = null): array
+    public function countGroupedBy(BrokenLinkQuery $query, BrokenLinkGroup $group): array
     {
+        if ($query->pids === []) {
+            return [];
+        }
+        $column = $group->getColumn();
+        $rows = $this->createQueryBuilder($query)
+            ->select($column . ' AS value')
+            ->addSelectLiteral('COUNT(b.uid) AS amount')
+            ->groupBy($column)
+            ->orderBy($column)
+            ->executeQuery()
+            ->fetchAllAssociative();
         $counts = [];
-        foreach (array_chunk($pids, 1000) as $chunk) {
-            $queryBuilder = $this->createQueryBuilderForPids($chunk, $permissions);
-            $rows = $queryBuilder
-                ->select('t.link_type')
-                ->addSelectLiteral('COUNT(b.uid) AS amount')
-                ->andWhere($queryBuilder->expr()->in('b.status', $queryBuilder->createNamedParameter(self::BROKEN_STATUSES, Connection::PARAM_STR_ARRAY)))
-                ->groupBy('t.link_type')
-                ->executeQuery()
-                ->fetchAllAssociative();
-            foreach ($rows as $row) {
-                $type = (string)$row['link_type'];
-                $counts[$type] = ($counts[$type] ?? 0) + (int)$row['amount'];
-            }
+        foreach ($rows as $row) {
+            $counts[$group === BrokenLinkGroup::Language ? (int)$row['value'] : (string)$row['value']] = (int)$row['amount'];
         }
         return $counts;
     }
 
-    /**
-     * Values present among the broken links of the given pages with their number of results, to offer
-     * only filter options with results. Not narrowed by the other filters.
-     *
-     * @param list<int> $pids
-     * @return array{status: array<string, int>, linkType: array<string, int>, table: array<string, int>, language: array<int, int>}
-     */
-    public function findFilterValues(array $pids, ?ReportPermissions $permissions = null): array
-    {
-        $values = ['status' => [], 'linkType' => [], 'table' => [], 'language' => []];
-        if ($pids === []) {
-            return $values;
-        }
-        $columns = ['status' => 'b.status', 'linkType' => 't.link_type', 'table' => 'b.table_name', 'language' => 'b.language'];
-        foreach ($columns as $key => $column) {
-            $rows = $this->createQueryBuilderForPids($pids, $permissions)
-                ->select($column . ' AS value')
-                ->addSelectLiteral('COUNT(b.uid) AS amount')
-                ->groupBy($column)
-                ->orderBy($column)
-                ->executeQuery()
-                ->fetchAllAssociative();
-            foreach ($rows as $row) {
-                $values[$key][$key === 'language' ? (int)$row['value'] : (string)$row['value']] = (int)$row['amount'];
-            }
-        }
-        return $values;
-    }
-
-    /**
-     * @param list<int> $pids
-     */
-    private function createFilteredQueryBuilder(array $pids, ReportFilter $filter, ?ReportPermissions $permissions): QueryBuilder
-    {
-        $queryBuilder = $this->createQueryBuilderForPids($pids, $permissions);
-        if ($filter->status !== '') {
-            $queryBuilder->andWhere($queryBuilder->expr()->eq('b.status', $queryBuilder->createNamedParameter($filter->status)));
-        }
-        if ($filter->linkType !== '') {
-            $queryBuilder->andWhere($queryBuilder->expr()->eq('t.link_type', $queryBuilder->createNamedParameter($filter->linkType)));
-        }
-        if ($filter->table !== '') {
-            $queryBuilder->andWhere($queryBuilder->expr()->eq('b.table_name', $queryBuilder->createNamedParameter($filter->table)));
-        }
-        if ($filter->language !== null) {
-            $queryBuilder->andWhere($queryBuilder->expr()->eq('b.language', $queryBuilder->createNamedParameter($filter->language, Connection::PARAM_INT)));
-        }
-        if ($filter->search !== '') {
-            $like = $queryBuilder->createNamedParameter('%' . $queryBuilder->escapeLikeWildcards($filter->search) . '%');
-            $queryBuilder->andWhere($queryBuilder->expr()->or(
-                $queryBuilder->expr()->like('b.link_string', $like),
-                $queryBuilder->expr()->like('b.link_text', $like),
-            ));
-        }
-        return $queryBuilder;
-    }
-
-    /**
-     * @param list<int> $pids
-     */
-    /**
-     * @param list<int> $pids
-     */
-    private function createQueryBuilderForPids(array $pids, ?ReportPermissions $permissions = null): QueryBuilder
+    private function createQueryBuilder(BrokenLinkQuery $query): QueryBuilder
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+        $expr = $queryBuilder->expr();
         $queryBuilder
             ->from(self::TABLE, 'b')
-            ->leftJoin('b', TargetRepository::TABLE, 't', $queryBuilder->expr()->eq('t.uid', $queryBuilder->quoteIdentifier('b.target')))
+            ->leftJoin('b', TargetRepository::TABLE, 't', $expr->eq('t.uid', $queryBuilder->quoteIdentifier('b.target')))
             ->where(
                 // The integers are part of the SQL, not placeholders: a database allows about 65,000 of them in
                 // a statement, and a report over a large page tree has more pages than that
-                $queryBuilder->expr()->in('b.pid', array_map(intval(...), $pids)),
-                $queryBuilder->expr()->eq('b.workspace', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT))
+                $expr->in('b.pid', array_map(intval(...), $query->pids)),
+                $expr->eq('b.workspace', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT))
             );
-        if ($permissions !== null) {
-            $this->applyPermissions($queryBuilder, $permissions);
+        if ($query->permissions !== null) {
+            $this->applyPermissions($queryBuilder, $query->permissions);
+        }
+        if ($query->onlyBroken) {
+            $queryBuilder->andWhere($expr->in('t.status', $queryBuilder->createNamedParameter(self::BROKEN_STATUSES, Connection::PARAM_STR_ARRAY)));
+        }
+        if ($query->detectedSince !== null) {
+            $queryBuilder->andWhere($expr->gte('b.first_detected', $queryBuilder->createNamedParameter($query->detectedSince, Connection::PARAM_INT)));
+        }
+        $filter = $query->filter;
+        if ($filter->status !== '') {
+            $queryBuilder->andWhere($expr->eq('t.status', $queryBuilder->createNamedParameter($filter->status)));
+        }
+        if ($filter->linkType !== '') {
+            $queryBuilder->andWhere($expr->eq('t.link_type', $queryBuilder->createNamedParameter($filter->linkType)));
+        }
+        if ($filter->table !== '') {
+            $queryBuilder->andWhere($expr->eq('b.table_name', $queryBuilder->createNamedParameter($filter->table)));
+        }
+        if ($filter->language !== null) {
+            $queryBuilder->andWhere($expr->eq('b.language', $queryBuilder->createNamedParameter($filter->language, Connection::PARAM_INT)));
+        }
+        if ($filter->search !== '') {
+            $like = $queryBuilder->createNamedParameter('%' . $queryBuilder->escapeLikeWildcards($filter->search) . '%');
+            $queryBuilder->andWhere($expr->or(
+                $expr->like('b.link_string', $like),
+                $expr->like('b.link_text', $like),
+            ));
         }
         return $queryBuilder;
     }
@@ -261,27 +207,19 @@ final readonly class BrokenLinkRepository
     }
 
     /**
-     * Stored results below the pages whose link string contains the hint, for an exclusion to
-     * decide on. Without a hint all results of the pages.
+     * Stored results below the pages, for an exclusion to decide on.
      *
      * @param list<int>|null $pids null for all pages
      * @return list<array<string, mixed>>
      */
-    public function findForExclusion(?array $pids, ?string $hint): array
+    public function findForExclusion(?array $pids): array
     {
         $rows = [];
         foreach ($pids === null ? [null] : array_chunk($pids, 1000) as $chunk) {
             $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
-            $queryBuilder->select('uid', 'table_name', 'record_uid', 'field', 'pid', 'language', 'link_string', 'link_text', 'status')->from(self::TABLE);
+            $queryBuilder->select('uid', 'table_name', 'record_uid', 'field', 'pid', 'language', 'link_string', 'link_text')->from(self::TABLE);
             if ($chunk !== null) {
                 $queryBuilder->where($queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter($chunk, Connection::PARAM_INT_ARRAY)));
-            }
-            if ($hint !== null) {
-                $queryBuilder->andWhere($queryBuilder->expr()->comparison(
-                    'LOWER(' . $queryBuilder->quoteIdentifier('link_string') . ')',
-                    'LIKE',
-                    $queryBuilder->createNamedParameter('%' . $queryBuilder->escapeLikeWildcards(mb_strtolower($hint)) . '%')
-                ));
             }
             foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row) {
                 $rows[] = $row;
@@ -316,8 +254,8 @@ final readonly class BrokenLinkRepository
         if ($pid === false) {
             return null;
         }
-        $queryBuilder = $this->createQueryBuilderForPids([(int)$pid], $permissions);
-        $queryBuilder->select('b.*', 't.identifier');
+        $queryBuilder = $this->createQueryBuilder(new BrokenLinkQuery([(int)$pid], permissions: $permissions));
+        $queryBuilder->select('b.*', 't.identifier', 't.status', 't.error_type', 't.error_details');
         foreach ($identity as $column => $value) {
             $queryBuilder->andWhere($queryBuilder->expr()->eq('b.' . $column, $queryBuilder->createNamedParameter($value, is_int($value) ? Connection::PARAM_INT : Connection::PARAM_STR)));
         }
@@ -326,104 +264,18 @@ final readonly class BrokenLinkRepository
     }
 
     /**
-     * The result of a target changed: every stored result for it takes the new status. A target
-     * that is fine now has no results any more.
-     *
-     * @return array<string, array{table: string, uid: int, brokenDelta: int}> Records whose number of broken links changed, by "table:uid"
+     * A target that is fine now has no results any more. The status of the others is read from the
+     * target, so there is nothing to update.
      */
-    public function applyResultToTarget(int $targetUid, CheckResult $result): array
+    public function removeByTarget(int $targetUid): void
     {
-        $connection = $this->connectionPool->getConnectionForTable(self::TABLE);
-        $rows = $connection->select(['uid', 'table_name', 'record_uid', 'status'], self::TABLE, ['target' => $targetUid])->fetchAllAssociative();
-        $newCounts = in_array($result->status->value, self::BROKEN_STATUSES, true) ? 1 : 0;
-        $records = [];
-        foreach ($rows as $row) {
-            $delta = ($result->isOk() ? 0 : $newCounts) - (in_array($row['status'], self::BROKEN_STATUSES, true) ? 1 : 0);
-            if ($delta !== 0) {
-                $key = $row['table_name'] . ':' . $row['record_uid'];
-                $records[$key] ??= ['table' => (string)$row['table_name'], 'uid' => (int)$row['record_uid'], 'brokenDelta' => 0];
-                $records[$key]['brokenDelta'] += $delta;
-            }
-        }
-        if ($result->isOk()) {
-            $connection->delete(self::TABLE, ['target' => $targetUid]);
-        } else {
-            $connection->update(self::TABLE, [
-                'status' => $result->status->value,
-                'error_type' => $result->errorType,
-                'error_details' => json_encode($result->details, JSON_THROW_ON_ERROR),
-            ], ['target' => $targetUid]);
-        }
-        return $records;
+        $this->connectionPool->getConnectionForTable(self::TABLE)->delete(self::TABLE, ['target' => $targetUid]);
     }
 
     public function removeForRecord(string $table, int $recordUid): void
     {
         $this->connectionPool->getConnectionForTable(self::TABLE)
             ->delete(self::TABLE, ['table_name' => $table, 'record_uid' => $recordUid]);
-    }
-
-    public function countBrokenByPid(int $pid, ?ReportPermissions $permissions = null): int
-    {
-        $queryBuilder = $this->createQueryBuilderForPids([$pid], $permissions);
-        return (int)$queryBuilder
-            ->count('b.uid')
-            ->andWhere($queryBuilder->expr()->in('b.status', $queryBuilder->createNamedParameter(self::BROKEN_STATUSES, Connection::PARAM_STR_ARRAY)))
-            ->executeQuery()
-            ->fetchOne();
-    }
-
-    public function countDetectedSince(int $pid, int $since, ?ReportPermissions $permissions = null): int
-    {
-        $queryBuilder = $this->createQueryBuilderForPids([$pid], $permissions);
-        return (int)$queryBuilder
-            ->count('b.uid')
-            ->andWhere(
-                $queryBuilder->expr()->gte('b.first_detected', $queryBuilder->createNamedParameter($since, Connection::PARAM_INT)),
-                $queryBuilder->expr()->in('b.status', $queryBuilder->createNamedParameter(self::BROKEN_STATUSES, Connection::PARAM_STR_ARRAY))
-            )
-            ->executeQuery()
-            ->fetchOne();
-    }
-
-    /**
-     * @return list<array{table: string, uid: int}>
-     */
-    public function findRecordsByPid(int $pid): array
-    {
-        $rows = $this->connectionPool->getConnectionForTable(self::TABLE)
-            ->select(['table_name', 'record_uid'], self::TABLE, ['pid' => $pid])
-            ->fetchAllAssociative();
-        return array_map(static fn(array $row): array => ['table' => (string)$row['table_name'], 'uid' => (int)$row['record_uid']], $rows);
-    }
-
-    /**
-     * @param list<int>|null $pids null for all pages
-     * @return list<array{table: string, uid: int}>
-     */
-    public function findRecordsByPids(?array $pids): array
-    {
-        $records = [];
-        foreach ($pids === null ? [null] : array_chunk($pids, 1000) as $chunk) {
-            $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
-            $queryBuilder->select('table_name', 'record_uid')->from(self::TABLE)->groupBy('table_name', 'record_uid');
-            if ($chunk !== null) {
-                $queryBuilder->where($queryBuilder->expr()->in('pid', $queryBuilder->createNamedParameter($chunk, Connection::PARAM_INT_ARRAY)));
-            }
-            foreach ($queryBuilder->executeQuery()->fetchAllAssociative() as $row) {
-                $records[] = ['table' => (string)$row['table_name'], 'uid' => (int)$row['record_uid']];
-            }
-        }
-        return $records;
-    }
-
-    /**
-     * @return list<int>
-     */
-    public function findPids(): array
-    {
-        $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
-        return array_map(intval(...), $queryBuilder->select('pid')->from(self::TABLE)->groupBy('pid')->executeQuery()->fetchFirstColumn());
     }
 
     /**

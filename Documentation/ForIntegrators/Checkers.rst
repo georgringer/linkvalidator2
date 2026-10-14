@@ -86,10 +86,10 @@ link is neither checked nor reported.
 Caching
 =======
 
-A checker that implements :php:`CacheableLinkCheckerInterface` has its results
-stored per target and reused for the lifetime it returns. The first
-cacheable checker of a type decides the lifetime of the whole chain, the
-others do not have to implement anything.
+Results of external URLs (link type :php:`url`) are stored per target and
+reused for the time set in the extension configuration
+:confval:`externalCacheLifetime`, whichever checker produced them. Checks of
+other link types always run.
 
 Example: an external service
 ============================

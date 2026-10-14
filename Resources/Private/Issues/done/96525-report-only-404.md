@@ -26,3 +26,21 @@ Die Schwelle aus dem Kommentar ist als Folgeschritt geplant: unknown → broken 
 
 Zu klären: ob „unknown“ im Modul standardmäßig ausgeblendet sein soll (heute: Filter
 leer = alle Status). Spec sagt „unknown nicht in kaputt, eigener Filter“.
+
+## Mögliches Todo: Eskalation und Anzeige
+
+Die Spalten `failure_count` und `first_failed_at` bleiben, solange das hier offen ist. Sie
+werden von `TargetRepository::store` gepflegt (Reset bei „ok“, `first_failed_at` bleibt
+beim ersten Fehlschlag stehen), aber von nichts gelesen.
+
+- **Eskalation:** `unknown` wird zu `broken`, wenn `failure_count >= 3` und
+  `now - first_failed_at >= 7 Tage`. Die Regel gehört in den `RecordCheckService` nach dem
+  Check, nicht in den `ExternalUrlChecker`. Schwellen zunächst als Konstanten, später
+  eventuell Extension-Konfiguration. Test zuerst: dritter Fehlschlag nach 7 Tagen, zweiter
+  Fehlschlag, Reset durch ein „ok“.
+- **Anzeige im Report:** Bei Zeilen mit Status `unknown` ein Hinweis wie „seit 12 Tagen,
+  4 Prüfungen“. `BrokenLinkRepository::find` selektiert dafür beide Spalten aus `t` mit,
+  `ReportController` übernimmt sie in die Zeile, das Fluid-Template gibt sie aus, Label in
+  `messages.xlf`. Im Backend prüfen.
+- **Entscheidung:** Wird beides nicht gebraucht, die Spalten und den `@todo` im
+  `ExternalUrlChecker` entfernen.

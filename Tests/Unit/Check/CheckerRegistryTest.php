@@ -18,7 +18,6 @@ declare(strict_types=1);
 namespace GeorgRinger\Linkvalidator2\Tests\Unit\Check;
 
 use PHPUnit\Framework\Attributes\Test;
-use GeorgRinger\Linkvalidator2\Check\CacheableLinkCheckerInterface;
 use GeorgRinger\Linkvalidator2\Check\CheckerRegistry;
 use GeorgRinger\Linkvalidator2\Check\CheckResult;
 use GeorgRinger\Linkvalidator2\Check\CheckStatus;
@@ -102,20 +101,6 @@ final class CheckerRegistryTest extends UnitTestCase
         self::assertTrue($subject->hasChecker('url'));
     }
 
-    #[Test]
-    public function cacheLifetimeComesFromTheCacheableCheckerOfTheType(): void
-    {
-        $subject = new CheckerRegistry([
-            $this->createChecker(['url'], CheckResult::skip()),
-            $this->createCacheableChecker(['url'], 3600),
-            $this->createChecker(['page'], CheckResult::ok()),
-        ]);
-
-        self::assertSame(3600, $subject->getCacheLifetime('url'));
-        self::assertNull($subject->getCacheLifetime('page'));
-        self::assertNull($subject->getCacheLifetime('email'));
-    }
-
     private function createTarget(string $type): LinkTarget
     {
         return new LinkTarget($type, $type . ':1');
@@ -142,31 +127,6 @@ final class CheckerRegistryTest extends UnitTestCase
             public function check(LinkTarget $target, LinkCandidate $source): CheckResult
             {
                 return $this->result;
-            }
-        };
-    }
-
-    /**
-     * @param list<string> $types
-     */
-    private function createCacheableChecker(array $types, int $lifetime): CacheableLinkCheckerInterface
-    {
-        return new readonly class ($types, $lifetime) implements CacheableLinkCheckerInterface {
-            public function __construct(private array $types, private int $lifetime) {}
-
-            public function getSupportedTypes(): array
-            {
-                return $this->types;
-            }
-
-            public function getCacheLifetime(): int
-            {
-                return $this->lifetime;
-            }
-
-            public function check(LinkTarget $target, LinkCandidate $source): CheckResult
-            {
-                return CheckResult::ok();
             }
         };
     }

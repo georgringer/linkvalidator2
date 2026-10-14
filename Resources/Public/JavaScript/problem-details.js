@@ -23,6 +23,8 @@ import labels from '~labels/linkvalidator2.messages';
  */
 const rows = [
   ['target', 'details.target'],
+  ['redirectBy', 'details.redirectBy'],
+  ['redirectTarget', 'details.redirectTarget'],
   ['httpStatus', 'details.httpStatus'],
   ['errno', 'details.errno'],
   ['message', 'details.message'],

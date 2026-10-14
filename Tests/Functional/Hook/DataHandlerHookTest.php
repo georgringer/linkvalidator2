@@ -24,6 +24,7 @@ use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use GeorgRinger\Linkvalidator2\Service\RecordCheckService;
 use GeorgRinger\Linkvalidator2\Tests\Functional\SiteConfigurationTrait;
+use GeorgRinger\Linkvalidator2\Tests\Functional\BrokenLinkResultsTrait;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 /**
@@ -31,6 +32,8 @@ use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
  */
 final class DataHandlerHookTest extends FunctionalTestCase
 {
+    use BrokenLinkResultsTrait;
+
     use SiteConfigurationTrait;
 
     private const BROKEN_LINK_TABLE = 'tx_linkvalidator2_broken_link';
@@ -72,7 +75,6 @@ final class DataHandlerHookTest extends FunctionalTestCase
         $this->process(['tt_content' => [15 => ['bodytext' => '<p><a href="t3://page?uid=2">visible</a></p>']]]);
 
         self::assertSame([], $this->getErrorTypes(15));
-        self::assertSame(0, $this->getStatus(15)['broken_count']);
     }
 
     /**
@@ -211,9 +213,12 @@ final class DataHandlerHookTest extends FunctionalTestCase
      */
     private function getErrorTypes(int $uid): array
     {
-        $errorTypes = $this->getConnectionPool()->getConnectionForTable(self::BROKEN_LINK_TABLE)
-            ->select(['error_type'], self::BROKEN_LINK_TABLE, ['table_name' => 'tt_content', 'record_uid' => $uid, 'status' => 'broken'])
-            ->fetchFirstColumn();
+        $errorTypes = [];
+        foreach ($this->selectBrokenLinks(['t.error_type', 't.status'], ['table_name' => 'tt_content', 'record_uid' => $uid]) as $row) {
+            if ($row['status'] === 'broken') {
+                $errorTypes[] = $row['error_type'];
+            }
+        }
         sort($errorTypes);
         return $errorTypes;
     }
@@ -225,12 +230,12 @@ final class DataHandlerHookTest extends FunctionalTestCase
     }
 
     /**
-     * @return array{pid: int, broken_count: int, last_checked: int}|null
+     * @return array{pid: int, last_checked: int}|null
      */
     private function getStatus(int $uid): ?array
     {
         $row = $this->getConnectionPool()->getConnectionForTable(self::STATUS_TABLE)
-            ->select(['pid', 'broken_count', 'last_checked'], self::STATUS_TABLE, ['table_name' => 'tt_content', 'record_uid' => $uid])
+            ->select(['pid', 'last_checked'], self::STATUS_TABLE, ['table_name' => 'tt_content', 'record_uid' => $uid])
             ->fetchAssociative();
         return $row === false ? null : array_map(intval(...), $row);
     }

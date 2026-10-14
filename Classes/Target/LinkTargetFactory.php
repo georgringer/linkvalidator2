@@ -32,11 +32,14 @@ final readonly class LinkTargetFactory
     ) {}
 
     /**
-     * Returns null for links that are not checked: email, telephone,
+     * An empty link (href="") is invalid. Returns null for links that are not checked: email, telephone,
      * in-page anchors, unknown schemes and links from content to its own page.
      */
     public function create(LinkCandidate $candidate): ?LinkTarget
     {
+        if ($candidate->link === '') {
+            return LinkTarget::invalid('', 'The link has no target', 'link.empty');
+        }
         try {
             $resolved = $this->linkService->resolve($candidate->link);
         } catch (UnknownLinkHandlerException|UnknownUrnException|\InvalidArgumentException $e) {

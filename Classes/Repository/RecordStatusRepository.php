@@ -30,11 +30,11 @@ final readonly class RecordStatusRepository
     /**
      * @param int $excludedCount Links not checked because of exclusions
      */
-    public function markChecked(string $table, int $recordUid, int $pid, int $language, int $brokenCount, int $now, int $excludedCount = 0): void
+    public function markChecked(string $table, int $recordUid, int $pid, int $language, int $now, int $excludedCount = 0): void
     {
         $connection = $this->connectionPool->getConnectionForTable(self::TABLE);
         $identifier = ['table_name' => $table, 'record_uid' => $recordUid, 'workspace' => 0];
-        $data = ['pid' => $pid, 'language' => $language, 'last_checked' => $now, 'broken_count' => $brokenCount, 'excluded_count' => $excludedCount];
+        $data = ['pid' => $pid, 'language' => $language, 'last_checked' => $now, 'excluded_count' => $excludedCount];
         if ($connection->count('uid', self::TABLE, $identifier) > 0) {
             $connection->update(self::TABLE, $data, $identifier);
             return;
@@ -43,30 +43,21 @@ final readonly class RecordStatusRepository
     }
 
     /**
-     * Results of the record were removed because of an exclusion: they are no broken links any
-     * more and count as excluded. Links that were fine have no result, they are counted by the
-     * next check of the record.
+     * Results of the record were removed because of an exclusion: they count as excluded. Links
+     * that were fine have no result, they are counted by the next check of the record.
      */
-    public function markExcluded(string $table, int $recordUid, int $removedBroken, int $removedTotal): void
+    public function markExcluded(string $table, int $recordUid, int $removedCount): void
     {
-        $connection = $this->connectionPool->getConnectionForTable(self::TABLE);
-        $row = $connection->select(['broken_count', 'excluded_count'], self::TABLE, ['table_name' => $table, 'record_uid' => $recordUid, 'workspace' => 0])->fetchAssociative();
-        if ($row === false) {
-            return;
-        }
-        $connection->update(self::TABLE, [
-            'broken_count' => max(0, (int)$row['broken_count'] - $removedBroken),
-            'excluded_count' => (int)$row['excluded_count'] + $removedTotal,
-        ], ['table_name' => $table, 'record_uid' => $recordUid, 'workspace' => 0]);
-    }
-
-    public function adjustBrokenCount(string $table, int $recordUid, int $delta): void
-    {
-        $connection = $this->connectionPool->getConnectionForTable(self::TABLE);
-        $count = $connection->select(['broken_count'], self::TABLE, ['table_name' => $table, 'record_uid' => $recordUid, 'workspace' => 0])->fetchOne();
-        if ($count !== false) {
-            $connection->update(self::TABLE, ['broken_count' => max(0, (int)$count + $delta)], ['table_name' => $table, 'record_uid' => $recordUid, 'workspace' => 0]);
-        }
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+        $queryBuilder
+            ->update(self::TABLE)
+            ->set('excluded_count', $queryBuilder->quoteIdentifier('excluded_count') . ' + ' . $removedCount, false)
+            ->where(
+                $queryBuilder->expr()->eq('table_name', $queryBuilder->createNamedParameter($table)),
+                $queryBuilder->expr()->eq('record_uid', $queryBuilder->createNamedParameter($recordUid, Connection::PARAM_INT)),
+                $queryBuilder->expr()->eq('workspace', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT))
+            )
+            ->executeStatement();
     }
 
     public function remove(string $table, int $recordUid): void
@@ -136,17 +127,6 @@ final readonly class RecordStatusRepository
             }
         }
         return $due;
-    }
-
-    /**
-     * @return list<array{table: string, uid: int}>
-     */
-    public function findRecordsByPid(int $pid): array
-    {
-        $rows = $this->connectionPool->getConnectionForTable(self::TABLE)
-            ->select(['table_name', 'record_uid'], self::TABLE, ['pid' => $pid])
-            ->fetchAllAssociative();
-        return array_map(static fn(array $row): array => ['table' => (string)$row['table_name'], 'uid' => (int)$row['record_uid']], $rows);
     }
 
     /**

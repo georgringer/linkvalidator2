@@ -18,6 +18,7 @@ namespace GeorgRinger\Linkvalidator2\Service;
 
 use GeorgRinger\Linkvalidator2\Check\CheckStatus;
 use GeorgRinger\Linkvalidator2\Report\ReportFilter;
+use GeorgRinger\Linkvalidator2\Repository\BrokenLinkQuery;
 use GeorgRinger\Linkvalidator2\Repository\BrokenLinkRepository;
 use GeorgRinger\Linkvalidator2\Repository\RecordStatusRepository;
 
@@ -63,9 +64,9 @@ final readonly class PageCheckService
             $done,
             count($records),
             $checkedCount,
-            $this->brokenLinkRepository->countBrokenByPid($pageUid),
-            $this->brokenLinkRepository->countDetectedSince($pageUid, $runStartedAt),
-            $this->brokenLinkRepository->countByPids([$pageUid], new ReportFilter(CheckStatus::Info->value)),
+            $this->brokenLinkRepository->count(new BrokenLinkQuery([$pageUid], onlyBroken: true)),
+            $this->brokenLinkRepository->count(new BrokenLinkQuery([$pageUid], onlyBroken: true, detectedSince: $runStartedAt)),
+            $this->brokenLinkRepository->count(new BrokenLinkQuery([$pageUid], new ReportFilter(CheckStatus::Info->value))),
         );
     }
 }

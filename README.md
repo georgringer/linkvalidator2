@@ -14,10 +14,16 @@ Status: **work in progress**. Design decisions and the implementation plan live 
   from the TCA schema of the record type – nothing to configure per extension.
 - Resolves every link with the core `LinkService` and checks it with a checker per link
   type (page, record, file, folder, external URL).
-- Stores only broken links, plus a check status per record. The status table doubles as
+- Stores the result once per link target (`target`), the places that link to it
+  (`broken_link`, only for problems), and a check status per record. The status table doubles as
   the work queue: never checked records first, then the least recently checked ones.
 - Shows the result in a backend module below *Link Management* and marks broken links
   in the rich text editor.
+
+## How it works
+
+How a check is started, what `checkRecord` does with a record, the chain of checkers and the
+tables (German, with an example): [flow diagrams](https://claude.ai/artifact/VSeBbLmu9wByDuNBZ4WvDs).
 
 ## Usage
 
@@ -91,7 +97,7 @@ solved ones in `done/`.
 | Shortcut / link page whose target is not reachable | ❌ | ❓ | ✅ `page.targetNotReachable` (frontend resolution) | | #92542 |
 | Page hidden / expired via a parent with `extendToSubpages` | ❌ | ❓ | ✅ decided by the frontend's page resolution (`PageInformationFactory`, without rendering) | | #106675, #101367 |
 | Restricted or scheduled target (fe_group, start time, future stop time, also via parent) | ❌ | ❓ | ✅ reported as notice, not as broken; listed with a badge, status filter | | #106675 |
-| Status "notice" for reachable targets with restrictions | ❌ | ❓ | ✅ own status next to broken / cannot be checked, not counted as broken | 📋 more notices (redirects, language fallback) | |
+| Status "notice" for reachable targets with restrictions | ❌ | ❓ | ✅ own status next to broken / cannot be checked, not counted as broken | 📋 more notices (language fallback) | |
 | Page expired (endtime) | ❌ | ❌ | ✅ | | |
 | Page without frontend (folder, spacer) | ❌ | ❌ | ✅ | | |
 | Content anchor `#c123` | ✅ assumes `#c<uid>` is a content element | ✅ | ❌ by decision: the target page is checked, the fragment ignored – an anchor can be any id (template, plugin, JS); register an own `page` checker to check the rendered HTML | | #100933 |
@@ -99,12 +105,13 @@ solved ones in `done/`.
 | Target not available in the language of the source | ❌ | ❌ | ❌ | 📋 step 7 (site fallback chain) | |
 | Record links (`t3://record`) | ✅ | ✅ | ✅ missing / hidden / expired, table via `TCEMAIN.linkHandler` (fallback: identifier = table) | | |
 | Files / folders | ✅ files | ✅ files | ✅ files and folders, offline storage = unknown | | |
+| Empty link (`<a href="">`, e.g. from the RTE for a missing file) | ❌ | ❓ | ✅ reported once per field as broken `link.empty`; anchors without `href` are ignored | | |
 | Unresolvable `t3://` links | 🟡 | 🟡 | ✅ reported as invalid | | |
 | **Checking external URLs** | | | | | |
 | External checking | 🟡 off by default | ✅ | ✅ CLI and module; each URL requested once per run | | |
 | Cache across runs | ❌ only within one run | ✅ link target cache with expiry | ✅ per target, configurable lifetime (default 7 days), cache-only mode, checkbox "Request external URLs again" in the module to ignore it for one check | | #92700 |
-| HEAD with GET fallback, redirects | ✅ | ✅ | ✅ GET on 405/501, max. 5 redirects | | |
-| 401/403/429/5xx/999/TLS/timeouts as "unknown" instead of broken | ❌ | ❌ | ✅ broken only 404, 410, unknown host; status filter; cURL error from Guzzle 7 and 8; timeout message names the seconds | 📋 escalation after 3 checks / 7 days | #96525, #85006 |
+| HEAD with GET fallback, redirects | ✅ | ✅ | ✅ GET on 405/501, max. 5 redirects; a hop sent by a TYPO3 redirect (header `X-Redirect-By`) is reported as notice `url.redirectedByTypo3` if the end is reachable; redirect and its target are shown in the details, also when the end is broken | | |
+| 401/403/429/5xx/999/TLS/timeouts as "unknown" instead of broken | ❌ | ❌ | ✅ broken only 404, 410, unknown host; status filter; cURL error from Guzzle 7 and 8; timeout message names the seconds | 📋 escalation after 3 checks / 7 days, optionally show "since n days" in the report (columns `failure_count`/`first_failed_at` are already kept) | #96525, #85006 |
 | Full error message (e.g. cURL TLS details) | 🟡 one localised text per cURL code | ❓ | ✅ short localised text, the cURL message in a "Details" modal (target, HTTP status, error code, message), `errno` stored; `details.message` shown for every checker | | #101935 |
 | Polite crawling: own User-Agent | ✅ configurable | ✅ | ✅ `externalUserAgent` | | #89287 |
 | Polite crawling: crawl delay per domain, `Retry-After` | ❌ | ✅ crawl delay | ❌ | 📋 later | #89287 |
