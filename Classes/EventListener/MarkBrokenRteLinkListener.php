@@ -20,13 +20,12 @@ use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Attribute\AsEventListener;
 use TYPO3\CMS\Core\Html\Event\BrokenLinkAnalysisEvent;
-use TYPO3\CMS\Core\Localization\LanguageService;
-use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
 use TYPO3\CMS\Core\LinkHandling\LinkService;
 use GeorgRinger\Linkvalidator2\Check\CheckerRegistry;
 use GeorgRinger\Linkvalidator2\Check\CheckResult;
 use GeorgRinger\Linkvalidator2\Check\CheckStatus;
 use GeorgRinger\Linkvalidator2\Extraction\LinkCandidate;
+use GeorgRinger\Linkvalidator2\Report\ErrorMessageFormatter;
 use GeorgRinger\Linkvalidator2\Repository\TargetRepository;
 use GeorgRinger\Linkvalidator2\Target\LinkTargetFactory;
 
@@ -43,7 +42,7 @@ final readonly class MarkBrokenRteLinkListener
         private LinkTargetFactory $linkTargetFactory,
         private CheckerRegistry $checkerRegistry,
         private TargetRepository $targetRepository,
-        private LanguageServiceFactory $languageServiceFactory,
+        private ErrorMessageFormatter $errorMessageFormatter,
     ) {}
 
     #[AsEventListener('linkvalidator2/rte-check-link', before: 'rte-check-link-external,rte-check-link-to-page,rte-check-link-to-file')]
@@ -67,7 +66,7 @@ final readonly class MarkBrokenRteLinkListener
         $event->markAsCheckedLink();
         // Without the right Page TSconfig the identifier is taken as table: not reliable
         if ($result?->status === CheckStatus::Broken && $result->errorType !== 'record.unknownTable') {
-            $event->markAsBrokenLink($this->getReason($result));
+            $event->markAsBrokenLink($this->errorMessageFormatter->format($result->errorType, $result->details));
         }
     }
 
@@ -96,16 +95,5 @@ final readonly class MarkBrokenRteLinkListener
             }
         }
         return 0;
-    }
-
-    private function getReason(CheckResult $result): string
-    {
-        $label = $this->getLanguageService()->sL('linkvalidator2.messages:error.' . $result->errorType);
-        return $label !== '' ? $label : $result->errorType;
-    }
-
-    private function getLanguageService(): LanguageService
-    {
-        return $GLOBALS['LANG'] ?? $this->languageServiceFactory->create('default');
     }
 }

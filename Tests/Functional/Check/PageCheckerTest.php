@@ -92,6 +92,15 @@ final class PageCheckerTest extends FunctionalTestCase
         self::assertInstanceOf(UserAspect::class, $userAspect);
     }
 
+    #[Test]
+    public function developmentIpMaskDoesNotMakeReachablePagesBroken(): void
+    {
+        $GLOBALS['TYPO3_CONF_VARS']['SYS']['devIPmask'] = '*';
+        self::assertTrue($this->check(2)->isOk());
+        self::assertSame('page.hidden', $this->check(3)->errorType);
+        self::assertSame('*', $GLOBALS['TYPO3_CONF_VARS']['SYS']['devIPmask'], 'devIPmask is restored');
+    }
+
     private function check(int $pageUid): CheckResult
     {
         return $this->get(PageChecker::class)->check(

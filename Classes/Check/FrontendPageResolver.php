@@ -36,7 +36,8 @@ use TYPO3\CMS\Frontend\Page\PageInformationFactory;
  * are decided exactly as for a request. Results are kept for the current process.
  *
  * The resolution is done as an anonymous visitor regardless of a logged-in backend user, and
- * without the error handling of the site, which might fetch an error page for every failure.
+ * without the error handling of the site, which might fetch an error page for every failure,
+ * and independent of the devIPmask.
  */
 final class FrontendPageResolver
 {
@@ -93,12 +94,17 @@ final class FrontendPageResolver
         }
         $this->context->setAspect('backend.user', new UserAspect());
         $this->context->setAspect('visibility', new VisibilityAspect());
+        // With a matching devIPmask the error controller throws instead of returning a response,
+        // which hides the codes the failures are told apart by
+        $devIpMask = $GLOBALS['TYPO3_CONF_VARS']['SYS']['devIPmask'] ?? null;
+        $GLOBALS['TYPO3_CONF_VARS']['SYS']['devIPmask'] = '';
         try {
             $this->pageInformationFactory->create($request);
             return null;
         } catch (PageInformationCreationFailedException|StatusException $e) {
             return in_array((int)$e->getCode(), self::SETUP_FAILURE_CODES, true) ? null : (int)$e->getCode();
         } finally {
+            $GLOBALS['TYPO3_CONF_VARS']['SYS']['devIPmask'] = $devIpMask;
             foreach ($aspects as $name => $aspect) {
                 if ($aspect !== null) {
                     $this->context->setAspect($name, $aspect);

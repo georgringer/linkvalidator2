@@ -41,6 +41,7 @@ use TYPO3\CMS\Core\Utility\MathUtility;
 use GeorgRinger\Linkvalidator2\Configuration\ExtensionSettings;
 use GeorgRinger\Linkvalidator2\Exclusion\ExclusionPermissions;
 use GeorgRinger\Linkvalidator2\Report\LanguageIconProvider;
+use GeorgRinger\Linkvalidator2\Report\ErrorMessageFormatter;
 use GeorgRinger\Linkvalidator2\Report\ReportFilter;
 use GeorgRinger\Linkvalidator2\Report\ReportOrdering;
 use GeorgRinger\Linkvalidator2\Report\ReportPermissions;
@@ -73,6 +74,7 @@ final readonly class ReportController
         private TcaSchemaFactory $tcaSchemaFactory,
         private SiteFinder $siteFinder,
         private RecordStatusRepository $recordStatusRepository,
+        private ErrorMessageFormatter $errorMessageFormatter,
         private ExtensionSettings $extensionSettings,
         private LanguageIconProvider $languageIconProvider,
         private ExclusionPermissions $exclusionPermissions,
@@ -188,32 +190,6 @@ final readonly class ReportController
     }
 
     /**
-     * Arguments of the error labels: 1. HTTP status, code, date or parent page title, 2. a hint that a
-     * notice comes from a parent page.
-     *
-     * @param array<int, string> $pageTitles
-     * @return array{0: string, 1: string}
-     */
-    private function getMessageArguments(string $errorType, array $details, array &$pageTitles): array
-    {
-        $parentTitle = '';
-        if (isset($details['parentPage'])) {
-            $parentPage = (int)$details['parentPage'];
-            $parentTitle = $pageTitles[$parentPage] ??= BackendUtility::getRecordTitle('pages', BackendUtility::getRecord('pages', $parentPage) ?? ['uid' => $parentPage]);
-        }
-        $first = match ($errorType) {
-            'page.hiddenByParent', 'page.expiredByParent' => $parentTitle,
-            'page.notYetVisible' => date('d.m.Y H:i', (int)($details['starttime'] ?? 0)),
-            'page.visibleUntil' => date('d.m.Y H:i', (int)($details['endtime'] ?? 0)),
-            default => (string)($details['httpStatus'] ?? $details['code'] ?? $details['seconds'] ?? ''),
-        };
-        $byParent = $parentTitle !== '' && in_array($errorType, ['page.accessRestricted', 'page.notYetVisible', 'page.visibleUntil'], true)
-            ? sprintf($this->getLanguageService()->sL('linkvalidator2.messages:error.byParentPage'), $parentTitle)
-            : '';
-        return [$first, $byParent];
-    }
-
-    /**
      * @return array<int, string>
      */
     private function getDepthOptions(): array
@@ -293,7 +269,7 @@ final readonly class ReportController
             $row['languageIcon'] = $this->languageIconProvider->describe($pid, (int)$row['language'])['icon'] ?? '';
             $row['details'] = (array)json_decode((string)$row['error_details'], true);
             $row['detailsJson'] = json_encode($row['details'] + ['target' => (string)$row['link_string']], JSON_THROW_ON_ERROR);
-            $row['messageArguments'] = $this->getMessageArguments((string)$row['error_type'], $row['details'], $pageTitles);
+            $row['messageArguments'] = $this->errorMessageFormatter->getArguments((string)$row['error_type'], $row['details'], $pageTitles);
             $row['targetUrl'] = $this->getTargetUrl((string)$row['link_string'], (int)$row['language']);
             $row['statusClass'] = match ((string)$row['status']) {
                 'info' => 'badge-info',
