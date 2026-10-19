@@ -35,6 +35,8 @@ bin/typo3 linkvalidator2:check --page=1287 --depth=99
 # message queue: queue a page tree, a worker checks it (several workers may run in parallel)
 bin/typo3 linkvalidator2:fillqueue 1287
 bin/typo3 messenger:consume linkvalidator2_priority doctrine --time-limit=240
+# mail the broken links of an area, here only those broken for a week already, with all of them as CSV
+bin/typo3 linkvalidator2:report 1287 --depth=99 --to=editor@example.org --min-age="7 days" --content=both
 ```
 
 `fillqueue` walks the page tree below the page, level by level, and queues the records of every
@@ -157,9 +159,9 @@ solved ones in `done/`.
 | Markers in the rich text editor | 🟡 page missing/hidden, file, known external | 🟡 similar | ✅ same checkers as the report, external from cache; page of the edited record from the form request (Page TSconfig `TCEMAIN.linkHandler`), record links to an unknown table never marked | | |
 | Page module callout | ❌ | ✅ with EXT:page_callouts | ❌ | 📋 later | |
 | **Reporting** | | | | | |
-| E-mail report | ✅ full list after each run | ✅ | ❌ | 📋 later: changes since last report, per site, the result attached as CSV | |
-| Site name in the mail, links to edit / to the module | ❌ no absolute backend URLs in CLI | ❓ | ❌ | 📋 with the mail report: per site, base URL from site / settings | #106487, #106677 |
-| Full, clickable target URL in the mail | ❌ cropped to 15 characters | ❓ | ❌ | 📋 with the mail report | #106677 |
+| E-mail report | ✅ full list after each run | ✅ | ✅ `linkvalidator2:report <page>` (via "Execute console commands", one entry per area and recipient): a page with `--depth`, filtered like the module (`--status` broken by default, `--link-type`, `--language`, `--search`, `--include-tables` / `--exclude-tables`) and by the time a link is broken (`--min-age` for a reminder, `--max-age` for the new ones); `--content=inline\|attach\|both` lists the oldest links in the text (`--inline-limit`, 50) and/or attaches all of them with every column as CSV; no mail without links unless `--send-empty`; no state is kept, so a link can be in several mails; the tables lists do not replace permissions | 📋 "changes since last report" (needs a state) | #106487 |
+| Site name in the mail, links to edit / to the module | ❌ no absolute backend URLs in CLI | ❓ | ✅ subject "Broken links: <page title>" or `--subject`; absolute links to edit the record and to the module, from the site of the page and a `BE/entryPoint` given as URL (`--base-url` for pages without a site) | | #106487, #106677 |
+| Full, clickable target URL in the mail | ❌ cropped to 15 characters | ❓ | ✅ complete and linked in the HTML part, complete in the text part and the CSV | | #106677 |
 | **Configuration** | | | | | |
 | Where | Page TSconfig + scheduler task field | Page TSconfig + extension configuration | extension configuration | 📋 global (extension configuration) + per site (site settings), no Page TSconfig | #96447 |
 | **Extensibility** | | | | | |

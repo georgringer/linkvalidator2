@@ -63,6 +63,52 @@ final class BrokenLinkRepositoryTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function detectedBeforeKeepsOnlyLinksFirstDetectedAtOrBeforeTheTimestamp(): void
+    {
+        $this->insertRows([['broken', 1, 100], ['broken', 1, 200], ['broken', 1, 300]]);
+        $repository = $this->get(BrokenLinkRepository::class);
+
+        self::assertSame(2, $repository->count(new BrokenLinkQuery([1], detectedBefore: 200)));
+    }
+
+    #[Test]
+    public function detectedSinceAndBeforeFormARange(): void
+    {
+        $this->insertRows([['broken', 1, 100], ['broken', 1, 200], ['broken', 1, 300]]);
+        $repository = $this->get(BrokenLinkRepository::class);
+
+        self::assertSame(1, $repository->count(new BrokenLinkQuery([1], detectedSince: 150, detectedBefore: 250)));
+    }
+
+    #[Test]
+    public function includeTablesKeepsOnlyThoseTables(): void
+    {
+        $this->insertRows([['broken', 1, 100, 'tt_content'], ['broken', 1, 100, 'pages'], ['broken', 1, 100, 'sys_category']]);
+        $repository = $this->get(BrokenLinkRepository::class);
+
+        self::assertSame(2, $repository->count(new BrokenLinkQuery([1], includeTables: ['tt_content', 'pages'])));
+    }
+
+    #[Test]
+    public function excludeTablesRemovesThoseTables(): void
+    {
+        $this->insertRows([['broken', 1, 100, 'tt_content'], ['broken', 1, 100, 'pages'], ['broken', 1, 100, 'sys_category']]);
+        $repository = $this->get(BrokenLinkRepository::class);
+
+        self::assertSame(1, $repository->count(new BrokenLinkQuery([1], excludeTables: ['tt_content', 'pages'])));
+    }
+
+    #[Test]
+    public function excludeIsAppliedAfterInclude(): void
+    {
+        $this->insertRows([['broken', 1, 100, 'tt_content'], ['broken', 1, 100, 'pages'], ['broken', 1, 100, 'sys_category']]);
+        $repository = $this->get(BrokenLinkRepository::class);
+
+        $rows = $repository->find(new BrokenLinkQuery([1], includeTables: ['tt_content', 'pages'], excludeTables: ['pages']), new ReportOrdering());
+        self::assertSame(['tt_content'], array_column($rows, 'table_name'));
+    }
+
+    #[Test]
     public function groupedCountsReuseTheConditionsOfTheQuery(): void
     {
         $this->insertRows([['broken', 1, 100], ['broken', 1, 100], ['info', 1, 100], ['broken', 2, 100]]);
@@ -74,17 +120,18 @@ final class BrokenLinkRepositoryTest extends FunctionalTestCase
     }
 
     /**
-     * @param list<array{0: string, 1: int, 2: int}> $rows Status, pid, first_detected
+     * @param list<array{0: string, 1: int, 2: int, 3?: string}> $rows Status, pid, first_detected, table (default tt_content)
      */
     private function insertRows(array $rows): void
     {
         $connection = $this->getConnectionPool()->getConnectionForTable('tx_linkvalidator2_broken_link');
         $targets = $this->getConnectionPool()->getConnectionForTable('tx_linkvalidator2_target');
-        foreach ($rows as $index => [$status, $pid, $firstDetected]) {
+        foreach ($rows as $index => $row) {
+            [$status, $pid, $firstDetected] = $row;
             $targets->insert('tx_linkvalidator2_target', ['link_type' => 'url', 'identifier' => 'url:' . $index, 'identifier_hash' => sha1((string)$index), 'status' => $status]);
             $connection->insert('tx_linkvalidator2_broken_link', [
                 'target' => (int)$targets->lastInsertId(),
-                'table_name' => 'tt_content',
+                'table_name' => $row[3] ?? 'tt_content',
                 'record_uid' => $index + 1,
                 'field' => 'bodytext',
                 'pid' => $pid,

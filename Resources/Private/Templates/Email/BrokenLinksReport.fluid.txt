@@ -1,0 +1,15 @@
+<f:format.raw>{headline}
+
+<f:translate key="linkvalidator2.messages:mail.summary" languageKey="{language}" arguments="{total: total, page: pageTitle}" />
+
+<f:for each="{items}" as="item">
+- {item.pageTitle} / {item.recordTitle}
+  {item.target}
+  {item.errorMessage} ({item.firstDetected -> f:format.date(format: 'Y-m-d')})
+  {item.editUrl}
+</f:for>
+<f:if condition="{more}"><f:translate key="linkvalidator2.messages:mail.more" languageKey="{language}" arguments="{more: more}" />
+
+</f:if><f:if condition="{hasCsv}"><f:translate key="linkvalidator2.messages:mail.attachment" languageKey="{language}" />
+
+</f:if><f:translate key="linkvalidator2.messages:mail.openModule" languageKey="{language}" />: {moduleUrl}</f:format.raw>

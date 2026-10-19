@@ -140,6 +140,15 @@ final readonly class BrokenLinkRepository
         if ($query->detectedSince !== null) {
             $queryBuilder->andWhere($expr->gte('b.first_detected', $queryBuilder->createNamedParameter($query->detectedSince, Connection::PARAM_INT)));
         }
+        if ($query->detectedBefore !== null) {
+            $queryBuilder->andWhere($expr->lte('b.first_detected', $queryBuilder->createNamedParameter($query->detectedBefore, Connection::PARAM_INT)));
+        }
+        if ($query->includeTables !== []) {
+            $queryBuilder->andWhere($expr->in('b.table_name', $queryBuilder->createNamedParameter($query->includeTables, Connection::PARAM_STR_ARRAY)));
+        }
+        if ($query->excludeTables !== []) {
+            $queryBuilder->andWhere($expr->notIn('b.table_name', $queryBuilder->createNamedParameter($query->excludeTables, Connection::PARAM_STR_ARRAY)));
+        }
         $filter = $query->filter;
         if ($filter->status !== '') {
             $queryBuilder->andWhere($expr->eq('t.status', $queryBuilder->createNamedParameter($filter->status)));

@@ -15,3 +15,6 @@ $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_tcemain.php']['proc
 $GLOBALS['TYPO3_CONF_VARS']['SYS']['messenger']['routing'][CheckRecordsMessage::class] ??= 'doctrine';
 // Records that became due go to a transport of their own, which a worker takes before the regular one
 $GLOBALS['TYPO3_CONF_VARS']['SYS']['messenger']['routing'][CheckDueRecordsMessage::class] ??= 'linkvalidator2_priority';
+
+// Fluid template of the mail report, below the paths a project sets to override templates
+$GLOBALS['TYPO3_CONF_VARS']['MAIL']['templateRootPaths'][5] ??= 'EXT:linkvalidator2/Resources/Private/Templates/Email/';

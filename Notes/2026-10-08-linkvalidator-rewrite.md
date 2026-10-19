@@ -410,7 +410,7 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 - [ ] FlexForms (Auto-Discovery über FlexFormFieldType, Pfad z. B.
       `pi_flexform:sDEF/settings.detailPid`).
 - [x] Berechtigungen umsetzt, Modul für Redakteure offen (2026-10-11, `ReportPermissions`).
-- [ ] Mail-Report: Delta seit letztem Report (neu kaputt + Summe + Link ins Modul),
+- [x] Mail-Report (umgesetzt 2026-10-19 als `linkvalidator2:report`, anders als hier geplant: Seitenbereich statt Site, Altersfilter statt Delta, kein Zustand; siehe `2026-10-19-mail-report-design.md`). Ursprünglicher Plan: Delta seit letztem Report (neu kaputt + Summe + Link ins Modul),
       keine Mail ohne Änderung, pro Site (Site Settings), periodisch entkoppelt vom
       Prüflauf, `last_report_sent` pro Site, Fluid-Mail. Site-Titel im Betreff,
       volle klickbare Ziel-URL, Ergebnis als CSV-Anhang, Links zum Bearbeiten/ins Modul mit absoluter

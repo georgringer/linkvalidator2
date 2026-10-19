@@ -3,7 +3,10 @@
 - Forge: https://forge.typo3.org/issues/106677 (Task, Under Review, angelegt 2025-05-12)
 - Gerrit: https://review.typo3.org/c/Packages/TYPO3.CMS/+/89357 (abandoned)
 - Verwandt: #106487
-- **Status linkvalidator2:** 📋 offen (Mail-Report, später)
+- **Status linkvalidator2:** ✅ gelöst (2026-10-19)
+
+Umgesetzt mit `linkvalidator2:report`: volle, anklickbare Ziel-URL im HTML-Teil, vollständig im Text und in der CSV; die
+absolute Backend-URL kommt aus der Site der Seite und `BE/entryPoint` (`--base-url` für Seiten ohne Site).
 
 ## Problem
 

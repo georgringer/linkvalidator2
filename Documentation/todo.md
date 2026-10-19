@@ -61,9 +61,8 @@ The chapter "For integrators" is written (`Documentation/ForIntegrators/`, rende
   right away in the process without a queue, for scripts and small installations. The former
   background mode of `linkvalidator2:check` without options is gone.
 - Staging with a database synced from live: do not set up the scheduler cron there, or
-  send mails to a catcher (`MAIL.transport` per environment, e.g. Mailpit or `null`).
-  Mail report recipients can come from an environment variable (`%env()%` in site
-  settings). No own switch (Forge #110615).
+  send mails to a catcher (`MAIL.transport` per environment, e.g. Mailpit or `null`). No
+  own switch (Forge #110615).
 - `robots.txt` is not respected on purpose: single HEAD requests to linked URLs, not a
   crawler (Forge #89287).
 
@@ -74,6 +73,15 @@ The chapter "For integrators" is written (`Documentation/ForIntegrators/`, rende
   (turns checking off for the subtree, e.g. an archive). Editors need "tables_modify" for
   `tx_linkvalidator2_exclusion` and content edit permission on the page. They can have a
   start and stop time.
+
+- Mail report: `linkvalidator2:report <page> --to=…`, one scheduler task "Execute console commands" per
+  area and recipient. A reminder for what is broken for a week: `--min-age="7 days"` weekly; the new ones
+  of the day: `--max-age="1 day"` daily; both together are a range. Nothing is stored, so choose the
+  interval of the task and the age to match; a missed run is not made up for. `--include-tables` and
+  `--exclude-tables` decide what a recipient gets, there is no permission check per recipient. The links
+  in the mail need the host of the backend: it comes from the site of the page, from `BE/entryPoint` if that
+  is a full URL, or from `--base-url` for a page without a site. The text of the mail is the Fluid
+  template `BrokenLinksReport` (`--template` for your own, `MAIL.templateRootPaths`), the language `--mail-language`.
 
 ## For developers
 

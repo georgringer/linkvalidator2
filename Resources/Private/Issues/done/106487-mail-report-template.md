@@ -2,7 +2,10 @@
 
 - Forge: https://forge.typo3.org/issues/106487 (Feature, Accepted, angelegt 2025-04-02)
 - Verwandt: #106677
-- **Status linkvalidator2:** 📋 offen (Mail-Report, später)
+- **Status linkvalidator2:** ✅ gelöst (2026-10-19)
+
+Umgesetzt mit `linkvalidator2:report` (`Notes/2026-10-19-mail-report-design.md`): Betreff mit Seitentitel oder `--subject`,
+Links zum Bearbeiten und ins Modul mit absoluter Backend-URL, Ergebnis wahlweise als CSV-Anhang.
 
 ## Problem
 

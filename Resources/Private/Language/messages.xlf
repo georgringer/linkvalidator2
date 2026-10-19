@@ -366,6 +366,39 @@
       <trans-unit id="error.url.unsupportedScheme">
         <source>Only http and https URLs can be checked</source>
       </trans-unit>
+      <trans-unit id="mail.subject">
+        <source>Broken links: %s</source>
+      </trans-unit>
+      <trans-unit id="mail.summary">
+        <source>{total, plural, =0 {No broken links} one {# broken link} other {# broken links}} in the area of "{page}".</source>
+      </trans-unit>
+      <trans-unit id="mail.column.page">
+        <source>Page</source>
+      </trans-unit>
+      <trans-unit id="mail.column.record">
+        <source>Record</source>
+      </trans-unit>
+      <trans-unit id="mail.column.target">
+        <source>Target</source>
+      </trans-unit>
+      <trans-unit id="mail.column.problem">
+        <source>Problem</source>
+      </trans-unit>
+      <trans-unit id="mail.column.since">
+        <source>Broken since</source>
+      </trans-unit>
+      <trans-unit id="mail.column.edit">
+        <source>Edit</source>
+      </trans-unit>
+      <trans-unit id="mail.more">
+        <source>And {more} more. All of them are in the report in the backend.</source>
+      </trans-unit>
+      <trans-unit id="mail.attachment">
+        <source>The complete list with all details is attached as CSV.</source>
+      </trans-unit>
+      <trans-unit id="mail.openModule">
+        <source>Open the report in the backend</source>
+      </trans-unit>
     </body>
   </file>
 </xliff>

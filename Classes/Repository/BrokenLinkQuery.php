@@ -30,6 +30,9 @@ final readonly class BrokenLinkQuery
      * @param ReportPermissions|null $permissions Only what the user may fix, null for everything
      * @param bool $onlyBroken Leaves out notices, which are stored but no broken links
      * @param int|null $detectedSince Only links first detected at or after this timestamp
+     * @param int|null $detectedBefore Only links first detected at or before this timestamp
+     * @param list<string> $includeTables Only results of these tables, all if empty
+     * @param list<string> $excludeTables No results of these tables, applied after $includeTables
      */
     public function __construct(
         public array $pids,
@@ -37,5 +40,8 @@ final readonly class BrokenLinkQuery
         public ?ReportPermissions $permissions = null,
         public bool $onlyBroken = false,
         public ?int $detectedSince = null,
+        public ?int $detectedBefore = null,
+        public array $includeTables = [],
+        public array $excludeTables = [],
     ) {}
 }

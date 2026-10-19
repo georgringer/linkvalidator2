@@ -15,8 +15,6 @@ Source: https://forge.typo3.org/projects/typo3cms-core/issues?set_filter=1&f[]=s
 | Issue | Subject | Status linkvalidator2 |
 |---|---|---|
 | [#107983](107983-workspace-users.md) | Make Link Validator (linkvalidator) accessible for Preview-Workspace users | 📋 offen (Workspaces; Berechtigungen ✅) |
-| [#106677](106677-mail-report-clickable-urls.md) | Improve Linkvalidator broken URL output in E-Mail Report | 📋 offen (Mail-Report, später) |
-| [#106487](106487-mail-report-template.md) | Improve linkvalidator report mail template | 📋 offen (Mail-Report, später) |
 | [#96447](96447-concept-and-open-decisions.md) | Linkvalidator concept & open decisions | 🟡 größtenteils durch den Neubau beantwortet |
 | [#94195](94195-translation-of-hidden-original.md) | Translated (connected mode) content will still get checked by linkvalidator if original content is hidden | 📋 offen (Schritt 7: Sprachregel) |
 | [#89287](89287-polite-crawling.md) | Make linkvalidator crawling polite | 🟡 teilweise |
@@ -27,6 +25,8 @@ Source: https://forge.typo3.org/projects/typo3cms-core/issues?set_filter=1&f[]=s
 
 | Issue | Subject | Status linkvalidator2 |
 |---|---|---|
+| [#106677](done/106677-mail-report-clickable-urls.md) | Improve Linkvalidator broken URL output in E-Mail Report | ✅ gelöst (2026-10-19) |
+| [#106487](done/106487-mail-report-template.md) | Improve linkvalidator report mail template | ✅ gelöst (2026-10-19) |
 | [#92542](done/92542-shortcut-pages.md) | Linkvalidator should check shortcut pages | ✅ gelöst (2026-10-11) |
 | [#101935](done/101935-curl-error-codes.md) | Better handling of curl error codes in linkvalidator | ✅ gelöst (2026-10-11) |
 | [#92822](done/92822-ignore-button.md) | Ignore button for link targets | ✅ gelöst (2026-10-11) |
