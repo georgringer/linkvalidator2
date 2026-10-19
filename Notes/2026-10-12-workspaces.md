@@ -1,6 +1,6 @@
 # Workspaces (zurückgestellt, für den Core-Ersatz Pflicht)
 
-Stand 2026-10-12: Die Extension prüft nur den Live-Workspace. Das Modul ist wie das des
+Stand 2026-10-12, Abgleich mit dem Code 2026-10-19: unverändert, nichts davon ist umgesetzt. Die Extension prüft nur den Live-Workspace. Das Modul ist wie das des
 Core-Linkvalidators für Workspaces gesperrt (`'workspaces' => 'live'` in
 `Configuration/Backend/Modules.php`). Der Hook prüft beim Veröffentlichen, das Speichern im
 Workspace wird ignoriert. Die Spalte `workspace` gibt es in `tx_linkvalidator2_broken_link` und
@@ -47,7 +47,7 @@ Zurückgestellt wurde nur die Umsetzung, nicht die Anforderung.
    (`discard`) räumen die Workspace-Ergebnisse weg, nach dem Veröffentlichen wird Live neu
    geprüft.
 4. **Oberfläche und Queue:** Modul mit `'workspaces' => 'all'`, Report, "Check links", erneutes
-   Prüfen (`LinkRechecker`: `applyResultToTarget()` muss nach Workspace begrenzen), Widget,
+   Prüfen (`LinkRechecker` muss das Übernehmen des Ergebnisses auf gleiche Ziele nach Workspace begrenzen), Widget,
    `CheckRecordsMessage`/`CheckDueRecordsMessage` und `fillqueue` mit Workspace.
 5. **Tests** mit `$coreExtensionsToLoad = ['workspaces']` und DataHandler-Workspace-Operationen,
    Doku, README.
@@ -56,8 +56,8 @@ Zurückgestellt wurde nur die Umsetzung, nicht die Anforderung.
 
 - `PageRecordFinder::findOnPages()` filtert auf `t3ver_wsid = 0`.
 - `RecordCheckService::checkRecord()` lädt mit `BackendUtility::getRecord()` (ohne Overlay).
-- `RecordStatusRepository` und `BrokenLinkRepository` nutzen `workspace = 0` fest
-  (`createQueryBuilderForPids()`, `markChecked()`, `findOneVisible()`, ...).
+- `RecordStatusRepository`, `BrokenLinkRepository` und `ReferencingRecordFinder` nutzen `workspace = 0` fest
+  (`markChecked()`, `findDue()`, `replaceForRecord()`, die Abfragen für den Report, ...).
 - `DataHandlerHook` ignoriert alles außer dem Live-Workspace (`isLiveWorkspace()`).
 - `tx_linkvalidator2_target` ist pro Ziel, nicht pro Workspace: Ergebnisse interner Ziele
   (Seite, Record) können vom Workspace abhängen und dürfen dort nicht aus dem gemeinsamen

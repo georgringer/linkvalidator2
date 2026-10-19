@@ -5,8 +5,13 @@ Status: Entwurf aus der Diskussion vom 2026-10-12. Umgesetzt (2026-10-12): `fill
 gibt nur noch Nachrichten pro Tabelle mit bis zu `--chunk-size` Records (kein `CheckPageMessage`),
 das Aufräumen verschwundener Records macht `fillqueue` selbst beim Durchlaufen. Der Handler leert den Runtime-Cache pro Nachricht (siehe unten). Danach umgesetzt:
 `RecordQueue` und der Queue-Modus von `linkvalidator2:check` ohne Optionen sind entfernt,
-`check --page` läuft über dieselbe Seitenbaum-Abfrage und gibt den Fortschritt aus. Offen sind
-`--only-if-empty`, der Hook, `CheckCommand` ohne Optionen und die Messung mit großen Beständen.
+`check --page` läuft über dieselbe Seitenbaum-Abfrage und gibt den Fortschritt aus.
+Abgleich mit dem Code 2026-10-19: Routing ist umgesetzt (`ext_localconf.php`: `CheckRecordsMessage` →
+`doctrine`). Der Hook reiht externe URLs ein: `DueQueue` schickt fällige Records als
+`CheckDueRecordsMessage` (Chunks à 25) auf den eigenen Transport `linkvalidator2_priority`, den ein
+Worker vor der regulären Queue abarbeitet; interne Ziele werden weiter sofort geprüft. Die Messung mit
+großen Beständen steht unten. Offen sind `--only-if-empty` und ob `CheckCommand` ohne Optionen ein Alias wird
+(er hat heute nur `--record`, `--page`, `--depth`, `--no-external`).
 
 ## Ausgangslage
 
@@ -121,11 +126,9 @@ werden.
   pro Domain (Forge #89287) braucht dann gemeinsamen Zustand (Cache oder Lock pro
   Domain).
 - Default-Routing: Nachrichten ohne Routing verarbeitet der Messenger synchron. Die
-  Extension muss das Routing auf den Doctrine-Transport mitliefern oder in der Doku
-  verlangen. Offen.
-- Der DataHandler-Hook kann einreihen statt sofort zu prüfen. Offen, ob die Prüfung
-  interner Ziele weiter sofort läuft (so ist es heute) und nur externe URLs in die
-  Queue gehen.
+  Extension liefert das Routing mit (`ext_localconf.php`, `??=`, überschreibbar). Umgesetzt.
+- Der DataHandler-Hook reiht externe URLs ein, interne Ziele werden sofort geprüft. Umgesetzt
+  (`DueQueue`). Ohne laufenden Worker bleibt der Record fällig, siehe `2026-10-19-eager-check-on-save.md`.
 
 ## Worker-Prozess: Runtime-Cache und Datenbankverbindung
 
@@ -186,9 +189,7 @@ Ergebnisse:
 
 ## Offen
 
-- Schwelle N und das Aufteilen großer Seiten (`CheckRecordsMessage`), Abgleich
-  verschwundener Records bei Stücken.
-- Queue-Länge abfragbar (`--only-if-empty`)?
-- Routing und Transport-Default.
-- Hook: sofort prüfen oder einreihen.
+- Queue-Länge abfragbar (`--only-if-empty`)? Im Code gibt es kein `MessageCountAwareInterface`.
 - Lock-Verhalten und Abbruch mitten im Lauf in einem Test belegen.
+- Erledigt, nicht mehr offen: Aufteilen großer Seiten (`CheckRecordsMessage`, `--chunk-size`, der Abgleich
+  verschwundener Records macht `fillqueue` selbst), Routing, Hook.

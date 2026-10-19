@@ -21,3 +21,5 @@ und Kopf. (2) siehe #106677 (absolute Backend-URLs im CLI).
 - Fluid-Template mit Site-Titel im Betreff, optionaler Freitext aus Site Settings.
 - Pro kaputtem Link: Seite, Datensatz, Feld, Ziel, Fehler, „kaputt seit“
   (`first_detected`), Link zum Bearbeiten + Link ins Modul.
+- Ergebnis als CSV an die Mail anhängen (gleiche Spalten wie im Report, vollständige
+  Ziel-URL); gerade bei vielen Treffern besser auswertbar als die Mail selbst.

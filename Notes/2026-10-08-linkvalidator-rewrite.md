@@ -26,6 +26,10 @@
 
 ## Bau-Reihenfolge
 
+Abgleich mit dem Code 2026-10-19: Schritte 1–5 sind umgesetzt, dazu Messenger-Queue, Berechtigungen, Dashboard-Widget und
+Browser-Batches. Offen: 6 (Site Settings, Mail-Report), 7 (Sprachregel, Quelle unter versteckter Seite), Workspaces
+(Pflicht, siehe `2026-10-12-workspaces.md`), Eskalation unknown → broken, Crawl-Delay/`Retry-After`.
+
 (Stand 2026-10-11: 1, 2, 3 umgesetzt; 5 Ausschlüsse umgesetzt (siehe „Ausschlüsse“); 4 DataHandler umgesetzt, `Hook/DataHandlerHook`; Queue-Command
 (Task 8) umgesetzt: `RecordQueue` – nie geprüft (LEFT JOIN) → fällig (0) → älter als `--interval`,
 Keyset-Cursor, Lock `linkvalidator2-queue`, Waisen-Cleanup zu Beginn; 2.000 Datensätze ~10 s ohne extern.)
@@ -75,8 +79,9 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
   - Gelöschte Seite: Zeilen bleiben in der DB, im Report unsichtbar (Seite nicht mehr im Baum).
   - Verschobener Datensatz/Seite: `pid` veraltet, Treffer erscheint unter der alten Seite, bis
     er am neuen Ort geprüft wird.
-  - **Stand 2026-10-11:** (1) umgesetzt (`RecordCheckService::removeStaleResults()`, Tests in
-    `CheckCommandTest`); offen bleibt die gelöschte Seite selbst → (2)/(3).
+  - **Stand 2026-10-19: behoben.** (1) `RecordCheckService::removeStaleResults()` (Tests in
+    `CheckCommandTest`), (2) der DataHandler-Hook räumt beim Löschen/Verschieben auf, (3)
+    `removeResultsOfMissingPages()` für gelöschte Seiten.
   - Geplante Abhilfe: (1) beim Prüfen einer Seite Ergebnis-/Statuszeilen dieser pid mit den
     gefundenen Datensätzen abgleichen und Überzählige löschen (deckt auch SQL/Import und neu
     ausgeschlossene Felder/Tabellen ab); (2) DataHandler-Hook (Schritt 4) für sofortige
@@ -97,9 +102,9 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 - Extractor arbeitet auf „Feldwert mit Pfad“ → FlexForm später als weitere Quelle.
 
 ## Konfiguration
-- Global (Extension-Konfiguration): TTL, HTTP-Timeout, User-Agent, Crawl-Delay,
-  Tabellen-/Feld-Opt-out.
-- Pro Site (Site Set `typo3/linkvalidator`): Linktypen, Mail-Report, Empfänger.
+- Global (Extension-Konfiguration, heute): `excludedFields`, `externalCacheLifetime`, `externalTimeout`,
+  `externalUserAgent`, `allowManualCheck`. Crawl-Delay gibt es noch nicht.
+- Pro Site (Site Set `typo3/linkvalidator`): Linktypen, Mail-Report, Empfänger. Nicht umgesetzt, es gibt noch keine Site Settings.
 - **Kein Page TSconfig** mehr → Breaking-RST.
 
 ## Ausschlüsse
@@ -147,12 +152,13 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 ## Workspaces
 - v1 nur Live. Spalte `workspace` (immer 0) in record_status + link von Anfang an.
 - Hinweis im Modul, wenn in Workspace: „Ergebnisse zeigen Live-Stand“.
-- Modul auch in Workspaces erreichbar (`workspaces => '*'`, #107983), sobald Berechtigungen
-  umgesetzt sind. „Prüfen“ im Workspace prüft Live; DataHandler-Hook reagiert erst auf Publish.
+- Heute: Modul nur im Live-Workspace (`'workspaces' => 'live'`), der Hook reagiert erst auf Publish. Entscheidung und Plan
+  für echte Workspace-Unterstützung (Pflicht für den Core-Ersatz): `2026-10-12-workspaces.md`; sie ersetzt den Hinweis-Ansatz
+  „Ergebnisse zeigen Live-Stand“ und `workspaces => '*'` aus dem ersten Entwurf.
 
 ## Linktypen / Erweiterbarkeit
 - Pipeline: Softref-Parser → `LinkService::resolve()` → Checker nach LinkService-Typ.
-- Checker = getaggte Services (`linkvalidator.checker`); Core: page, record, file,
+- Checker = getaggte Services (`linkvalidator2.checker`, per Autokonfiguration für jedes `LinkCheckerInterface`); Core: page, record, file,
   folder, url. email/telephone werden übersprungen.
 - Rückgabe `CheckResult` (ok | broken | unknown, Fehlertyp, Details).
 - Eigene LinkHandler (#94086): Typ mit registriertem Checker → generisches Ziel und prüfen;
@@ -164,7 +170,8 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 - ok: 2xx nach Redirects (max 5). broken: 404, 410, DNS NXDOMAIN.
 - unknown: 401, 403, 429, 5xx, Timeout, Verbindungs-/TLS-Fehler.
 - unknown → broken nach 3 Prüfungen über ≥ 7 Tage (global konfigurierbar)
-  → target braucht `failure_count`, `first_failed_at`.
+  → target braucht `failure_count`, `first_failed_at`. Die Zähler werden geschrieben (`TargetRepository`),
+  die Eskalation selbst gibt es noch nicht (`@todo` in `ExternalUrlChecker`).
 - HEAD, Fallback GET (nur Header). 429 + Retry-After respektieren.
   Crawl-Delay pro Domain. Konfigurierbarer User-Agent.
 - Modul: unknown nicht in „kaputt“, eigener Filter „nicht prüfbar“.
@@ -355,8 +362,9 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 - **Kein Upgrade-Wizard.** Alte Tabelle `tx_linkvalidator_link` → Analyzer räumt ab.
 - Breaking-RST: Ergebnisse verfallen (Report leer bis erster Lauf), alte
   ValidatorTask-Tasks neu anlegen, `mod.linkvalidator.*` entfällt (Mapping-Tabelle).
-- **Nur CLI-Command** `linkvalidator:check` (`--time-limit`, `--limit`, `--site`,
-  `--[no-]external`); Scheduler über „Execute console commands“. Kein eigener Task.
+- **Nur CLI-Commands**, kein eigener Scheduler-Task (Scheduler über „Execute console commands“). Heute:
+  `linkvalidator2:fillqueue <page>` (`--depth`, `--chunk-size`) und `linkvalidator2:check` (`--record`, `--page`,
+  `--depth`, `--no-external`); `--time-limit`, `--limit`, `--site` aus dem ersten Entwurf gibt es nicht.
 
 ## Berechtigungen (umgesetzt 2026-10-11)
 - Report zeigt nur, was der User **reparieren** kann: Seiten-Bearbeitungsrecht
@@ -381,8 +389,7 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 ## TODO später
 - [ ] Vorkommen akzeptieren (Flag auf Link-Zeile, taucht bei Fehleränderung/
       Bearbeitung wieder auf).
-- [ ] Eager-Befüllung der Status-Tabelle (Initial-Command; DataHandler legt seit Schritt 4
-      beim Anlegen an).
+- [x] Eager-Befüllung der Status-Tabelle: `fillqueue` reiht alles ein, der Handler legt die Status-Zeilen an.
 - [x] Notification-Text: Singular/Plural – ICU-Labels + `~labels/linkvalidator2.messages` im JS (2026-10-11).
 - [x] **Ziel ändert sich** (2026-10-11): Ändert sich ein Datensatz (Update, Löschen,
       Verschieben, Wiederherstellen), werden alle Datensätze, die laut `sys_refindex` auf ihn
@@ -390,22 +397,23 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
       Typ-Sonderfälle. Nicht sofort geprüft: der Hook läuft vor dem Cache-Clear des
       DataHandlers, die Seitenauflösung sähe den alten Stand (Runtime-Cache ohne Tags).
       `extendToSubpages` bewusst nicht (Unterseiten): fängt der Queue-Lauf ab.
-- [ ] Messenger als Transport für Hintergrund-Prüfung.
+- [x] Messenger als Transport für Hintergrund-Prüfung (`fillqueue`, `CheckRecordsMessage`, `CheckDueRecordsMessage`).
 - [ ] Workspace-Prüfung (Quelle + Ziel-Sicht, Publish/Discard umhängen).
 - [ ] Events (alle): welche Erweiterungspunkte braucht es wirklich.
-- [ ] Redirect-Hinweis (301 → „Link aktualisieren“).
-- [ ] Warnung „Ziel noch nicht sichtbar“ (starttime in Zukunft).
+- [x] Redirect-Hinweis: Status „notice“ für URLs, die ein TYPO3-Redirect (`sys_redirect`) weiterleitet (`ExternalUrlChecker`);
+      andere Redirects werden nicht gemeldet.
+- [x] Warnung „Ziel noch nicht sichtbar“ (starttime in Zukunft): `page.notYetVisible`.
 - [ ] Seitenmodul-Callout „N kaputte Links auf dieser Seite“.
 - [ ] Hinweis im Bearbeitungsformular (FormEngine).
 - [ ] Modul: nach „Seite prüfen“ zeigen, welche Datensätze geprüft wurden (nicht nur Anzahl).
-- [ ] Dashboard-Widget, Badges im Seitenbaum.
+- [x] Dashboard-Widget (`BrokenLinksWidget`).
 - [ ] FlexForms (Auto-Discovery über FlexFormFieldType, Pfad z. B.
       `pi_flexform:sDEF/settings.detailPid`).
 - [x] Berechtigungen umsetzt, Modul für Redakteure offen (2026-10-11, `ReportPermissions`).
 - [ ] Mail-Report: Delta seit letztem Report (neu kaputt + Summe + Link ins Modul),
       keine Mail ohne Änderung, pro Site (Site Settings), periodisch entkoppelt vom
       Prüflauf, `last_report_sent` pro Site, Fluid-Mail. Site-Titel im Betreff,
-      volle klickbare Ziel-URL, Links zum Bearbeiten/ins Modul mit absoluter
+      volle klickbare Ziel-URL, Ergebnis als CSV-Anhang, Links zum Bearbeiten/ins Modul mit absoluter
       Backend-URL (Basis aus Site bzw. Site Setting, CLI kennt keinen Host;
       #106487, #106677). Auf Staging abschaltbar ohne DB: Empfänger per `%env()%` in
       Site Settings (kein eigener Schalter, #110615 verworfen).
@@ -418,18 +426,18 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
       Zeile (max. eine Seite à 50) → gesammelt laden.
 - [ ] Dedupe nur pro Feld (`field|identifier`): gleiches Ziel in zwei Feldern = zwei Zeilen.
       Bestätigen, dass gewollt (Felder werden getrennt repariert).
-- [ ] **Bug RTE-Listener:** Event ohne pid → Record-Links mit per TSconfig gemapptem
+- [x] ~~**Bug RTE-Listener:** Event ohne pid → Record-Links mit per TSconfig gemapptem
       Identifier (`category` → `sys_category`) werden als `record.unknownTable` markiert,
       obwohl gültig. Seite aus Request/FormEngine-Kontext ermitteln oder unbekannte Tabellen
-      im RTE nicht markieren. Reproduzierbar mit `seed-bigtree.php` (Kategorie-Links).
+      im RTE nicht markieren. Reproduzierbar mit `seed-bigtree.php` (Kategorie-Links).~~ Gelöst 2026-10-11: `record.unknownTable`
+      wird im RTE nie markiert (siehe Abschnitt RTE-Markierung).
 - [x] **Bug Plain-URLs (#97937):** `&nbsp;` beendet die URL jetzt (2026-10-11, mit Test).
 - [x] **Bug eigene LinkHandler (#94086):** gelöst 2026-10-11, Doku-Notizen in
       `Documentation/todo.md`.
 - [x] Ziel per Rootline prüfen (`extendToSubpages`, #106675/#101367) – über Frontend-Auflösung.
 - [x] Fehlerdetails (`error_details.message`) im Modul anzeigen, `errno` gespeichert (#101935, 2026-10-11).
 - Analyse aller offenen Forge-Issues: `Resources/Private/Issues/`.
-- [ ] Shortcut-Seiten mit `shortcut_mode` ≠ NONE prüfen (erste/zufällige Unterseite ohne
-      sichtbare Unterseite, Elternseite auf Root-Seite).
+- [x] Shortcut-Seiten mit `shortcut_mode` ≠ NONE prüfen: gelöst mit #92542 (siehe oben).
 
 ## Modul: Level, Filter, Pagination (entschieden 2026-10-08)
 - **Level-Dropdown bleibt** (diese Seite, 1–4, unendlich; moduleData `depth`) und gilt
@@ -497,9 +505,8 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 - `Notes/` (diese Notizen, Plan), `AGENTS.md`/`CLAUDE.md` und `.superpowers/` gehören nicht in den Core: beim
   Einzug weglassen. Sie enthalten `linkvalidator2` absichtlich.
 - RTE-Transformation beim Speichern macht aus Links auf nicht existierende Dateien/
-  Ordner `href=""`, aus `#top` `t3://page?uid=current#top`. Leeres href = für Besucher
-  kaputt → melden (`link.empty`)? Entscheidung offen. Tendenz: melden, für Besucher kaputt
-  (`@todo` in `LinkExtractor::extractFromHtml()`).
+  Ordner `href=""`, aus `#top` `t3://page?uid=current#top`. Leeres href wird als `link.empty` gemeldet
+  (umgesetzt, `LinkExtractor`/`LinkTargetFactory`).
 - Beim Einzug in typo3/sysext: composer.json `type` zurück auf `typo3-cms-framework`
   (lokal `typo3-cms-extension`, sonst kein Autoload im Classic Mode), Root-composer.json
   PSR-4 ergänzen, `version`/`providesPackages` entfernen (Framework-Pakete brauchen es nicht).

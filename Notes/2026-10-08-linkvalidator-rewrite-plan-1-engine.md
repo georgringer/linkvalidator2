@@ -1,5 +1,12 @@
 # Linkvalidator2 – Schritt 1: Engine – Implementation Plan
 
+> **Historisch (Abgleich 2026-10-19):** Dieser Plan ist umgesetzt und der Code seither deutlich
+> weitergewachsen. Die Codeblöcke zeigen den Stand vom 2026-10-08, nicht den heutigen.
+> Insbesondere: `RecordQueue` und der Queue-Modus von `linkvalidator2:check` sind durch
+> `fillqueue` + Messenger ersetzt (siehe `2026-10-12-queue-messenger.md`), Tests gibt es
+> (Task 9 ist erledigt), externe Links werden geprüft (die Annahme "nicht geprüft" in den
+> Constraints gilt nicht mehr). Maßgeblich sind der Code und die anderen Notizen.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Eine lauffähige Prüf-Engine in `typo3conf/ext/linkvalidator2`, die per CLI

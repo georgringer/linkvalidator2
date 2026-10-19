@@ -157,7 +157,7 @@ solved ones in `done/`.
 | Markers in the rich text editor | 🟡 page missing/hidden, file, known external | 🟡 similar | ✅ same checkers as the report, external from cache; page of the edited record from the form request (Page TSconfig `TCEMAIN.linkHandler`), record links to an unknown table never marked | | |
 | Page module callout | ❌ | ✅ with EXT:page_callouts | ❌ | 📋 later | |
 | **Reporting** | | | | | |
-| E-mail report | ✅ full list after each run | ✅ | ❌ | 📋 later: changes since last report, per site | |
+| E-mail report | ✅ full list after each run | ✅ | ❌ | 📋 later: changes since last report, per site, the result attached as CSV | |
 | Site name in the mail, links to edit / to the module | ❌ no absolute backend URLs in CLI | ❓ | ❌ | 📋 with the mail report: per site, base URL from site / settings | #106487, #106677 |
 | Full, clickable target URL in the mail | ❌ cropped to 15 characters | ❓ | ❌ | 📋 with the mail report | #106677 |
 | **Configuration** | | | | | |
