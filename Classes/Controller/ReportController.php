@@ -19,6 +19,7 @@ namespace GeorgRinger\Linkvalidator2\Controller;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Backend\Attribute\AsController;
+use TYPO3\CMS\Backend\Configuration\TranslationConfigurationProvider;
 use TYPO3\CMS\Backend\Routing\PreviewUriBuilder;
 use TYPO3\CMS\Backend\Routing\UriBuilder;
 use TYPO3\CMS\Backend\Template\Components\ButtonBar;
@@ -27,7 +28,6 @@ use TYPO3\CMS\Backend\Template\ModuleTemplate;
 use TYPO3\CMS\Backend\Template\ModuleTemplateFactory;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
-use TYPO3\CMS\Core\Exception\SiteNotFoundException;
 use TYPO3\CMS\Core\Imaging\IconFactory;
 use TYPO3\CMS\Core\Imaging\IconSize;
 use TYPO3\CMS\Core\LinkHandling\LinkService;
@@ -35,12 +35,10 @@ use TYPO3\CMS\Core\Localization\LanguageService;
 use TYPO3\CMS\Core\Page\PageRenderer;
 use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Schema\TcaSchemaFactory;
-use TYPO3\CMS\Core\Site\SiteFinder;
 use TYPO3\CMS\Core\Type\Bitmask\Permission;
 use TYPO3\CMS\Core\Utility\MathUtility;
 use GeorgRinger\Linkvalidator2\Configuration\ExtensionSettings;
 use GeorgRinger\Linkvalidator2\Exclusion\ExclusionPermissions;
-use GeorgRinger\Linkvalidator2\Report\LanguageIconProvider;
 use GeorgRinger\Linkvalidator2\Report\ErrorMessageFormatter;
 use GeorgRinger\Linkvalidator2\Report\ReportFilter;
 use GeorgRinger\Linkvalidator2\Report\ReportOrdering;
@@ -72,11 +70,10 @@ final readonly class ReportController
         private ReportPermissionsFactory $reportPermissionsFactory,
         private BrokenLinkRepository $brokenLinkRepository,
         private TcaSchemaFactory $tcaSchemaFactory,
-        private SiteFinder $siteFinder,
         private RecordStatusRepository $recordStatusRepository,
         private ErrorMessageFormatter $errorMessageFormatter,
         private ExtensionSettings $extensionSettings,
-        private LanguageIconProvider $languageIconProvider,
+        private TranslationConfigurationProvider $translationConfigurationProvider,
         private ExclusionPermissions $exclusionPermissions,
     ) {}
 
@@ -266,7 +263,9 @@ final readonly class ReportController
             $row['pageRecord'] = $pageRecords[$pid];
             $row['record'] = $record;
             $row['pageTitle'] = $pageTitles[$pid];
-            $row['languageIcon'] = $this->languageIconProvider->describe($pid, (int)$row['language'])['icon'] ?? '';
+            $language = $this->getLanguageInformation($pid, (int)$row['language']);
+            $row['languageFlag'] = $language['flagIcon'] ?? '';
+            $row['languageTitle'] = $language['title'] ?? '';
             $row['details'] = (array)json_decode((string)$row['error_details'], true);
             $row['detailsJson'] = json_encode($row['details'] + ['target' => (string)$row['link_string']], JSON_THROW_ON_ERROR);
             $row['messageArguments'] = $this->errorMessageFormatter->getArguments((string)$row['error_type'], $row['details'], $pageTitles);
@@ -421,14 +420,18 @@ final readonly class ReportController
      */
     private function getLanguageTitles(int $pageUid): array
     {
-        $titles = [-1 => $this->getLanguageService()->sL('linkvalidator2.messages:language.all')];
-        try {
-            foreach ($this->siteFinder->getSiteByPageId($pageUid)->getAllLanguages() as $siteLanguage) {
-                $titles[$siteLanguage->getLanguageId()] = $siteLanguage->getTitle();
-            }
-        } catch (SiteNotFoundException) {
-        }
-        return $titles;
+        return array_map(static fn(array $language): string => (string)$language['title'], $this->translationConfigurationProvider->getSystemLanguages($pageUid));
+    }
+
+    /**
+     * Title and flag of the language of a result, for sites with several languages only
+     *
+     * @return array{title: string, flagIcon: string}|null
+     */
+    private function getLanguageInformation(int $pid, int $language): ?array
+    {
+        $languages = $this->translationConfigurationProvider->getSystemLanguages($pid);
+        return count(array_diff_key($languages, [-1 => true])) > 1 ? ($languages[$language] ?? null) : null;
     }
 
     private function getBackendUser(): BackendUserAuthentication

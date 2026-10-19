@@ -48,6 +48,14 @@ final class BackendUrlFactoryTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function theRequestCarriesTheUrlOfTheSite(): void
+    {
+        $request = $this->createFactory()->create(2, null)->getRequest();
+
+        self::assertSame('https://example.com/', $request->getAttribute('normalizedParams')->getSiteUrl());
+    }
+
+    #[Test]
     public function editUrlTargetsTheRecordEditor(): void
     {
         $urls = $this->createFactory()->create(2, null);

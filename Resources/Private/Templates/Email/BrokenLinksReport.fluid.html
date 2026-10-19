@@ -1,37 +1,34 @@
-<f:spaceless>
-<h2>{headline}</h2>
-<p><f:translate key="linkvalidator2.messages:mail.summary" languageKey="{language}" arguments="{total: total, page: pageTitle}" /></p>
-<f:if condition="{items}">
-    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse;">
-        <thead>
-            <tr>
-                <th align="left"><f:translate key="linkvalidator2.messages:mail.column.page" languageKey="{language}" /></th>
-                <th align="left"><f:translate key="linkvalidator2.messages:mail.column.record" languageKey="{language}" /></th>
-                <th align="left"><f:translate key="linkvalidator2.messages:mail.column.target" languageKey="{language}" /></th>
-                <th align="left"><f:translate key="linkvalidator2.messages:mail.column.problem" languageKey="{language}" /></th>
-                <th align="left"><f:translate key="linkvalidator2.messages:mail.column.since" languageKey="{language}" /></th>
-                <th align="left"><f:translate key="linkvalidator2.messages:mail.column.edit" languageKey="{language}" /></th>
-            </tr>
-        </thead>
-        <tbody>
-            <f:for each="{items}" as="item">
-                <tr>
-                    <td>{item.pageTitle}</td>
-                    <td>{item.recordTitle}</td>
-                    <td><a href="{item.target}">{item.target}</a><f:if condition="{item.linkText}"><br>{item.linkText}</f:if></td>
-                    <td>{item.errorMessage}</td>
-                    <td><f:format.date format="Y-m-d">{item.firstDetected}</f:format.date></td>
-                    <td><a href="{item.editUrl}"><f:translate key="linkvalidator2.messages:mail.column.edit" languageKey="{language}" /></a></td>
+<f:layout name="SystemEmail" />
+<f:section name="Title">{headline}</f:section>
+<f:section name="Main">
+    <p><f:translate key="linkvalidator2.messages:mail.summary" languageKey="{language}" arguments="{total: total, page: pageTitle}" /></p>
+    <f:if condition="{items}">
+        <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border: 1px solid #cccccc;">
+            <thead>
+                <tr style="background-color: #f2f2f2;">
+                    <th align="left" style="font-size: 13px; padding: 6px 8px; border: 1px solid #cccccc;"><f:translate key="linkvalidator2.messages:mail.column.record" languageKey="{language}" /></th>
+                    <th align="left" style="font-size: 13px; padding: 6px 8px; border: 1px solid #cccccc;"><f:translate key="linkvalidator2.messages:mail.column.target" languageKey="{language}" /></th>
+                    <th align="left" style="font-size: 13px; padding: 6px 8px; border: 1px solid #cccccc; white-space: nowrap;"><f:translate key="linkvalidator2.messages:mail.column.since" languageKey="{language}" /></th>
+                    <th align="left" style="font-size: 13px; padding: 6px 8px; border: 1px solid #cccccc; white-space: nowrap;"><f:translate key="linkvalidator2.messages:mail.column.edit" languageKey="{language}" /></th>
                 </tr>
-            </f:for>
-        </tbody>
-    </table>
-    <f:if condition="{more}">
-        <p><f:translate key="linkvalidator2.messages:mail.more" languageKey="{language}" arguments="{more: more}" /></p>
+            </thead>
+            <tbody>
+                <f:for each="{items}" as="item">
+                    <tr>
+                        <td valign="top" style="font-size: 13px; line-height: 1.4; padding: 6px 8px; border: 1px solid #cccccc;"><strong>{item.recordTitle}</strong><br>{item.pageTitle}</td>
+                        <td valign="top" style="font-size: 13px; line-height: 1.4; padding: 6px 8px; border: 1px solid #cccccc;"><a href="{item.target}" style="word-break: break-all;">{item.target}</a><f:if condition="{item.linkText}"><br>{item.linkText}</f:if><br><span style="color: #b00020;">{item.errorMessage}</span></td>
+                        <td valign="top" style="font-size: 13px; line-height: 1.4; padding: 6px 8px; border: 1px solid #cccccc; white-space: nowrap;"><f:format.date format="Y-m-d">{item.firstDetected}</f:format.date></td>
+                        <td valign="top" style="font-size: 13px; line-height: 1.4; padding: 6px 8px; border: 1px solid #cccccc; white-space: nowrap;"><a href="{item.editUrl}"><f:translate key="linkvalidator2.messages:mail.column.edit" languageKey="{language}" /></a></td>
+                    </tr>
+                </f:for>
+            </tbody>
+        </table>
+        <f:if condition="{more}">
+            <p><f:translate key="linkvalidator2.messages:mail.more" languageKey="{language}" arguments="{more: more}" /></p>
+        </f:if>
     </f:if>
-</f:if>
-<f:if condition="{hasCsv}">
-    <p><f:translate key="linkvalidator2.messages:mail.attachment" languageKey="{language}" /></p>
-</f:if>
-<p><a href="{moduleUrl}"><f:translate key="linkvalidator2.messages:mail.openModule" languageKey="{language}" /></a></p>
-</f:spaceless>
+    <f:if condition="{hasCsv}">
+        <p><f:translate key="linkvalidator2.messages:mail.attachment" languageKey="{language}" /></p>
+    </f:if>
+    <p><a href="{moduleUrl}"><f:translate key="linkvalidator2.messages:mail.openModule" languageKey="{language}" /></a></p>
+</f:section>

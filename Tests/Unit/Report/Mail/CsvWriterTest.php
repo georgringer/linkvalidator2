@@ -24,7 +24,7 @@ use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 final class CsvWriterTest extends UnitTestCase
 {
-    private const HEADER = 'Page;"Page id";Table;Uid;Field;Language;Record;"Link text";Target;"Link type";Status;"Error type";Error;"Broken since";"Last seen";"Edit link";"Module link"';
+    private const HEADER = '"Page";"Page id";"Table";"Uid";"Field";"Language";"Record";"Link text";"Target";"Link type";"Status";"Error type";"Error";"Broken since";"Last seen";"Edit link";"Module link"';
 
     #[Test]
     public function outputStartsWithTheUtf8Bom(): void
@@ -45,7 +45,7 @@ final class CsvWriterTest extends UnitTestCase
 
         self::assertSame(
             self::HEADER . "\n"
-            . 'Home;1;tt_content;12;bodytext;0;Intro;Read;https://example.org/gone;url;broken;url.notFound;"Not found (404)";"2026-10-19 08:00:00";"2026-10-19 09:30:00";https://example.org/typo3/edit;https://example.org/typo3/module' . "\n",
+            . '"Home";1;"tt_content";12;"bodytext";0;"Intro";"Read";"https://example.org/gone";"url";"broken";"url.notFound";"Not found (404)";"2026-10-19 08:00:00";"2026-10-19 09:30:00";"https://example.org/typo3/edit";"https://example.org/typo3/module"' . "\n",
             $csv
         );
     }
@@ -61,9 +61,9 @@ final class CsvWriterTest extends UnitTestCase
     #[Test]
     public function valuesStartingWithFormulaCharactersAreNeutralised(): void
     {
-        foreach (['=SUM(A1)', '+1', '-1', '@x'] as $value) {
+        foreach (['=SUM(A1)', '@x', '+cmd', '-cmd'] as $value) {
             $csv = $this->withoutBom((new CsvWriter())->write([$this->item(linkText: $value, target: $value)]));
-            self::assertStringContainsString(";'" . $value . ";'" . $value . ';', $csv, $value);
+            self::assertStringContainsString(';"\'' . $value . '";"\'' . $value . '";', $csv, $value);
         }
     }
 

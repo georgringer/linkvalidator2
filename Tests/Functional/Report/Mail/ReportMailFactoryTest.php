@@ -22,7 +22,12 @@ use GeorgRinger\Linkvalidator2\Report\Mail\MailReportOptions;
 use GeorgRinger\Linkvalidator2\Report\Mail\ReportContent;
 use GeorgRinger\Linkvalidator2\Report\Mail\ReportMailFactory;
 use PHPUnit\Framework\Attributes\Test;
+use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\Mime\Address;
+use TYPO3\CMS\Core\Core\Environment;
+use TYPO3\CMS\Core\Core\SystemEnvironmentBuilder;
+use TYPO3\CMS\Core\Http\NormalizedParams;
+use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
 use TYPO3\CMS\Core\Mail\TemplatedEmailFactory;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
@@ -49,7 +54,7 @@ final class ReportMailFactoryTest extends FunctionalTestCase
         $email = $this->create(ReportContent::Attach, items: [], total: 3, csv: "csv-content");
 
         self::assertStringContainsString('3 broken links', (string)$email->getHtmlBody());
-        self::assertStringNotContainsString('<table', (string)$email->getHtmlBody());
+        self::assertStringNotContainsString('Broken since', (string)$email->getHtmlBody());
         self::assertCount(1, $email->getAttachments());
     }
 
@@ -127,6 +132,15 @@ final class ReportMailFactoryTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function theCoreLayoutNamesTheHostInTheFooter(): void
+    {
+        $email = $this->create(ReportContent::Inline, items: [], total: 1, csv: null, request: $this->createRequest());
+
+        self::assertStringContainsString('from URL: https://example.com/', (string)$email->getTextBody());
+        self::assertStringContainsString('href="https://example.com/"', (string)$email->getHtmlBody());
+    }
+
+    #[Test]
     public function theTextVersionIsNotHtmlEscaped(): void
     {
         $email = $this->create(ReportContent::Inline, items: [$this->item('https://example.org/?a=1&b=2')], total: 1, csv: null, pageTitle: 'Home "A" & B');
@@ -141,11 +155,20 @@ final class ReportMailFactoryTest extends FunctionalTestCase
     /**
      * @param list<MailReportItem> $items
      */
-    private function create(ReportContent $content, array $items, int $total, ?string $csv, ?string $subject = null, ?string $from = null, string $pageTitle = 'Home'): \TYPO3\CMS\Core\Mail\FluidEmail
+    private function create(ReportContent $content, array $items, int $total, ?string $csv, ?string $subject = null, ?string $from = null, string $pageTitle = 'Home', ?ServerRequestInterface $request = null): \TYPO3\CMS\Core\Mail\FluidEmail
     {
         $factory = new ReportMailFactory($this->get(TemplatedEmailFactory::class), $this->get(LanguageServiceFactory::class));
         $options = new MailReportOptions(['editor@example.org', 'lead@example.org'], $from, $subject, $content, 50, 'BrokenLinksReport', 'default');
-        return $factory->create($options, $pageTitle, $total, $items, $csv, 'https://example.com/typo3/module/link-management/linkvalidator2?id=1', self::NOW);
+        return $factory->create($options, $pageTitle, $total, $items, $csv, 'https://example.com/typo3/module/link-management/linkvalidator2?id=1', self::NOW, $request);
+    }
+
+    private function createRequest(): ServerRequestInterface
+    {
+        $publicPath = Environment::getPublicPath();
+        $request = new ServerRequest('https://example.com/', 'GET', 'php://input', [], ['HTTP_HOST' => 'example.com', 'HTTPS' => 'on', 'REQUEST_URI' => '/']);
+        return $request
+            ->withAttribute('applicationType', SystemEnvironmentBuilder::REQUESTTYPE_BE)
+            ->withAttribute('normalizedParams', new NormalizedParams($request->getServerParams(), $GLOBALS['TYPO3_CONF_VARS']['SYS'], $publicPath . '/index.php', $publicPath));
     }
 
     private function item(string $target, string $linkText = 'Read more'): MailReportItem

@@ -1,5 +1,6 @@
-<f:format.raw>{headline}
-
+<f:layout name="SystemEmail" />
+<f:section name="Title"><f:format.raw>{headline}</f:format.raw></f:section>
+<f:section name="Main"><f:format.raw>
 <f:translate key="linkvalidator2.messages:mail.summary" languageKey="{language}" arguments="{total: total, page: pageTitle}" />
 
 <f:for each="{items}" as="item">
@@ -12,4 +13,5 @@
 
 </f:if><f:if condition="{hasCsv}"><f:translate key="linkvalidator2.messages:mail.attachment" languageKey="{language}" />
 
-</f:if><f:translate key="linkvalidator2.messages:mail.openModule" languageKey="{language}" />: {moduleUrl}</f:format.raw>
+</f:if><f:translate key="linkvalidator2.messages:mail.openModule" languageKey="{language}" />: {moduleUrl}
+</f:format.raw></f:section>

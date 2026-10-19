@@ -19,7 +19,6 @@ namespace GeorgRinger\Linkvalidator2\Tests\Functional\Command;
 
 use GeorgRinger\Linkvalidator2\Command\ReportCommand;
 use GeorgRinger\Linkvalidator2\Report\ErrorMessageFormatter;
-use GeorgRinger\Linkvalidator2\Report\Mail\AgeParser;
 use GeorgRinger\Linkvalidator2\Report\Mail\BackendUrlFactory;
 use GeorgRinger\Linkvalidator2\Report\Mail\CsvWriter;
 use GeorgRinger\Linkvalidator2\Report\Mail\MailReportBuilder;
@@ -83,6 +82,7 @@ final class ReportCommandTest extends FunctionalTestCase
         self::assertSame('Broken links: Root', $this->sent[0]->getSubject());
         self::assertSame('editor@example.org', $this->sent[0]->getTo()[0]->getAddress());
         self::assertStringContainsString('https://example.org/gone', (string)$this->sent[0]->getTextBody());
+        self::assertStringContainsString('from URL: https://example.com/', (string)$this->sent[0]->getTextBody());
         self::assertCount(0, $this->sent[0]->getAttachments());
     }
 
@@ -289,7 +289,6 @@ final class ReportCommandTest extends FunctionalTestCase
                 $this->get(BrokenLinkRepository::class),
                 $this->get(PageRecordFinder::class),
                 $this->get(ErrorMessageFormatter::class),
-                new AgeParser(),
             ),
             new BackendUrlFactory($this->get(SiteFinder::class), $this->get(BackendEntryPointResolver::class), $this->get(Router::class)),
             new ReportMailFactory($this->get(TemplatedEmailFactory::class), $this->get(LanguageServiceFactory::class)),

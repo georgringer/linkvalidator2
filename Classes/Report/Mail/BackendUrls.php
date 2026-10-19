@@ -17,6 +17,7 @@ declare(strict_types=1);
 
 namespace GeorgRinger\Linkvalidator2\Report\Mail;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;
 
 /**
@@ -27,7 +28,16 @@ final readonly class BackendUrls
     public function __construct(
         private UriInterface $moduleUri,
         private UriInterface $editUri,
+        private ServerRequestInterface $request,
     ) {}
+
+    /**
+     * A request for the host of the backend, with its normalized params, for the layout of the mail
+     */
+    public function getRequest(): ServerRequestInterface
+    {
+        return $this->request;
+    }
 
     public function module(int $pageUid): string
     {

@@ -18,7 +18,6 @@ declare(strict_types=1);
 namespace GeorgRinger\Linkvalidator2\Tests\Functional\Report\Mail;
 
 use GeorgRinger\Linkvalidator2\Report\ErrorMessageFormatter;
-use GeorgRinger\Linkvalidator2\Report\Mail\AgeParser;
 use GeorgRinger\Linkvalidator2\Report\Mail\BackendUrls;
 use GeorgRinger\Linkvalidator2\Report\Mail\MailReportBuilder;
 use GeorgRinger\Linkvalidator2\Report\Mail\MailReportItem;
@@ -27,6 +26,7 @@ use GeorgRinger\Linkvalidator2\Report\ReportFilter;
 use GeorgRinger\Linkvalidator2\Repository\BrokenLinkRepository;
 use GeorgRinger\Linkvalidator2\Service\PageRecordFinder;
 use PHPUnit\Framework\Attributes\Test;
+use TYPO3\CMS\Core\Http\ServerRequest;
 use TYPO3\CMS\Core\Http\Uri;
 use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
@@ -172,13 +172,12 @@ final class MailReportBuilderTest extends FunctionalTestCase
             $this->get(BrokenLinkRepository::class),
             $this->get(PageRecordFinder::class),
             $this->get(ErrorMessageFormatter::class),
-            new AgeParser(),
         );
     }
 
     private function urls(): BackendUrls
     {
-        return new BackendUrls(new Uri('https://example.com/typo3/module/link-management/linkvalidator2'), new Uri('https://example.com/typo3/record/edit'));
+        return new BackendUrls(new Uri('https://example.com/typo3/module/link-management/linkvalidator2'), new Uri('https://example.com/typo3/record/edit'), new ServerRequest('https://example.com/'));
     }
 
     private function request(int $pageUid = 1, int $depth = 0, array $includeTables = [], array $excludeTables = [], ?string $minAge = null, ?string $maxAge = null): MailReportRequest

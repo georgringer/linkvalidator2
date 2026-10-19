@@ -17,6 +17,7 @@ declare(strict_types=1);
 
 namespace GeorgRinger\Linkvalidator2\Report\Mail;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Symfony\Component\Mime\Address;
 use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
 use TYPO3\CMS\Core\Mail\FluidEmail;
@@ -33,12 +34,13 @@ final readonly class ReportMailFactory
      * @param list<MailReportItem> $inline The links listed in the text, at most the inline limit
      * @param int $total All links of the report, also those not listed
      * @param string|null $csv Attached if not null
+     * @param ServerRequestInterface|null $request For the host in the layout of the mail
      */
-    public function create(MailReportOptions $options, string $pageTitle, int $total, array $inline, ?string $csv, string $moduleUrl, int $now): FluidEmail
+    public function create(MailReportOptions $options, string $pageTitle, int $total, array $inline, ?string $csv, string $moduleUrl, int $now, ?ServerRequestInterface $request = null): FluidEmail
     {
         $subject = $options->subject
             ?? sprintf($this->languageServiceFactory->create($options->language)->sL('linkvalidator2.messages:mail.subject'), $pageTitle);
-        $email = $this->templatedEmailFactory->create();
+        $email = $this->templatedEmailFactory->create($request);
         $email
             ->to(...array_map(static fn(string $address): Address => new Address($address), $options->to))
             ->subject($subject)

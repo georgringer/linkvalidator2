@@ -19,6 +19,7 @@ namespace GeorgRinger\Linkvalidator2\Report\Mail;
 
 use TYPO3\CMS\Backend\Routing\Router;
 use TYPO3\CMS\Core\Core\Environment;
+use TYPO3\CMS\Core\Core\SystemEnvironmentBuilder;
 use TYPO3\CMS\Core\Exception\SiteNotFoundException;
 use TYPO3\CMS\Core\Http\NormalizedParams;
 use TYPO3\CMS\Core\Http\ServerRequest;
@@ -59,6 +60,7 @@ final readonly class BackendUrlFactory
         return new BackendUrls(
             $this->backendEntryPointResolver->getUriFromRequest($request, ltrim($this->router->getRoute(self::MODULE_ROUTE)->getPath(), '/')),
             $this->backendEntryPointResolver->getUriFromRequest($request, ltrim($this->router->getRoute(self::EDIT_ROUTE)->getPath(), '/')),
+            $request,
         );
     }
 
@@ -77,9 +79,8 @@ final readonly class BackendUrlFactory
             'SCRIPT_FILENAME' => $publicPath . '/index.php',
             'DOCUMENT_ROOT' => $publicPath,
         ]);
-        return $request->withAttribute(
-            'normalizedParams',
-            new NormalizedParams($request->getServerParams(), $GLOBALS['TYPO3_CONF_VARS']['SYS'], $publicPath . '/index.php', $publicPath)
-        );
+        return $request
+            ->withAttribute('applicationType', SystemEnvironmentBuilder::REQUESTTYPE_BE)
+            ->withAttribute('normalizedParams', new NormalizedParams($request->getServerParams(), $GLOBALS['TYPO3_CONF_VARS']['SYS'], $publicPath . '/index.php', $publicPath));
     }
 }

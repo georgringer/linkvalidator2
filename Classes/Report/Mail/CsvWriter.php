@@ -17,8 +17,11 @@ declare(strict_types=1);
 
 namespace GeorgRinger\Linkvalidator2\Report\Mail;
 
+use TYPO3\CMS\Core\Utility\CsvUtility;
+
 /**
- * A result of the mail report as an Excel friendly CSV: UTF-8 with BOM, separated by semicolons.
+ * A result of the mail report as an Excel friendly CSV: UTF-8 with BOM, separated by semicolons. Text that a
+ * spreadsheet would run as a formula gets a leading quote.
  */
 final readonly class CsvWriter
 {
@@ -32,49 +35,33 @@ final readonly class CsvWriter
      */
     public function write(iterable $items): string
     {
-        $stream = fopen('php://temp', 'r+');
-        fwrite($stream, "\xEF\xBB\xBF");
-        $this->putRow($stream, self::HEADER);
+        $csv = "\xEF\xBB\xBF" . $this->row(self::HEADER);
         foreach ($items as $item) {
-            $this->putRow($stream, [
-                $this->text($item->pageTitle),
+            $csv .= $this->row([
+                $item->pageTitle,
                 $item->pageUid,
                 $item->table,
                 $item->uid,
                 $item->field,
                 $item->language,
-                $this->text($item->recordTitle),
-                $this->text($item->linkText),
-                $this->text($item->target),
+                $item->recordTitle,
+                $item->linkText,
+                $item->target,
                 $item->linkType,
                 $item->status,
                 $item->errorType,
-                $this->text($item->errorMessage),
+                $item->errorMessage,
                 gmdate('Y-m-d H:i:s', $item->firstDetected),
                 gmdate('Y-m-d H:i:s', $item->lastSeen),
                 $item->editUrl,
                 $item->moduleUrl,
             ]);
         }
-        rewind($stream);
-        $csv = (string)stream_get_contents($stream);
-        fclose($stream);
         return $csv;
     }
 
-    /**
-     * @param resource $stream
-     */
-    private function putRow($stream, array $row): void
+    private function row(array $cells): string
     {
-        fputcsv($stream, $row, ';', '"', '');
-    }
-
-    /**
-     * A spreadsheet would run text starting with one of these characters as a formula.
-     */
-    private function text(string $value): string
-    {
-        return $value !== '' && str_contains("=+-@\t\r", $value[0]) ? "'" . $value : $value;
+        return CsvUtility::csvValues($cells, ';', '"', CsvUtility::TYPE_PREFIX_CONTROLS) . "\n";
     }
 }

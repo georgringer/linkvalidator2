@@ -38,7 +38,6 @@ final class MailReportBuilder
         private readonly BrokenLinkRepository $brokenLinkRepository,
         private readonly PageRecordFinder $pageRecordFinder,
         private readonly ErrorMessageFormatter $errorMessageFormatter,
-        private readonly AgeParser $ageParser,
     ) {}
 
     public function count(MailReportRequest $request, int $now): int
@@ -75,11 +74,7 @@ final class MailReportBuilder
 
     private function createQuery(MailReportRequest $request, int $now): BrokenLinkQuery
     {
-        $detectedSince = $request->maxAge !== null ? $this->ageParser->toTimestamp($request->maxAge, $now) : null;
-        $detectedBefore = $request->minAge !== null ? $this->ageParser->toTimestamp($request->minAge, $now) : null;
-        if ($detectedSince !== null && $detectedBefore !== null && $detectedBefore < $detectedSince) {
-            throw new \InvalidArgumentException(sprintf('No link can be broken for at least "%s" and at most "%s".', $request->minAge, $request->maxAge), 1792436301);
-        }
+        [$detectedSince, $detectedBefore] = $request->getDetectedRange($now);
         return new BrokenLinkQuery(
             $this->pageRecordFinder->findPageIds($request->pageUid, $request->depth),
             $request->filter,

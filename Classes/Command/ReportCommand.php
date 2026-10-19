@@ -160,6 +160,7 @@ final class ReportCommand extends Command
             $csv,
             $urls->module($pageUid),
             $now,
+            $urls->getRequest(),
         );
         try {
             $this->mailer->send($email);

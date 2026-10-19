@@ -39,4 +39,38 @@ final readonly class MailReportRequest
         public ?string $minAge = null,
         public ?string $maxAge = null,
     ) {}
+
+    /**
+     * The times a link may have been first detected: not before the first value (from --max-age), not
+     * after the second one (from --min-age).
+     *
+     * @return array{0: int|null, 1: int|null}
+     * @throws \InvalidArgumentException If an age cannot be used or no link can be broken that long
+     */
+    public function getDetectedRange(int $now): array
+    {
+        $since = $this->maxAge !== null ? $this->toTimestamp($this->maxAge, $now) : null;
+        $before = $this->minAge !== null ? $this->toTimestamp($this->minAge, $now) : null;
+        if ($since !== null && $before !== null && $before < $since) {
+            throw new \InvalidArgumentException(sprintf('No link can be broken for at least "%s" and at most "%s".', $this->minAge, $this->maxAge), 1792436301);
+        }
+        return [$since, $before];
+    }
+
+    private function toTimestamp(string $age, int $now): int
+    {
+        try {
+            $interval = \DateInterval::createFromDateString(trim($age));
+        } catch (\Throwable) {
+            $interval = false;
+        }
+        if ($interval === false || trim($age) === '') {
+            throw new \InvalidArgumentException(sprintf('"%s" is not an age like "7 days" or "12 hours".', $age), 1792435848);
+        }
+        $timestamp = (new \DateTimeImmutable('@' . $now))->sub($interval)->getTimestamp();
+        if ($timestamp >= $now) {
+            throw new \InvalidArgumentException(sprintf('The age "%s" must be longer than zero.', $age), 1792435862);
+        }
+        return $timestamp;
+    }
 }
