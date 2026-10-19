@@ -164,7 +164,7 @@ solved ones in `done/`.
 | Site name in the mail, links to edit / to the module | ❌ no absolute backend URLs in CLI | ❓ | ✅ subject "Broken links: <page title>" or `--subject`; absolute links to edit the record and to the module, from the site of the page and a `BE/entryPoint` given as URL (`--base-url` for pages without a site) | | #106487, #106677 |
 | Full, clickable target URL in the mail | ❌ cropped to 15 characters | ❓ | ✅ complete and linked in the HTML part, complete in the text part and the CSV | | #106677 |
 | **Configuration** | | | | | |
-| Where | Page TSconfig + scheduler task field | Page TSconfig + extension configuration | extension configuration | 📋 global (extension configuration) + per site (site settings), no Page TSconfig | #96447 |
+| Where | Page TSconfig + scheduler task field | Page TSconfig + extension configuration | extension configuration | 📋 global (extension configuration) + per site (site settings), no Page TSconfig except `mod.linkvalidator2.pageModuleCallout` | #96447 |
 | **Extensibility** | | | | | |
 | Custom link types | ✅ `LinktypeInterface` | ✅ link types | ✅ checker per `LinkService` type, autoconfigured for every extension; several checkers per type form a chain ordered by tag `priority` (`unknown` and `skip` hand over to the next); links of a registered link handler without checker are skipped | 📋 labels for custom error types, see `Documentation/todo.md` | #94086 |
 | PSR-14 events | ✅ 2 events | 🟡 | ❌ | 📋 later, only where needed | |

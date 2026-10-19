@@ -403,7 +403,7 @@ Forge-Issues je Schritt (Analyse in `Resources/Private/Issues/`, Stand 2026-10-1
 - [x] Redirect-Hinweis: Status „notice“ für URLs, die ein TYPO3-Redirect (`sys_redirect`) weiterleitet (`ExternalUrlChecker`);
       andere Redirects werden nicht gemeldet.
 - [x] Warnung „Ziel noch nicht sichtbar“ (starttime in Zukunft): `page.notYetVisible`.
-- [ ] Seitenmodul-Callout „N kaputte Links auf dieser Seite“.
+- [x] Seitenmodul-Callout „N kaputte Links auf dieser Seite“ (2026-10-19, `PageModuleCalloutListener`, Event `ModifyPageLayoutContentEvent`).
 - [ ] Hinweis im Bearbeitungsformular (FormEngine).
 - [ ] Modul: nach „Seite prüfen“ zeigen, welche Datensätze geprüft wurden (nicht nur Anzahl).
 - [x] Dashboard-Widget (`BrokenLinksWidget`).
