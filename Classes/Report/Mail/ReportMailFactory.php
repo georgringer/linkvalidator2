@@ -39,7 +39,7 @@ final readonly class ReportMailFactory
     public function create(MailReportOptions $options, string $pageTitle, int $total, array $inline, ?string $csv, string $moduleUrl, int $now, ?ServerRequestInterface $request = null): FluidEmail
     {
         $subject = $options->subject
-            ?? sprintf($this->languageServiceFactory->create($options->language)->sL('linkvalidator2.messages:mail.subject'), $pageTitle);
+            ?? (string)$this->languageServiceFactory->create($options->language)->label('linkvalidator2.messages:mail.subject', ['page' => $pageTitle]);
         $email = $this->templatedEmailFactory->create($request);
         $email
             ->to(...array_map(static fn(string $address): Address => new Address($address), $options->to))

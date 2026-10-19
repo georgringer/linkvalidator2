@@ -30,6 +30,7 @@ final class ErrorMessageFormatterTest extends FunctionalTestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->importCSVDataSet(__DIR__ . '/../Fixtures/pages.csv');
         $GLOBALS['LANG'] = $this->get(LanguageServiceFactory::class)->create('en');
     }
 
@@ -39,6 +40,10 @@ final class ErrorMessageFormatterTest extends FunctionalTestCase
         yield 'http status' => ['url.httpStatus', ['httpStatus' => 418], 'Server responded with HTTP 418'];
         yield 'timeout' => ['url.timeout', ['seconds' => 10], 'Server did not respond within 10 seconds'];
         yield 'start time' => ['page.notYetVisible', ['starttime' => 2145916800], 'Linked page is not online yet, it is published on ' . date('d.m.Y H:i', 2145916800) . ' (start time)'];
+        yield 'start time of a parent page' => ['page.notYetVisible', ['starttime' => 2145916800, 'parentPage' => 1], 'Linked page is not online yet, it is published on ' . date('d.m.Y H:i', 2145916800) . ' (start time), set on the parent page "Root" for its subpages'];
+        yield 'hidden by a parent page' => ['page.hiddenByParent', ['parentPage' => 1], 'Linked page is hidden by its parent page "Root", which is hidden including subpages'];
+        yield 'access restriction of a parent page' => ['page.accessRestricted', ['parentPage' => 1], 'Linked page is only visible to logged-in website users (access restriction), set on the parent page "Root" for its subpages'];
+        yield 'access restriction of the page' => ['page.accessRestricted', ['page' => 1], 'Linked page is only visible to logged-in website users (access restriction)'];
         yield 'without placeholder' => ['page.hidden', ['page' => 1], 'Linked page is hidden'];
     }
 

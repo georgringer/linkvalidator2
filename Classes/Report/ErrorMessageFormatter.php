@@ -32,11 +32,11 @@ final readonly class ErrorMessageFormatter
     ) {}
 
     /**
-     * Arguments of the error labels: 1. HTTP status, code, date or parent page title, 2. a hint that a
-     * notice comes from a parent page.
+     * Named arguments of the error labels: "value" is the HTTP status, code, seconds, date or parent page title,
+     * "byParent" a hint that a notice comes from a parent page.
      *
      * @param array<int, string> $pageTitles titles of pages already looked up, extended by this call
-     * @return array{0: string, 1: string}
+     * @return array{value: string, byParent: string}
      */
     public function getArguments(string $errorType, array $details, array &$pageTitles = []): array
     {
@@ -52,18 +52,14 @@ final readonly class ErrorMessageFormatter
             default => (string)($details['httpStatus'] ?? $details['code'] ?? $details['seconds'] ?? ''),
         };
         $byParent = $parentTitle !== '' && in_array($errorType, ['page.accessRestricted', 'page.notYetVisible', 'page.visibleUntil'], true)
-            ? sprintf($this->getLanguageService()->sL('linkvalidator2.messages:error.byParentPage'), $parentTitle)
+            ? (string)$this->getLanguageService()->label('linkvalidator2.messages:error.byParentPage', ['page' => $parentTitle])
             : '';
-        return [$first, $byParent];
+        return ['value' => $first, 'byParent' => $byParent];
     }
 
     public function format(string $errorType, array $details): string
     {
-        $label = $this->getLanguageService()->sL('linkvalidator2.messages:error.' . $errorType);
-        if ($label === '') {
-            return $errorType;
-        }
-        return vsprintf($label, $this->getArguments($errorType, $details));
+        return (string)$this->getLanguageService()->label('linkvalidator2.messages:error.' . $errorType, $this->getArguments($errorType, $details), $errorType);
     }
 
     private function getLanguageService(): LanguageService

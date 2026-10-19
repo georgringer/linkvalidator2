@@ -18,7 +18,7 @@
             <f:if condition="{rows}">
                 <f:then>
                     <p>
-                        <f:translate key="linkvalidator2.widget:summary" arguments="{0: total, 1: pageTitle}" />
+                        <f:translate key="linkvalidator2.widget:summary" arguments="{total: total, page: pageTitle}" />
                     </p>
                     <div class="widget-table-wrapper">
                         <table class="widget-table table table-striped table-hover">
@@ -45,7 +45,7 @@
                     </div>
                 </f:then>
                 <f:else>
-                    <p><f:translate key="linkvalidator2.widget:empty" arguments="{0: pageTitle}" /></p>
+                    <p><f:translate key="linkvalidator2.widget:empty" arguments="{page: pageTitle}" /></p>
                 </f:else>
             </f:if>
         </f:defaultCase>

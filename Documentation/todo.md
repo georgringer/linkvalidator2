@@ -47,9 +47,12 @@ The chapter "For integrators" is written (`Documentation/ForIntegrators/`, rende
   found through the reference index: the next background run or "Check links" reports the
   link. Keep the reference index up to date after imports around the DataHandler.
 
-- Extension configuration: `excludedFields`, `externalCacheLifetime`,
+- Page module callout (a listener for `ModifyPageLayoutContentEvent`): the number of broken links of the page, off by the
+  extension configuration `pageModuleCallout` or Page TSconfig `mod.linkvalidator2.pageModuleCallout = 0`; the TSconfig wins in
+  both directions, so it also switches the callout on in a page tree where it is off globally.
+- Extension configuration: `pageModuleCallout`, `excludedFields`, `externalCacheLifetime`,
   `externalTimeout`, `externalUserAgent`, `allowManualCheck`.
-- No Page TSconfig any more (`mod.linkvalidator.*`), migration table in the breaking
+- No Page TSconfig any more for the checks (`mod.linkvalidator.*`; only `mod.linkvalidator2.pageModuleCallout` exists), migration table in the breaking
   changelog.
 - Message queue: `linkvalidator2:fillqueue <page>` fills the core's messenger queue, `messenger:consume
   doctrine` works it off (cron or systemd, not the scheduler without `--time-limit`); messages are routed

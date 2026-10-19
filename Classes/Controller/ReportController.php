@@ -300,7 +300,7 @@ final readonly class ReportController
             $options = [['type' => 'url', 'value' => $url, 'label' => $languageService->sL('linkvalidator2.messages:report.ignore.url')]];
             $host = (string)parse_url($url, PHP_URL_HOST);
             if ($host !== '') {
-                $options[] = ['type' => 'url', 'value' => $host, 'label' => sprintf($languageService->sL('linkvalidator2.messages:report.ignore.domain'), $host)];
+                $options[] = ['type' => 'url', 'value' => $host, 'label' => (string)$languageService->label('linkvalidator2.messages:report.ignore.domain', ['domain' => $host])];
             }
             return $options;
         }

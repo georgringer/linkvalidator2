@@ -105,6 +105,14 @@ final class ReportControllerTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function ignoringOffersTheDomainOfAnExternalLink(): void
+    {
+        $this->insertResult(2, 12, 0);
+
+        self::assertStringContainsString('Ignore the domain example.org on this page and its subpages', $this->render(2));
+    }
+
+    #[Test]
     public function theLanguageFilterOffersTheLanguagesOfTheResults(): void
     {
         $this->insertResult(2, 12, 0);

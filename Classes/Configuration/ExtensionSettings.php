@@ -38,6 +38,11 @@ final readonly class ExtensionSettings
         return (bool)(int)$this->get('allowManualCheck', '1');
     }
 
+    public function isPageModuleCalloutEnabled(): bool
+    {
+        return (bool)(int)$this->get('pageModuleCallout', '1');
+    }
+
     public function getExternalCacheLifetime(): int
     {
         return max(0, (int)$this->get('externalCacheLifetime', '168')) * 3600;

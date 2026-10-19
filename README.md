@@ -54,6 +54,7 @@ choose the levels and press *Check*.
 Configuration (extension configuration): `excludedFields` – comma-separated
 `table.field` or `table.*` that are never checked; `externalCacheLifetime` (hours),
 `externalTimeout` (seconds) and `externalUserAgent` for external URLs;
+`pageModuleCallout` (default on) – the callout with the broken links of a page in the page module, Page TSconfig `mod.linkvalidator2.pageModuleCallout` overrides it;
 `allowManualCheck` (default on) – switch off to hide the check buttons in the module
 and deny the AJAX endpoints, e.g. when links are only checked by the command.
 
@@ -157,7 +158,7 @@ solved ones in `done/`.
 | Workspace users | ❌ live users only | ❓ | ❌ `workspaces => live` | 📋 part of the workspace support, which is required, see the row Workspaces | #107983 |
 | **Visibility elsewhere** | | | | | |
 | Markers in the rich text editor | 🟡 page missing/hidden, file, known external | 🟡 similar | ✅ same checkers as the report, external from cache; page of the edited record from the form request (Page TSconfig `TCEMAIN.linkHandler`), record links to an unknown table never marked | | |
-| Page module callout | ❌ | ✅ with EXT:page_callouts | ❌ | 📋 later | |
+| Page module callout | ❌ | ✅ with EXT:page_callouts | ✅ own listener for the core event `ModifyPageLayoutContentEvent`: a callout above the page module with the number of broken links of the page (not its subpages) and a link to the report, only what the user may fix, not in a workspace; off by extension configuration `pageModuleCallout`, per page tree by Page TSconfig `mod.linkvalidator2.pageModuleCallout = 0` or `1` (which also switches it on where it is off globally) | | |
 | **Reporting** | | | | | |
 | E-mail report | ✅ full list after each run | ✅ | ✅ `linkvalidator2:report <page>` (via "Execute console commands", one entry per area and recipient): a page with `--depth`, filtered like the module (`--status` broken by default, `--link-type`, `--language`, `--search`, `--include-tables` / `--exclude-tables`) and by the time a link is broken (`--min-age` for a reminder, `--max-age` for the new ones); `--content=inline\|attach\|both` lists the oldest links in the text (`--inline-limit`, 50) and/or attaches all of them with every column as CSV; no mail without links unless `--send-empty`; no state is kept, so a link can be in several mails; the tables lists do not replace permissions | 📋 "changes since last report" (needs a state) | #106487 |
 | Site name in the mail, links to edit / to the module | ❌ no absolute backend URLs in CLI | ❓ | ✅ subject "Broken links: <page title>" or `--subject`; absolute links to edit the record and to the module, from the site of the page and a `BE/entryPoint` given as URL (`--base-url` for pages without a site) | | #106487, #106677 |

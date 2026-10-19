@@ -7,7 +7,7 @@
         <source>Broken links</source>
       </trans-unit>
       <trans-unit id="report.headlineWithPageTitle">
-        <source>Broken links on "%s"</source>
+        <source>Broken links on "{page}"</source>
       </trans-unit>
       <trans-unit id="report.empty">
         <source>No broken links found.</source>
@@ -82,31 +82,31 @@
         <source>Linked page is a folder or spacer without frontend output</source>
       </trans-unit>
       <trans-unit id="error.page.hiddenByParent">
-        <source>Linked page is hidden by its parent page "%1$s", which is hidden including subpages</source>
+        <source>Linked page is hidden by its parent page "{value}", which is hidden including subpages</source>
       </trans-unit>
       <trans-unit id="error.page.expiredByParent">
-        <source>Linked page is offline, the stop time of its parent page "%1$s" applies to subpages and has passed</source>
+        <source>Linked page is offline, the stop time of its parent page "{value}" applies to subpages and has passed</source>
       </trans-unit>
       <trans-unit id="error.page.targetNotReachable">
         <source>Linked shortcut or link page leads nowhere, its target is not reachable</source>
       </trans-unit>
       <trans-unit id="error.page.notReachable">
-        <source>Linked page is not delivered by the frontend (code %1$s)</source>
+        <source>Linked page is not delivered by the frontend (code {value})</source>
       </trans-unit>
       <trans-unit id="error.page.noSite">
         <source>Linked page does not belong to a site</source>
       </trans-unit>
       <trans-unit id="error.page.accessRestricted">
-        <source>Linked page is only visible to logged-in website users (access restriction)%2$s</source>
+        <source>Linked page is only visible to logged-in website users (access restriction){byParent}</source>
       </trans-unit>
       <trans-unit id="error.page.notYetVisible">
-        <source>Linked page is not online yet, it is published on %1$s (start time)%2$s</source>
+        <source>Linked page is not online yet, it is published on {value} (start time){byParent}</source>
       </trans-unit>
       <trans-unit id="error.page.visibleUntil">
-        <source>Linked page goes offline on %1$s (stop time)%2$s</source>
+        <source>Linked page goes offline on {value} (stop time){byParent}</source>
       </trans-unit>
       <trans-unit id="error.byParentPage">
-        <source>, set on the parent page "%s" for its subpages</source>
+        <source>, set on the parent page "{page}" for its subpages</source>
       </trans-unit>
       <trans-unit id="error.record.missing">
         <source>Linked record does not exist (deleted)</source>
@@ -187,7 +187,7 @@
         <source>Results</source>
       </trans-unit>
       <trans-unit id="report.lastChecked">
-        <source>Last check: %s</source>
+        <source>Last check: {date}</source>
       </trans-unit>
       <trans-unit id="report.notChecked">
         <source>Not checked yet</source>
@@ -226,22 +226,22 @@
         <source>Invalid link</source>
       </trans-unit>
       <trans-unit id="pagination.records">
-        <source>%1$d–%2$d of %3$d</source>
+        <source>{start}–{end} of {total}</source>
       </trans-unit>
       <trans-unit id="error.url.notFound">
-        <source>Page not found (HTTP %s)</source>
+        <source>Page not found (HTTP {value})</source>
       </trans-unit>
       <trans-unit id="error.url.gone">
-        <source>Page removed permanently (HTTP %s)</source>
+        <source>Page removed permanently (HTTP {value})</source>
       </trans-unit>
       <trans-unit id="error.url.unknownHost">
         <source>Domain does not exist</source>
       </trans-unit>
       <trans-unit id="error.url.httpStatus">
-        <source>Server responded with HTTP %s</source>
+        <source>Server responded with HTTP {value}</source>
       </trans-unit>
       <trans-unit id="error.url.timeout">
-        <source>Server did not respond within %s seconds</source>
+        <source>Server did not respond within {value} seconds</source>
       </trans-unit>
       <trans-unit id="error.url.tlsError">
         <source>Secure connection failed (TLS)</source>
@@ -319,7 +319,7 @@
         <source>Ignore this URL (and what starts with it) on this page and its subpages</source>
       </trans-unit>
       <trans-unit id="report.ignore.domain">
-        <source>Ignore the domain %s on this page and its subpages</source>
+        <source>Ignore the domain {domain} on this page and its subpages</source>
       </trans-unit>
       <trans-unit id="report.ignore.page">
         <source>Ignore links to this page on this page and its subpages</source>
@@ -343,7 +343,7 @@
         <source>Back to report</source>
       </trans-unit>
       <trans-unit id="exclusions.headlineWithPageTitle">
-        <source>Link check exclusions for "%1$s"</source>
+        <source>Link check exclusions for "{page}"</source>
       </trans-unit>
       <trans-unit id="exclusions.intro">
         <source>Exclusions apply to links in records on the page they are stored on and on its subpages. Excluded links are neither checked nor reported.</source>
@@ -364,7 +364,7 @@
         <source>Only http and https URLs can be checked</source>
       </trans-unit>
       <trans-unit id="mail.subject">
-        <source>Broken links: %s</source>
+        <source>Broken links: {page}</source>
       </trans-unit>
       <trans-unit id="mail.summary">
         <source>{total, plural, =0 {No broken links} one {# broken link} other {# broken links}} in the area of "{page}".</source>
@@ -389,6 +389,12 @@
       </trans-unit>
       <trans-unit id="mail.openModule">
         <source>Open the report in the backend</source>
+      </trans-unit>
+      <trans-unit id="callout.title">
+        <source>{count, plural, one {# broken link} other {# broken links}} on this page</source>
+      </trans-unit>
+      <trans-unit id="callout.open">
+        <source>Show them in the report</source>
       </trans-unit>
     </body>
   </file>

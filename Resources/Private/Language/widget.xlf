@@ -52,7 +52,7 @@
         <source>You do not have access to the selected page.</source>
       </trans-unit>
       <trans-unit id="summary">
-        <source>%1$d broken links below "%2$s"</source>
+        <source>{total, plural, one {# broken link} other {# broken links}} below "{page}"</source>
       </trans-unit>
       <trans-unit id="column.type">
         <source>Type of link</source>
@@ -61,7 +61,7 @@
         <source>Broken links</source>
       </trans-unit>
       <trans-unit id="empty">
-        <source>No broken links below "%1$s".</source>
+        <source>No broken links below "{page}".</source>
       </trans-unit>
       <trans-unit id="openReport">
         <source>Open the report</source>

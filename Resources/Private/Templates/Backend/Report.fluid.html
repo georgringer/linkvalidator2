@@ -9,7 +9,7 @@
 <f:section name="Content">
     <f:if condition="{pageTitle}">
         <f:then>
-            <h1><f:translate key="linkvalidator2.messages:report.headlineWithPageTitle" arguments="{0: pageTitle}" /></h1>
+            <h1><f:translate key="linkvalidator2.messages:report.headlineWithPageTitle" arguments="{page: pageTitle}" /></h1>
             <f:if condition="{manualCheckAllowed}">
                 <div class="mb-3">
                     <div class="form-check">
@@ -177,7 +177,7 @@
                             </f:then>
                             <f:else if="{lastChecked}">
                                 <f:be.infobox title="{f:translate(key: 'linkvalidator2.messages:report.empty')}" state="{f:constant(name: 'TYPO3\CMS\Core\Type\ContextualFeedbackSeverity::OK')}">
-                                    <f:translate key="linkvalidator2.messages:report.lastChecked" arguments="{0: '{lastChecked -> f:format.date(format: \'d.m.Y H:i\')}'}" />
+                                    <f:translate key="linkvalidator2.messages:report.lastChecked" arguments="{date: '{lastChecked -> f:format.date(format: \'d.m.Y H:i\')}'}" />
                                 </f:be.infobox>
                             </f:else>
                             <f:else>
