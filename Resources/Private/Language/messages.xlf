@@ -60,6 +60,9 @@
       <trans-unit id="report.column.link">
         <source>Link</source>
       </trans-unit>
+      <trans-unit id="report.column.status">
+        <source>Status</source>
+      </trans-unit>
       <trans-unit id="report.column.problem">
         <source>Problem</source>
       </trans-unit>
@@ -176,6 +179,9 @@
       </trans-unit>
       <trans-unit id="filter.all">
         <source>All</source>
+      </trans-unit>
+      <trans-unit id="filter.groupByPage">
+        <source>Group by page</source>
       </trans-unit>
       <trans-unit id="filter.submit">
         <source>Filter</source>

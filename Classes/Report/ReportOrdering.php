@@ -40,6 +40,7 @@ final readonly class ReportOrdering
     public function __construct(
         public string $field = self::DEFAULT_FIELD,
         public bool $descending = false,
+        public bool $groupByPage = false,
     ) {}
 
     public static function fromModuleData(ModuleData $moduleData): self
@@ -48,6 +49,7 @@ final readonly class ReportOrdering
         return new self(
             isset(self::FIELDS[$field]) ? $field : self::DEFAULT_FIELD,
             $moduleData->get('orderDirection') === 'desc',
+            (bool)$moduleData->get('groupByPage', false),
         );
     }
 
@@ -56,7 +58,8 @@ final readonly class ReportOrdering
      */
     public function getColumns(): array
     {
-        return self::FIELDS[$this->field];
+        $columns = self::FIELDS[$this->field];
+        return $this->groupByPage && $this->field !== 'page' ? ['b.pid', ...$columns] : $columns;
     }
 
     public function getDirection(): string

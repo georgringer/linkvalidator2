@@ -36,6 +36,13 @@
                         <input type="search" id="linkvalidator2-filter-search" name="search" value="{filter.search}" class="form-control">
                     </div>
                     <div class="form-group">
+                        <input type="hidden" name="groupByPage" value="0">
+                        <div class="form-check">
+                            <input type="checkbox" id="linkvalidator2-group-by-page" name="groupByPage" value="1" class="form-check-input" {f:if(condition: groupByPage, then: 'checked')}>
+                            <label for="linkvalidator2-group-by-page" class="form-check-label"><f:translate key="linkvalidator2.messages:filter.groupByPage" /></label>
+                        </div>
+                    </div>
+                    <div class="form-group">
                         <button type="submit" class="btn btn-default"><f:translate key="linkvalidator2.messages:filter.submit" /></button>
                         <f:if condition="{filter.active}">
                             <a href="{resetFilterUrl}" class="btn btn-link"><f:translate key="linkvalidator2.messages:filter.reset" /></a>
@@ -89,30 +96,38 @@
                             </thead>
                             <tbody>
                                 <f:for each="{brokenLinks}" as="brokenLink">
+                                    <f:if condition="{brokenLink.newPage}">
+                                        <tr class="table-secondary">
+                                            <th colspan="{columnCount}" scope="colgroup">
+                                                <a href="#" data-contextmenu-trigger="click" data-contextmenu-table="pages" data-contextmenu-uid="{brokenLink.pid}"><core:iconForRecord table="pages" row="{brokenLink.pageRecord}" /></a>
+                                                {brokenLink.pageTitle} <small class="fw-normal">[{brokenLink.pid}]</small>
+                                            </th>
+                                        </tr>
+                                    </f:if>
                                     <tr>
-                                        <td>
-                                            <a href="#" data-contextmenu-trigger="click" data-contextmenu-table="pages" data-contextmenu-uid="{brokenLink.pid}"><core:iconForRecord table="pages" row="{brokenLink.pageRecord}" /></a>
-                                            {brokenLink.pageTitle}<br><small>{brokenLink.pid}</small>
-                                        </td>
+                                        <f:if condition="!{groupByPage}">
+                                            <td>
+                                                <a href="#" data-contextmenu-trigger="click" data-contextmenu-table="pages" data-contextmenu-uid="{brokenLink.pid}"><core:iconForRecord table="pages" row="{brokenLink.pageRecord}" /></a>
+                                                {brokenLink.pageTitle}<br><small>{brokenLink.pid}</small>
+                                            </td>
+                                        </f:if>
                                         <td>
                                             <f:if condition="{brokenLink.record}"><a href="#" data-contextmenu-trigger="click" data-contextmenu-table="{brokenLink.table_name}" data-contextmenu-uid="{brokenLink.record_uid}"><core:iconForRecord table="{brokenLink.table_name}" row="{brokenLink.record}" /></a></f:if>
                                             <f:if condition="{brokenLink.languageFlag}"><core:icon identifier="{brokenLink.languageFlag}" size="small" title="{brokenLink.languageTitle}" /></f:if>
                                             <a href="{brokenLink.editUrl}"><f:format.crop maxCharacters="50" append="…">{brokenLink.recordTitle}</f:format.crop></a>
                                             <br><small>{brokenLink.table_name}:{brokenLink.record_uid} · {brokenLink.field}</small>
                                         </td>
-                                        <td>
+                                        <td style="min-width: 16rem">
                                             <f:if condition="{brokenLink.targetUrl}">
-                                                <f:then><a href="{brokenLink.targetUrl}" target="_blank" rel="noopener noreferrer"><code>{brokenLink.link_string}</code></a></f:then>
-                                                <f:else><code>{brokenLink.link_string}</code></f:else>
+                                                <f:then><a href="{brokenLink.targetUrl}" target="_blank" rel="noopener noreferrer"><code class="text-reset text-break">{brokenLink.link_string}</code></a></f:then>
+                                                <f:else><code class="text-reset text-break">{brokenLink.link_string}</code></f:else>
                                             </f:if>
                                             <f:if condition="{brokenLink.link_text}">
-                                                <br><small>{brokenLink.link_text}</small>
+                                                <br><small class="text-body-secondary">{brokenLink.link_text}</small>
                                             </f:if>
                                         </td>
-                                        <td>
-                                            <span class="badge {brokenLink.statusClass}"><f:translate key="linkvalidator2.messages:status.{brokenLink.status}" /></span>
-                                            <f:translate key="linkvalidator2.messages:error.{brokenLink.error_type}" arguments="{brokenLink.messageArguments}" default="{brokenLink.error_type}" />
-                                        </td>
+                                        <td class="text-nowrap"><span class="badge {brokenLink.statusClass}"><f:translate key="linkvalidator2.messages:status.{brokenLink.status}" /></span></td>
+                                        <td><f:translate key="linkvalidator2.messages:error.{brokenLink.error_type}" arguments="{brokenLink.messageArguments}" default="{brokenLink.error_type}" /></td>
                                         <td><typo3-backend-datetime datetime="{brokenLink.first_detected}" mode="relative" threshold-days="5" format="datetime"></typo3-backend-datetime></td>
                                         <td class="col-control">
                                             <div class="btn-group">

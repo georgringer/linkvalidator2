@@ -33,6 +33,7 @@ return [
             'search' => '',
             'orderField' => 'page',
             'orderDirection' => 'asc',
+            'groupByPage' => 0,
             'exclusionDepth' => 999,
         ],
     ],

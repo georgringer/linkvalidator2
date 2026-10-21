@@ -149,7 +149,9 @@ final readonly class ReportController
                 ['id' => $pageUid, ...array_fill_keys(ReportFilter::PROPERTIES, '')]
             ),
             'pagination' => $pagination,
-            'columns' => $this->getColumns($pageUid, $ordering),
+            'columns' => $columns = $this->getColumns($pageUid, $ordering),
+            'columnCount' => count($columns) + 1,
+            'groupByPage' => $ordering->groupByPage,
             'brokenLinks' => $this->getBrokenLinks($query, $ordering, $pagination, $moduleUrl, $mayManageExclusions),
             'excludedCount' => $this->recordStatusRepository->countExcluded($pageIds),
             'mayManageExclusions' => $mayManageExclusions,
@@ -276,6 +278,7 @@ final readonly class ReportController
     private function getBrokenLinks(BrokenLinkQuery $query, ReportOrdering $ordering, array $pagination, string $returnUrl, bool $mayIgnore): array
     {
         $result = [];
+        $previousPid = null;
         $pageTitles = [];
         $pageRecords = [];
         $rows = $this->brokenLinkRepository->find($query, $ordering, self::ITEMS_PER_PAGE, $pagination['startRecord'] - 1);
@@ -286,6 +289,8 @@ final readonly class ReportController
             $record = BackendUtility::getRecord($table, $uid) ?? [];
             $pageRecords[$pid] ??= BackendUtility::getRecord('pages', $pid) ?? ['uid' => $pid];
             $pageTitles[$pid] ??= BackendUtility::getRecordTitle('pages', $pageRecords[$pid]);
+            $row['newPage'] = $ordering->groupByPage && $pid !== $previousPid;
+            $previousPid = $pid;
             $row['pageRecord'] = $pageRecords[$pid];
             $row['record'] = $record;
             $row['pageTitle'] = $pageTitles[$pid];
@@ -341,17 +346,20 @@ final readonly class ReportController
 
     /**
      * Table header: clicking a column sorts by it, clicking the sorted column reverses the direction.
-     * The link column (target and link text) is not offered for sorting, ReportOrdering still supports it.
+     * The link and status columns are not offered for sorting, ReportOrdering still supports it.
      *
      * @return list<array{label: string, url: ?string, active: bool, descending: bool}>
      */
     private function getColumns(int $pageUid, ReportOrdering $ordering): array
     {
         $columns = [];
-        foreach (['page', 'record', 'link', 'problem', 'since'] as $field) {
-            if ($field === 'link') {
+        foreach (['page', 'record', 'link', 'status', 'problem', 'since'] as $field) {
+            if ($field === 'page' && $ordering->groupByPage) {
+                continue;
+            }
+            if ($field === 'link' || $field === 'status') {
                 $columns[] = [
-                    'label' => $this->getLanguageService()->sL('linkvalidator2.messages:report.column.link'),
+                    'label' => $this->getLanguageService()->sL('linkvalidator2.messages:report.column.' . $field),
                     'url' => null,
                     'active' => false,
                     'descending' => false,
