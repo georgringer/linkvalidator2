@@ -35,7 +35,8 @@ final class MailReportBuilderTest extends FunctionalTestCase
 {
     use InsertBrokenLinkTrait;
 
-    private const NOW = 100000;
+    // Large enough that NOW minus a few days stays positive: first_detected is unsigned (MariaDB rejects negatives)
+    private const NOW = 1_792_396_800;
 
     protected array $testExtensionsToLoad = ['georgringer/linkvalidator2'];
 
