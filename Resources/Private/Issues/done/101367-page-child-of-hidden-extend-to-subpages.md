@@ -3,6 +3,7 @@
 - Forge: https://forge.typo3.org/issues/101367 (Bug, New, angelegt 2023-07-17)
 - Verwandt: #106675 (gleiches Problem, ausführlicher)
 - **Status linkvalidator2:** ✅ gelöst (2026-10-11)
+- Core-Fix in Review: Gerrit 96918 (2026-10-20, `InternalLinktype`, nur Sichtbarkeit der Rootline, fe_group ausdrücklich nicht)
 
 ## Problem
 

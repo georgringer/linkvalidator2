@@ -75,7 +75,7 @@ Details and explanations: [`Notes/2026-10-21-feature-comparison-full.md`](Notes/
 | Workspaces | ❌ | 🟡 live only | 📋 required |
 | **Checking** | | | |
 | Pages, records, files, folders | ✅ | ✅ | ✅ |
-| Page hidden via parent (`extendToSubpages`) | ❌ #106675 #101367 | ❓ | ✅ |
+| Page hidden via parent (`extendToSubpages`) | 🟡 #101367 fix in review (96918), #106675 | ❓ | ✅ |
 | Restricted or scheduled target as notice | ❌ | ❓ | ✅ |
 | Shortcut / link page without reachable target | ❌ #92542 | ❓ | ✅ |
 | Empty or unresolvable links | ❌ | ❓ | ✅ |
