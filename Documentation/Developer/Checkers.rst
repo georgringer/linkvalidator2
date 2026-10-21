@@ -88,7 +88,8 @@ Caching
 
 Results of external URLs (link type :php:`url`) are stored per target and
 reused for the time set in the extension configuration
-:confval:`externalCacheLifetime`, whichever checker produced them. Checks of
+:ref:`externalCacheLifetime
+<confval-linkvalidator2-externalcachelifetime>`, whichever checker produced them. Checks of
 other link types always run.
 
 Example: an external service

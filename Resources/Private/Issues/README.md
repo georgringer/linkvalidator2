@@ -6,7 +6,7 @@ against the current code, what is left to do, test idea (German, like `Notes/`).
 
 Solved issues – implemented or obsolete by design – are in [`done/`](done/). When an
 issue is solved, move its file there and update the status line, this index and the
-*Forge* column of the feature comparison in the extension `README.md`.
+*linkvalidator* column of the feature comparison in the extension `README.md`.
 
 Source: https://forge.typo3.org/projects/typo3cms-core/issues?set_filter=1&f[]=status_id&op[status_id]=o&f[]=category_id&op[category_id]==&v[category_id][]=1493
 

@@ -28,6 +28,15 @@ options of the system extension do not exist any more.
     Editors can start a check from the backend module. Switch it off if
     links are only checked in the background.
 
+.. confval:: pageModuleCallout
+    :name: linkvalidator2-pagemodulecallout
+    :type: boolean
+    :Default: 1
+
+    Shows the number of broken links of a page in the page module. Page
+    TSconfig :typoscript:`mod.linkvalidator2.pageModuleCallout = 0|1`
+    overrides it for a page tree, in both directions.
+
 .. confval:: externalCacheLifetime
     :name: linkvalidator2-externalcachelifetime
     :type: integer

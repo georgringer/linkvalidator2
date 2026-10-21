@@ -86,11 +86,13 @@ final readonly class ReportController
         $view = $this->moduleTemplateFactory->create($request);
         if ($pageRecord !== []) {
             $view->getDocHeaderComponent()->setPageBreadcrumb($pageRecord);
-        $view->getDocHeaderComponent()->setShortcutContext(
-            'linkvalidator2_report',
-            sprintf($this->getLanguageService()->translate('shortcut.title', 'backend.messages'), $this->getLanguageService()->sL('linkvalidator2.module:title'), '', $pageRecord['title'], $pageUid),
-            ['id' => $pageUid]
-        );
+        }
+        if ($pageUid > 0 && $pageRecord !== []) {
+            $view->getDocHeaderComponent()->setShortcutContext(
+                'linkvalidator2_report',
+                sprintf($this->getLanguageService()->translate('shortcut.title', 'backend.messages'), $this->getLanguageService()->sL('linkvalidator2.module:title'), '', $pageRecord['title'], $pageUid),
+                ['id' => $pageUid]
+            );
         }
         $view->setTitle($this->getLanguageService()->sL('linkvalidator2.module:title'));
         $view->makeDocHeaderModuleMenu(['id' => $pageUid]);

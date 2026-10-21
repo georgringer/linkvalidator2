@@ -69,8 +69,9 @@ final class ReportControllerTest extends FunctionalTestCase
 
         self::assertStringContainsString('data-linkvalidator2-check="1"', $html);
         self::assertStringContainsString('data-linkvalidator2-check-ignore-stored', $html);
-        // An option of the toolbar, not a form field in the content
-        self::assertStringNotContainsString('<input type="checkbox"', $html);
+        // An option of the toolbar, not a form field in the content; the only checkbox there is "Group by page"
+        self::assertSame(1, substr_count($html, '<input type="checkbox"'));
+        self::assertStringContainsString('name="groupByPage"', $html);
     }
 
     #[Test]

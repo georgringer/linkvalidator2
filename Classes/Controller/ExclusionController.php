@@ -87,11 +87,11 @@ final readonly class ExclusionController
         if ($pageRecord !== []) {
             if ($pageUid > 0) {
                 $view->getDocHeaderComponent()->setPageBreadcrumb($pageRecord);
-        $view->getDocHeaderComponent()->setShortcutContext(
-            'linkvalidator2_report.exclusions',
-            sprintf($this->getLanguageService()->translate('shortcut.title', 'backend.messages'), $this->getLanguageService()->sL('linkvalidator2.messages:exclusions.title'), '', $pageRecord['title'], $pageUid),
-            ['id' => $pageUid]
-        );
+                $view->getDocHeaderComponent()->setShortcutContext(
+                    'linkvalidator2_report.exclusions',
+                    sprintf($this->getLanguageService()->translate('shortcut.title', 'backend.messages'), $this->getLanguageService()->sL('linkvalidator2.messages:exclusions.title'), '', $pageRecord['title'], $pageUid),
+                    ['id' => $pageUid]
+                );
             }
             $this->addDocHeaderButtons($view, $pageUid, $depth, $pageRecord, (string)$request->getAttribute('normalizedParams')->getRequestUri());
         }
