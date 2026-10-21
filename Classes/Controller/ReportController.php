@@ -86,6 +86,11 @@ final readonly class ReportController
         $view = $this->moduleTemplateFactory->create($request);
         if ($pageRecord !== []) {
             $view->getDocHeaderComponent()->setPageBreadcrumb($pageRecord);
+        $view->getDocHeaderComponent()->setShortcutContext(
+            'linkvalidator2_report',
+            sprintf($this->getLanguageService()->translate('shortcut.title', 'backend.messages'), $this->getLanguageService()->sL('linkvalidator2.module:title'), '', $pageRecord['title'], $pageUid),
+            ['id' => $pageUid]
+        );
         }
         $view->setTitle($this->getLanguageService()->sL('linkvalidator2.module:title'));
         $view->makeDocHeaderModuleMenu(['id' => $pageUid]);
@@ -121,6 +126,7 @@ final readonly class ReportController
         if ($pageUid > 0 && $pageRecord !== []) {
             $this->addDocHeaderButtons($view, $pageUid, $depth, $this->extensionSettings->isManualCheckAllowed());
             $this->pageRenderer->loadJavaScriptModule('@typo3/backend/context-menu.js');
+            $this->pageRenderer->loadJavaScriptModule('@typo3/backend/element/datetime-element.js');
             $this->pageRenderer->loadJavaScriptModule('@typo3/linkvalidator2/problem-details.js');
             if ($this->extensionSettings->isManualCheckAllowed()) {
                 $this->pageRenderer->loadJavaScriptModule('@typo3/linkvalidator2/check-links.js');
