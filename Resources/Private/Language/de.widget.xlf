@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
+  <file source-language="en" target-language="de" datatype="plaintext" original="widget.xlf" product-name="linkvalidator2">
+    <header/>
+    <body>
+      <trans-unit id="widget.title">
+        <source>Broken links</source>
+        <target>Defekte Links</target>
+      </trans-unit>
+      <trans-unit id="widget.description">
+        <source>The broken links below a page by type of link, with a button to the report. Choose the page and the levels in the settings of the widget.</source>
+        <target>Die defekten Links unterhalb einer Seite nach Linktyp, mit einem Button zum Report. Wählen Sie Seite und Ebenen in den Einstellungen des Widgets.</target>
+      </trans-unit>
+      <trans-unit id="setting.label.label">
+        <source>Title</source>
+        <target>Titel</target>
+      </trans-unit>
+      <trans-unit id="setting.label.description">
+        <source>Replaces the title of the widget</source>
+        <target>Ersetzt den Titel des Widgets</target>
+      </trans-unit>
+      <trans-unit id="setting.page.label">
+        <source>Page</source>
+        <target>Seite</target>
+      </trans-unit>
+      <trans-unit id="setting.page.description">
+        <source>The page and its subpages are counted</source>
+        <target>Die Seite und ihre Unterseiten werden gezählt</target>
+      </trans-unit>
+      <trans-unit id="setting.depth.label">
+        <source>Levels</source>
+        <target>Ebenen</target>
+      </trans-unit>
+      <trans-unit id="setting.depth.description">
+        <source>Levels of subpages below the page</source>
+        <target>Ebenen von Unterseiten unterhalb der Seite</target>
+      </trans-unit>
+      <trans-unit id="setting.depth.0">
+        <source>Only the page</source>
+        <target>Nur die Seite</target>
+      </trans-unit>
+      <trans-unit id="setting.depth.1">
+        <source>1 level</source>
+        <target>1 Ebene</target>
+      </trans-unit>
+      <trans-unit id="setting.depth.2">
+        <source>2 levels</source>
+        <target>2 Ebenen</target>
+      </trans-unit>
+      <trans-unit id="setting.depth.3">
+        <source>3 levels</source>
+        <target>3 Ebenen</target>
+      </trans-unit>
+      <trans-unit id="setting.depth.4">
+        <source>4 levels</source>
+        <target>4 Ebenen</target>
+      </trans-unit>
+      <trans-unit id="setting.depth.99">
+        <source>All levels</source>
+        <target>Alle Ebenen</target>
+      </trans-unit>
+      <trans-unit id="state.noPage">
+        <source>Choose a page in the settings of the widget.</source>
+        <target>Wählen Sie in den Einstellungen des Widgets eine Seite aus.</target>
+      </trans-unit>
+      <trans-unit id="state.noAccess">
+        <source>You do not have access to the selected page.</source>
+        <target>Sie haben keinen Zugriff auf die ausgewählte Seite.</target>
+      </trans-unit>
+      <trans-unit id="summary">
+        <source>{total, plural, one {# broken link} other {# broken links}} below "{page}"</source>
+        <target>{total, plural, one {# defekter Link} other {# defekte Links}} unterhalb von „{page}“</target>
+      </trans-unit>
+      <trans-unit id="column.type">
+        <source>Type of link</source>
+        <target>Linktyp</target>
+      </trans-unit>
+      <trans-unit id="column.amount">
+        <source>Broken links</source>
+        <target>Defekte Links</target>
+      </trans-unit>
+      <trans-unit id="empty">
+        <source>No broken links below "{page}".</source>
+        <target>Keine defekten Links unterhalb von „{page}“.</target>
+      </trans-unit>
+      <trans-unit id="openReport">
+        <source>Open the report</source>
+        <target>Report öffnen</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

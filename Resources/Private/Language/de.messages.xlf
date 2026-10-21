@@ -1,0 +1,532 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file source-language="en" target-language="de" datatype="plaintext" original="EXT:linkvalidator2/Resources/Private/Language/messages.xlf" date="2026-10-08T12:00:00Z" product-name="linkvalidator2">
+    <header/>
+    <body>
+      <trans-unit id="report.headline">
+        <source>Broken links</source>
+        <target>Defekte Links</target>
+      </trans-unit>
+      <trans-unit id="report.headlineWithPageTitle">
+        <source>Broken links on "{page}"</source>
+        <target>Defekte Links auf „{page}“</target>
+      </trans-unit>
+      <trans-unit id="report.empty">
+        <source>No broken links found.</source>
+        <target>Keine defekten Links gefunden.</target>
+      </trans-unit>
+      <trans-unit id="report.selectPage">
+        <source>Select a page in the page tree.</source>
+        <target>Wählen Sie eine Seite im Seitenbaum aus.</target>
+      </trans-unit>
+      <trans-unit id="report.checkPage">
+        <source>Check links</source>
+        <target>Links prüfen</target>
+      </trans-unit>
+      <trans-unit id="check.progress">
+        <source>Page {page} of {pages} checked, {broken, plural, =0 {no broken links} one {# broken link} other {# broken links}} so far ({new} new)</source>
+        <target>Seite {page} von {pages} geprüft, bisher {broken, plural, =0 {keine defekten Links} one {# defekter Link} other {# defekte Links}} ({new} neu)</target>
+      </trans-unit>
+      <trans-unit id="check.starting">
+        <source>Collecting pages…</source>
+        <target>Seiten werden gesammelt…</target>
+      </trans-unit>
+      <trans-unit id="check.ignoreStored">
+        <source>Request external URLs again</source>
+        <target>Externe URLs erneut abfragen</target>
+      </trans-unit>
+      <trans-unit id="check.ignoreStored.description">
+        <source>Ignore the stored results of external URLs for the next check. Each URL is still requested only once per check.</source>
+        <target>Gespeicherte Ergebnisse externer URLs bei der nächsten Prüfung ignorieren. Jede URL wird pro Prüfung weiterhin nur einmal abgefragt.</target>
+      </trans-unit>
+      <trans-unit id="check.cancel">
+        <source>Cancel</source>
+        <target>Abbrechen</target>
+      </trans-unit>
+      <trans-unit id="check.cancelling">
+        <source>Stopping after the current page…</source>
+        <target>Stoppt nach der aktuellen Seite…</target>
+      </trans-unit>
+      <trans-unit id="check.done">
+        <source>Links checked</source>
+        <target>Links geprüft</target>
+      </trans-unit>
+      <trans-unit id="check.doneMessage">
+        <source>{pages, plural, one {# page} other {# pages}} checked: {broken, plural, =0 {no broken links} one {# broken link} other {# broken links}} ({new} new), {notices, plural, =0 {no notices} one {# notice} other {# notices}}.</source>
+        <target>{pages, plural, one {# Seite} other {# Seiten}} geprüft: {broken, plural, =0 {keine defekten Links} one {# defekter Link} other {# defekte Links}} ({new} neu), {notices, plural, =0 {keine Hinweise} one {# Hinweis} other {# Hinweise}}.</target>
+      </trans-unit>
+      <trans-unit id="check.cancelled">
+        <source>Checking stopped after {checked} of {pages, plural, one {# page} other {# pages}}.</source>
+        <target>Die Prüfung wurde nach {checked} von {pages, plural, one {# Seite} other {# Seiten}} gestoppt.</target>
+      </trans-unit>
+      <trans-unit id="check.failed">
+        <source>Checking links failed</source>
+        <target>Die Linkprüfung ist fehlgeschlagen</target>
+      </trans-unit>
+      <trans-unit id="report.column.record">
+        <source>Record</source>
+        <target>Datensatz</target>
+      </trans-unit>
+      <trans-unit id="report.column.link">
+        <source>Link</source>
+        <target>Link</target>
+      </trans-unit>
+      <trans-unit id="report.column.problem">
+        <source>Problem</source>
+        <target>Problem</target>
+      </trans-unit>
+      <trans-unit id="report.column.since">
+        <source>First detected</source>
+        <target>Erstmals erkannt</target>
+      </trans-unit>
+      <trans-unit id="error.link.invalid">
+        <source>The link cannot be resolved</source>
+        <target>Der Link kann nicht aufgelöst werden</target>
+      </trans-unit>
+      <trans-unit id="error.link.empty">
+        <source>The link has no target</source>
+        <target>Der Link hat kein Ziel</target>
+      </trans-unit>
+      <trans-unit id="error.page.linksToItself">
+        <source>Link page points to itself</source>
+        <target>Die Link-Seite verweist auf sich selbst</target>
+      </trans-unit>
+      <trans-unit id="error.page.missing">
+        <source>Linked page does not exist (deleted)</source>
+        <target>Die verlinkte Seite existiert nicht (gelöscht)</target>
+      </trans-unit>
+      <trans-unit id="error.page.hidden">
+        <source>Linked page is hidden</source>
+        <target>Die verlinkte Seite ist versteckt</target>
+      </trans-unit>
+      <trans-unit id="error.page.expired">
+        <source>Linked page is offline, its stop time has passed</source>
+        <target>Die verlinkte Seite ist offline, ihr Endzeitpunkt ist überschritten</target>
+      </trans-unit>
+      <trans-unit id="error.page.noFrontend">
+        <source>Linked page is a folder or spacer without frontend output</source>
+        <target>Die verlinkte Seite ist ein Ordner oder Trenner ohne Ausgabe im Frontend</target>
+      </trans-unit>
+      <trans-unit id="error.page.hiddenByParent">
+        <source>Linked page is hidden by its parent page "{value}", which is hidden including subpages</source>
+        <target>Die verlinkte Seite ist durch ihre übergeordnete Seite „{value}“ versteckt, die inklusive Unterseiten versteckt ist</target>
+      </trans-unit>
+      <trans-unit id="error.page.expiredByParent">
+        <source>Linked page is offline, the stop time of its parent page "{value}" applies to subpages and has passed</source>
+        <target>Die verlinkte Seite ist offline, der Endzeitpunkt ihrer übergeordneten Seite „{value}“ gilt für Unterseiten und ist überschritten</target>
+      </trans-unit>
+      <trans-unit id="error.page.targetNotReachable">
+        <source>Linked shortcut or link page leads nowhere, its target is not reachable</source>
+        <target>Die verlinkte Verknüpfungs- oder Link-Seite führt ins Leere, ihr Ziel ist nicht erreichbar</target>
+      </trans-unit>
+      <trans-unit id="error.page.notReachable">
+        <source>Linked page is not delivered by the frontend (code {value})</source>
+        <target>Die verlinkte Seite wird vom Frontend nicht ausgeliefert (Code {value})</target>
+      </trans-unit>
+      <trans-unit id="error.page.noSite">
+        <source>Linked page does not belong to a site</source>
+        <target>Die verlinkte Seite gehört zu keiner Site</target>
+      </trans-unit>
+      <trans-unit id="error.page.accessRestricted">
+        <source>Linked page is only visible to logged-in website users (access restriction){byParent}</source>
+        <target>Die verlinkte Seite ist nur für angemeldete Website-Benutzer sichtbar (Zugriffsbeschränkung){byParent}</target>
+      </trans-unit>
+      <trans-unit id="error.page.notYetVisible">
+        <source>Linked page is not online yet, it is published on {value} (start time){byParent}</source>
+        <target>Die verlinkte Seite ist noch nicht online, sie wird am {value} veröffentlicht (Startzeitpunkt){byParent}</target>
+      </trans-unit>
+      <trans-unit id="error.page.visibleUntil">
+        <source>Linked page goes offline on {value} (stop time){byParent}</source>
+        <target>Die verlinkte Seite geht am {value} offline (Endzeitpunkt){byParent}</target>
+      </trans-unit>
+      <trans-unit id="error.byParentPage">
+        <source>, set on the parent page "{page}" for its subpages</source>
+        <target>, gesetzt auf der übergeordneten Seite „{page}“ für ihre Unterseiten</target>
+      </trans-unit>
+      <trans-unit id="error.record.missing">
+        <source>Linked record does not exist (deleted)</source>
+        <target>Der verlinkte Datensatz existiert nicht (gelöscht)</target>
+      </trans-unit>
+      <trans-unit id="error.record.hidden">
+        <source>Linked record is hidden</source>
+        <target>Der verlinkte Datensatz ist versteckt</target>
+      </trans-unit>
+      <trans-unit id="error.record.expired">
+        <source>Linked record is offline, its stop time has passed</source>
+        <target>Der verlinkte Datensatz ist offline, sein Endzeitpunkt ist überschritten</target>
+      </trans-unit>
+      <trans-unit id="error.record.unknownTable">
+        <source>Linked record type is unknown</source>
+        <target>Der Typ des verlinkten Datensatzes ist unbekannt</target>
+      </trans-unit>
+      <trans-unit id="error.file.missing">
+        <source>Linked file does not exist</source>
+        <target>Die verlinkte Datei existiert nicht</target>
+      </trans-unit>
+      <trans-unit id="error.folder.missing">
+        <source>Linked folder does not exist</source>
+        <target>Der verlinkte Ordner existiert nicht</target>
+      </trans-unit>
+      <trans-unit id="error.storage.offline">
+        <source>File storage of the linked file is offline</source>
+        <target>Der Dateispeicher der verlinkten Datei ist offline</target>
+      </trans-unit>
+      <trans-unit id="report.depth">
+        <source>Levels</source>
+        <target>Ebenen</target>
+      </trans-unit>
+      <trans-unit id="report.depth.0">
+        <source>This page</source>
+        <target>Diese Seite</target>
+      </trans-unit>
+      <trans-unit id="report.depth.1">
+        <source>1 level</source>
+        <target>1 Ebene</target>
+      </trans-unit>
+      <trans-unit id="report.depth.2">
+        <source>2 levels</source>
+        <target>2 Ebenen</target>
+      </trans-unit>
+      <trans-unit id="report.depth.3">
+        <source>3 levels</source>
+        <target>3 Ebenen</target>
+      </trans-unit>
+      <trans-unit id="report.depth.4">
+        <source>4 levels</source>
+        <target>4 Ebenen</target>
+      </trans-unit>
+      <trans-unit id="report.depth.999">
+        <source>Infinite</source>
+        <target>Unbegrenzt</target>
+      </trans-unit>
+      <trans-unit id="report.column.page">
+        <source>Page</source>
+        <target>Seite</target>
+      </trans-unit>
+      <trans-unit id="filter.status">
+        <source>Status</source>
+        <target>Status</target>
+      </trans-unit>
+      <trans-unit id="filter.linkType">
+        <source>Link type</source>
+        <target>Linktyp</target>
+      </trans-unit>
+      <trans-unit id="filter.table">
+        <source>Table</source>
+        <target>Tabelle</target>
+      </trans-unit>
+      <trans-unit id="filter.language">
+        <source>Language</source>
+        <target>Sprache</target>
+      </trans-unit>
+      <trans-unit id="filter.search">
+        <source>Search</source>
+        <target>Suche</target>
+      </trans-unit>
+      <trans-unit id="filter.all">
+        <source>All</source>
+        <target>Alle</target>
+      </trans-unit>
+      <trans-unit id="filter.submit">
+        <source>Filter</source>
+        <target>Filtern</target>
+      </trans-unit>
+      <trans-unit id="filter.reset">
+        <source>Reset</source>
+        <target>Zurücksetzen</target>
+      </trans-unit>
+      <trans-unit id="report.excludedCount">
+        <source>{count, plural, one {# link is} other {# links are}} not checked because of exclusions.</source>
+        <target>{count, plural, one {# Link wird} other {# Links werden}} wegen Ausschlüssen nicht geprüft.</target>
+      </trans-unit>
+      <trans-unit id="report.showExclusions">
+        <source>Show exclusions</source>
+        <target>Ausschlüsse anzeigen</target>
+      </trans-unit>
+      <trans-unit id="report.results">
+        <source>Results</source>
+        <target>Ergebnisse</target>
+      </trans-unit>
+      <trans-unit id="report.lastChecked">
+        <source>Last check: {date}</source>
+        <target>Letzte Prüfung: {date}</target>
+      </trans-unit>
+      <trans-unit id="report.notChecked">
+        <source>Not checked yet</source>
+        <target>Noch nicht geprüft</target>
+      </trans-unit>
+      <trans-unit id="report.notChecked.description">
+        <source>The links on these pages have not been checked yet. Start a check with "Check links" above, or wait for the next background run.</source>
+        <target>Die Links auf diesen Seiten wurden noch nicht geprüft. Starten Sie oben mit „Links prüfen“ eine Prüfung oder warten Sie auf den nächsten Hintergrundlauf.</target>
+      </trans-unit>
+      <trans-unit id="report.emptyFiltered">
+        <source>No broken links match the filter.</source>
+        <target>Keine defekten Links entsprechen dem Filter.</target>
+      </trans-unit>
+      <trans-unit id="status.broken">
+        <source>Broken</source>
+        <target>Defekt</target>
+      </trans-unit>
+      <trans-unit id="status.unknown">
+        <source>Cannot be checked</source>
+        <target>Nicht prüfbar</target>
+      </trans-unit>
+      <trans-unit id="status.info">
+        <source>Notice</source>
+        <target>Hinweis</target>
+      </trans-unit>
+      <trans-unit id="linkType.page">
+        <source>Page</source>
+        <target>Seite</target>
+      </trans-unit>
+      <trans-unit id="linkType.record">
+        <source>Record</source>
+        <target>Datensatz</target>
+      </trans-unit>
+      <trans-unit id="linkType.file">
+        <source>File</source>
+        <target>Datei</target>
+      </trans-unit>
+      <trans-unit id="linkType.folder">
+        <source>Folder</source>
+        <target>Ordner</target>
+      </trans-unit>
+      <trans-unit id="linkType.url">
+        <source>External URL</source>
+        <target>Externe URL</target>
+      </trans-unit>
+      <trans-unit id="linkType.invalid">
+        <source>Invalid link</source>
+        <target>Ungültiger Link</target>
+      </trans-unit>
+      <trans-unit id="pagination.records">
+        <source>{start}–{end} of {total}</source>
+        <target>{start}–{end} von {total}</target>
+      </trans-unit>
+      <trans-unit id="error.url.notFound">
+        <source>Page not found (HTTP {value})</source>
+        <target>Seite nicht gefunden (HTTP {value})</target>
+      </trans-unit>
+      <trans-unit id="error.url.gone">
+        <source>Page removed permanently (HTTP {value})</source>
+        <target>Seite dauerhaft entfernt (HTTP {value})</target>
+      </trans-unit>
+      <trans-unit id="error.url.unknownHost">
+        <source>Domain does not exist</source>
+        <target>Die Domain existiert nicht</target>
+      </trans-unit>
+      <trans-unit id="error.url.httpStatus">
+        <source>Server responded with HTTP {value}</source>
+        <target>Der Server antwortete mit HTTP {value}</target>
+      </trans-unit>
+      <trans-unit id="error.url.timeout">
+        <source>Server did not respond within {value} seconds</source>
+        <target>Der Server antwortete nicht innerhalb von {value} Sekunden</target>
+      </trans-unit>
+      <trans-unit id="error.url.tlsError">
+        <source>Secure connection failed (TLS)</source>
+        <target>Sichere Verbindung fehlgeschlagen (TLS)</target>
+      </trans-unit>
+      <trans-unit id="error.url.connectionFailed">
+        <source>Connection failed</source>
+        <target>Verbindung fehlgeschlagen</target>
+      </trans-unit>
+      <trans-unit id="error.url.tooManyRedirects">
+        <source>Too many redirects</source>
+        <target>Zu viele Weiterleitungen</target>
+      </trans-unit>
+      <trans-unit id="error.url.redirectedByTypo3">
+        <source>Redirected by a TYPO3 redirect</source>
+        <target>Durch eine TYPO3-Weiterleitung umgeleitet</target>
+      </trans-unit>
+      <trans-unit id="error.url.requestFailed">
+        <source>Request failed</source>
+        <target>Anfrage fehlgeschlagen</target>
+      </trans-unit>
+      <trans-unit id="details.title">
+        <source>Details of the check</source>
+        <target>Details der Prüfung</target>
+      </trans-unit>
+      <trans-unit id="details.target">
+        <source>Link target</source>
+        <target>Linkziel</target>
+      </trans-unit>
+      <trans-unit id="details.redirectBy">
+        <source>Redirect</source>
+        <target>Weiterleitung</target>
+      </trans-unit>
+      <trans-unit id="details.redirectTarget">
+        <source>Redirects to</source>
+        <target>Leitet weiter auf</target>
+      </trans-unit>
+      <trans-unit id="details.message">
+        <source>Message</source>
+        <target>Meldung</target>
+      </trans-unit>
+      <trans-unit id="details.errno">
+        <source>Error code</source>
+        <target>Fehlercode</target>
+      </trans-unit>
+      <trans-unit id="details.httpStatus">
+        <source>HTTP status</source>
+        <target>HTTP-Status</target>
+      </trans-unit>
+      <trans-unit id="details.close">
+        <source>Close</source>
+        <target>Schließen</target>
+      </trans-unit>
+      <trans-unit id="report.recheck">
+        <source>Check this link again</source>
+        <target>Diesen Link erneut prüfen</target>
+      </trans-unit>
+      <trans-unit id="recheck.ok">
+        <source>The link works now, the result is removed</source>
+        <target>Der Link funktioniert jetzt, das Ergebnis wird entfernt</target>
+      </trans-unit>
+      <trans-unit id="recheck.broken">
+        <source>The link is still broken</source>
+        <target>Der Link ist weiterhin defekt</target>
+      </trans-unit>
+      <trans-unit id="recheck.unknown">
+        <source>The link still cannot be checked reliably</source>
+        <target>Der Link kann weiterhin nicht zuverlässig geprüft werden</target>
+      </trans-unit>
+      <trans-unit id="recheck.info">
+        <source>The link is reachable, but restricted</source>
+        <target>Der Link ist erreichbar, aber eingeschränkt</target>
+      </trans-unit>
+      <trans-unit id="recheck.gone">
+        <source>The record does not contain this link any more, the result is removed</source>
+        <target>Der Datensatz enthält diesen Link nicht mehr, das Ergebnis wird entfernt</target>
+      </trans-unit>
+      <trans-unit id="recheck.failed">
+        <source>The check could not be run</source>
+        <target>Die Prüfung konnte nicht ausgeführt werden</target>
+      </trans-unit>
+      <trans-unit id="recheck.title">
+        <source>Check again</source>
+        <target>Erneut prüfen</target>
+      </trans-unit>
+      <trans-unit id="report.details">
+        <source>Show details of the check</source>
+        <target>Details der Prüfung anzeigen</target>
+      </trans-unit>
+      <trans-unit id="report.column.actions">
+        <source>Actions</source>
+        <target>Aktionen</target>
+      </trans-unit>
+      <trans-unit id="report.ignore">
+        <source>Ignore</source>
+        <target>Ignorieren</target>
+      </trans-unit>
+      <trans-unit id="report.ignore.url">
+        <source>Ignore this URL (and what starts with it) on this page and its subpages</source>
+        <target>Diese URL (und alles, was damit beginnt) auf dieser Seite und ihren Unterseiten ignorieren</target>
+      </trans-unit>
+      <trans-unit id="report.ignore.domain">
+        <source>Ignore the domain {domain} on this page and its subpages</source>
+        <target>Die Domain {domain} auf dieser Seite und ihren Unterseiten ignorieren</target>
+      </trans-unit>
+      <trans-unit id="report.ignore.page">
+        <source>Ignore links to this page on this page and its subpages</source>
+        <target>Links auf diese Seite auf dieser Seite und ihren Unterseiten ignorieren</target>
+      </trans-unit>
+      <trans-unit id="ignore.done">
+        <source>Exclusion created</source>
+        <target>Ausschluss angelegt</target>
+      </trans-unit>
+      <trans-unit id="ignore.storedOn">
+        <source>Stored on {page}, applies to it and its subpages.</source>
+        <target>Gespeichert auf {page}, gilt dort und für die Unterseiten.</target>
+      </trans-unit>
+      <trans-unit id="ignore.failed">
+        <source>The exclusion could not be created</source>
+        <target>Der Ausschluss konnte nicht angelegt werden</target>
+      </trans-unit>
+      <trans-unit id="exclusions.title">
+        <source>Link check exclusions</source>
+        <target>Ausschlüsse der Linkprüfung</target>
+      </trans-unit>
+      <trans-unit id="exclusions.show">
+        <source>Exclusions</source>
+        <target>Ausschlüsse</target>
+      </trans-unit>
+      <trans-unit id="exclusions.backToReport">
+        <source>Back to report</source>
+        <target>Zurück zum Report</target>
+      </trans-unit>
+      <trans-unit id="exclusions.headlineWithPageTitle">
+        <source>Link check exclusions for "{page}"</source>
+        <target>Ausschlüsse der Linkprüfung für „{page}“</target>
+      </trans-unit>
+      <trans-unit id="exclusions.intro">
+        <source>Exclusions apply to links in records on the page they are stored on and on its subpages. Excluded links are neither checked nor reported.</source>
+        <target>Ausschlüsse gelten für Links in Datensätzen auf der Seite, auf der sie gespeichert sind, und auf ihren Unterseiten. Ausgeschlossene Links werden weder geprüft noch gemeldet.</target>
+      </trans-unit>
+      <trans-unit id="exclusions.inherited">
+        <source>Also applying here (from pages above)</source>
+        <target>Gelten auch hier (von übergeordneten Seiten)</target>
+      </trans-unit>
+      <trans-unit id="exclusions.storedOn">
+        <source>Stored on</source>
+        <target>Gespeichert auf</target>
+      </trans-unit>
+      <trans-unit id="exclusions.rootLevel">
+        <source>Root level (all pages)</source>
+        <target>Wurzelebene (alle Seiten)</target>
+      </trans-unit>
+      <trans-unit id="exclusions.new">
+        <source>New exclusion</source>
+        <target>Neuer Ausschluss</target>
+      </trans-unit>
+      <trans-unit id="error.url.unsupportedScheme">
+        <source>Only http and https URLs can be checked</source>
+        <target>Nur http- und https-URLs können geprüft werden</target>
+      </trans-unit>
+      <trans-unit id="mail.subject">
+        <source>Broken links: {page}</source>
+        <target>Defekte Links: {page}</target>
+      </trans-unit>
+      <trans-unit id="mail.summary">
+        <source>{total, plural, =0 {No broken links} one {# broken link} other {# broken links}} in the area of "{page}".</source>
+        <target>{total, plural, =0 {Keine defekten Links} one {# defekter Link} other {# defekte Links}} im Bereich von „{page}“.</target>
+      </trans-unit>
+      <trans-unit id="mail.column.record">
+        <source>Record</source>
+        <target>Datensatz</target>
+      </trans-unit>
+      <trans-unit id="mail.column.target">
+        <source>Target</source>
+        <target>Ziel</target>
+      </trans-unit>
+      <trans-unit id="mail.column.since">
+        <source>Broken since</source>
+        <target>Defekt seit</target>
+      </trans-unit>
+      <trans-unit id="mail.column.edit">
+        <source>Edit</source>
+        <target>Bearbeiten</target>
+      </trans-unit>
+      <trans-unit id="mail.more">
+        <source>And {more} more. All of them are in the report in the backend.</source>
+        <target>Und {more} weitere. Alle stehen im Report im Backend.</target>
+      </trans-unit>
+      <trans-unit id="mail.attachment">
+        <source>The complete list with all details is attached as CSV.</source>
+        <target>Die vollständige Liste mit allen Details ist als CSV angehängt.</target>
+      </trans-unit>
+      <trans-unit id="mail.openModule">
+        <source>Open the report in the backend</source>
+        <target>Report im Backend öffnen</target>
+      </trans-unit>
+      <trans-unit id="callout.title">
+        <source>{count, plural, one {# broken link} other {# broken links}} on this page</source>
+        <target>{count, plural, one {# defekter Link} other {# defekte Links}} auf dieser Seite</target>
+      </trans-unit>
+      <trans-unit id="callout.open">
+        <source>Show them in the report</source>
+        <target>Im Report anzeigen</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>
