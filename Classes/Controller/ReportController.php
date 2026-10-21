@@ -117,7 +117,8 @@ final readonly class ReportController
             (int)($request->getQueryParams()['page'] ?? 1)
         );
 
-        if ($pageRecord !== []) {
+        // The root level is readable for admins, but there is no page to check
+        if ($pageUid > 0 && $pageRecord !== []) {
             $this->addDocHeaderButtons($view, $pageUid, $depth, $this->extensionSettings->isManualCheckAllowed());
             $this->pageRenderer->loadJavaScriptModule('@typo3/backend/context-menu.js');
             $this->pageRenderer->loadJavaScriptModule('@typo3/linkvalidator2/problem-details.js');

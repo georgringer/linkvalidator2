@@ -63,6 +63,18 @@ final class ReportControllerTest extends FunctionalTestCase
     }
 
     #[Test]
+    public function checkButtonIsOfferedForASelectedPage(): void
+    {
+        self::assertStringContainsString('data-linkvalidator2-check="1"', $this->render(2));
+    }
+
+    #[Test]
+    public function checkButtonIsNotOfferedWithoutASelectedPage(): void
+    {
+        self::assertStringNotContainsString('data-linkvalidator2-check', $this->render(0));
+    }
+
+    #[Test]
     public function everyLanguageOfASiteWithSeveralLanguagesGetsItsFlag(): void
     {
         $this->insertResult(2, 12, 0);
