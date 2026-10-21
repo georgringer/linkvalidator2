@@ -65,13 +65,21 @@ final class ReportControllerTest extends FunctionalTestCase
     #[Test]
     public function checkButtonIsOfferedForASelectedPage(): void
     {
-        self::assertStringContainsString('data-linkvalidator2-check="1"', $this->render(2));
+        $html = $this->render(2);
+
+        self::assertStringContainsString('data-linkvalidator2-check="1"', $html);
+        self::assertStringContainsString('data-linkvalidator2-check-ignore-stored', $html);
+        // An option of the toolbar, not a form field in the content
+        self::assertStringNotContainsString('<input type="checkbox"', $html);
     }
 
     #[Test]
     public function checkButtonIsNotOfferedWithoutASelectedPage(): void
     {
-        self::assertStringNotContainsString('data-linkvalidator2-check', $this->render(0));
+        $html = $this->render(0);
+
+        self::assertStringNotContainsString('data-linkvalidator2-check', $html);
+        self::assertStringNotContainsString('data-linkvalidator2-check-ignore-stored', $html);
     }
 
     #[Test]

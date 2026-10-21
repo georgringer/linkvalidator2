@@ -10,15 +10,6 @@
     <f:if condition="{pageTitle}">
         <f:then>
             <h1><f:translate key="linkvalidator2.messages:report.headlineWithPageTitle" arguments="{page: pageTitle}" /></h1>
-            <f:if condition="{manualCheckAllowed}">
-                <div class="mb-3">
-                    <div class="form-check">
-                        <input type="checkbox" class="form-check-input" id="linkvalidator2-ignore-stored" data-linkvalidator2-check-ignore-stored aria-describedby="linkvalidator2-ignore-stored-help">
-                        <label class="form-check-label" for="linkvalidator2-ignore-stored"><f:translate key="linkvalidator2.messages:check.ignoreStored" /></label>
-                    </div>
-                    <div class="form-text" id="linkvalidator2-ignore-stored-help"><f:translate key="linkvalidator2.messages:check.ignoreStored.description" /></div>
-                </div>
-            </f:if>
             <div class="mb-3" data-linkvalidator2-check-progress hidden>
                 <typo3-backend-progress-bar value="0" max="1"></typo3-backend-progress-bar>
                 <div class="visually-hidden" role="status" aria-live="polite" data-linkvalidator2-check-status></div>

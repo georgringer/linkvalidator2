@@ -183,7 +183,7 @@ On the core move the domain becomes `linkvalidator.messages`.
 ## Editors: checking again from the backend
 
 - A manual check reuses the stored result of an external URL while it is younger than the cache
-  lifetime. The checkbox "Request external URLs again" above the progress bar ignores that for the
+  lifetime. The option "Request external URLs again" in the toolbar ("Options") ignores that for the
   check that is started; a URL is still requested once per check, not once per record.
 - Nothing is deleted beforehand: the results are replaced as the pages are checked, so a cancelled
   check leaves the old results of the pages it did not reach.

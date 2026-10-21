@@ -40,6 +40,11 @@ class CheckLinks {
     document.querySelectorAll('[data-linkvalidator2-check-depth]').forEach((item) => {
       item.addEventListener('click', () => this.selectDepth(item));
     });
+    this.ignoreStored?.addEventListener('click', () => {
+      const active = this.ignoreStored.dataset.dropdowntoggleStatus !== 'active';
+      this.ignoreStored.dataset.dropdowntoggleStatus = active ? 'active' : 'inactive';
+      this.ignoreStored.setAttribute('aria-checked', active ? 'true' : 'false');
+    });
     this.cancelButton.addEventListener('click', () => {
       this.cancelled = true;
       this.cancelButton.disabled = true;
@@ -71,7 +76,7 @@ class CheckLinks {
         let result;
         do {
           result = await (await new AjaxRequest(TYPO3.settings.ajaxUrls.linkvalidator2_check_page)
-            .post({ pageId: pageIds[checkedPages], runStartedAt: start.runStartedAt, ignoreStored: this.ignoreStored?.checked ?? false })).resolve();
+            .post({ pageId: pageIds[checkedPages], runStartedAt: start.runStartedAt, ignoreStored: this.ignoreStored?.dataset.dropdowntoggleStatus === 'active' })).resolve();
           if (!result.done && !this.cancelled) {
             // A page with many records takes several requests: show that it is still working. The
             // number of records grows with the page, e.g. when records are created during the check.

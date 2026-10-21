@@ -35,6 +35,10 @@
         <source>Collecting pages…</source>
         <target>Seiten werden gesammelt…</target>
       </trans-unit>
+      <trans-unit id="check.options">
+        <source>Options</source>
+        <target>Optionen</target>
+      </trans-unit>
       <trans-unit id="check.ignoreStored">
         <source>Request external URLs again</source>
         <target>Externe URLs erneut abfragen</target>

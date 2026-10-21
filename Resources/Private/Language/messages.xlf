@@ -27,6 +27,9 @@
       <trans-unit id="check.starting">
         <source>Collecting pages…</source>
       </trans-unit>
+      <trans-unit id="check.options">
+        <source>Options</source>
+      </trans-unit>
       <trans-unit id="check.ignoreStored">
         <source>Request external URLs again</source>
       </trans-unit>

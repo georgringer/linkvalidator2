@@ -226,6 +226,25 @@ final readonly class ReportController
         }
         $view->addButtonToButtonBar($depthButton, ButtonBar::BUTTON_POSITION_LEFT, 1);
 
+        $optionsButton = $this->componentFactory->createDropDownButton()
+            ->setLabel($languageService->sL('linkvalidator2.messages:check.options'))
+            ->setIcon($this->iconFactory->getIcon('actions-cog', IconSize::SMALL))
+            ->setShowLabelText(true);
+        $optionsButton->addItem(
+            $this->componentFactory->createDropDownToggle()
+                ->setTag('button')
+                ->setActive(false)
+                ->setLabel($languageService->sL('linkvalidator2.messages:check.ignoreStored'))
+                ->setTitle($languageService->sL('linkvalidator2.messages:check.ignoreStored.description'))
+                ->setAttributes([
+                    'type' => 'button',
+                    'role' => 'menuitemcheckbox',
+                    'aria-checked' => 'false',
+                    'data-linkvalidator2-check-ignore-stored' => '1',
+                ])
+        );
+        $view->addButtonToButtonBar($optionsButton, ButtonBar::BUTTON_POSITION_LEFT, 1);
+
         $checkButton = $this->componentFactory->createGenericButton()
             ->setTag('button')
             ->setLabel($languageService->sL('linkvalidator2.messages:report.checkPage'))
