@@ -12,6 +12,7 @@
  */
 
 import AjaxRequest from '@typo3/core/ajax/ajax-request.js';
+import DocumentService from '@typo3/core/document-service.js';
 import Notification from '@typo3/backend/notification.js';
 import labels from '~labels/linkvalidator2.messages';
 import '@typo3/backend/element/progress-bar-element.js';
@@ -144,8 +145,11 @@ class CheckLinks {
 
 }
 
-const button = document.querySelector('[data-linkvalidator2-check]');
-const progress = document.querySelector('[data-linkvalidator2-check-progress]');
-if (button && progress) {
-  new CheckLinks(button, progress);
-}
+// Modules load async in the head, the doc header button may not be parsed yet
+DocumentService.ready().then(() => {
+  const button = document.querySelector('[data-linkvalidator2-check]');
+  const progress = document.querySelector('[data-linkvalidator2-check-progress]');
+  if (button && progress) {
+    new CheckLinks(button, progress);
+  }
+});
