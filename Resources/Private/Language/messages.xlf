@@ -19,10 +19,10 @@
         <source>Check links</source>
       </trans-unit>
       <trans-unit id="check.progress">
-        <source>Page {page} of {pages} checked, {broken, plural, =0 {no broken links} one {# broken link} other {# broken links}} so far ({new} new)</source>
+        <source>Page {page} of {pages} checked ({records, plural, one {# record} other {# records}}), {broken, plural, =0 {no broken links} one {# broken link} other {# broken links}} so far ({new} new)</source>
       </trans-unit>
       <trans-unit id="check.progressRecords">
-        <source>Checking page {page} of {pages}: {processed} of {records, plural, one {# record} other {# records}} checked, {broken, plural, =0 {no broken links} one {# broken link} other {# broken links}} so far ({new} new)</source>
+        <source>Checking page {page} of {pages}: {processed} of {records, plural, one {# record} other {# records}} checked ({total, plural, one {# record} other {# records}} in total), {broken, plural, =0 {no broken links} one {# broken link} other {# broken links}} so far ({new} new)</source>
       </trans-unit>
       <trans-unit id="check.starting">
         <source>Collecting pages…</source>

@@ -63,6 +63,7 @@ class CheckLinks {
         .get()).resolve();
       const pageIds = start.pageIds;
       let checkedPages = 0;
+      let checkedRecords = 0;
       let brokenLinks = 0;
       let newBrokenLinks = 0;
       let notices = 0;
@@ -81,6 +82,7 @@ class CheckLinks {
               records: result.recordCount,
               broken: brokenLinks,
               new: newBrokenLinks,
+              total: checkedRecords + result.processedCount,
             }), false);
           }
         } while (!result.done && !this.cancelled);
@@ -88,11 +90,12 @@ class CheckLinks {
           break;
         }
         checkedPages++;
+        checkedRecords += result.recordCount;
         brokenLinks += result.brokenLinkCount;
         newBrokenLinks += result.newBrokenLinkCount;
         notices += result.noticeCount;
         if (!this.cancelled) {
-          this.update(checkedPages, pageIds.length, labels.get('check.progress', { page: checkedPages, pages: pageIds.length, broken: brokenLinks, new: newBrokenLinks }));
+          this.update(checkedPages, pageIds.length, labels.get('check.progress', { page: checkedPages, pages: pageIds.length, records: checkedRecords, broken: brokenLinks, new: newBrokenLinks }));
         }
       }
       if (this.cancelled) {

@@ -24,12 +24,12 @@
         <target>Links prüfen</target>
       </trans-unit>
       <trans-unit id="check.progress">
-        <source>Page {page} of {pages} checked, {broken, plural, =0 {no broken links} one {# broken link} other {# broken links}} so far ({new} new)</source>
-        <target>Seite {page} von {pages} geprüft, bisher {broken, plural, =0 {keine defekten Links} one {# defekter Link} other {# defekte Links}} ({new} neu)</target>
+        <source>Page {page} of {pages} checked ({records, plural, one {# record} other {# records}}), {broken, plural, =0 {no broken links} one {# broken link} other {# broken links}} so far ({new} new)</source>
+        <target>Seite {page} von {pages} geprüft ({records, plural, one {# Datensatz} other {# Datensätze}}), bisher {broken, plural, =0 {keine defekten Links} one {# defekter Link} other {# defekte Links}} ({new} neu)</target>
       </trans-unit>
       <trans-unit id="check.progressRecords">
-        <source>Checking page {page} of {pages}: {processed} of {records, plural, one {# record} other {# records}} checked, {broken, plural, =0 {no broken links} one {# broken link} other {# broken links}} so far ({new} new)</source>
-        <target>Prüfe Seite {page} von {pages}: {processed} von {records, plural, one {# Datensatz} other {# Datensätzen}} geprüft, bisher {broken, plural, =0 {keine defekten Links} one {# defekter Link} other {# defekte Links}} ({new} neu)</target>
+        <source>Checking page {page} of {pages}: {processed} of {records, plural, one {# record} other {# records}} checked ({total, plural, one {# record} other {# records}} in total), {broken, plural, =0 {no broken links} one {# broken link} other {# broken links}} so far ({new} new)</source>
+        <target>Prüfe Seite {page} von {pages}: {processed} von {records, plural, one {# Datensatz} other {# Datensätzen}} geprüft ({total, plural, one {# Datensatz} other {# Datensätze}} insgesamt), bisher {broken, plural, =0 {keine defekten Links} one {# defekter Link} other {# defekte Links}} ({new} neu)</target>
       </trans-unit>
       <trans-unit id="check.starting">
         <source>Collecting pages…</source>
