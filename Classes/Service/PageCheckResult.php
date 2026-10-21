@@ -22,6 +22,8 @@ final readonly class PageCheckResult
         /** False when the time budget ran out; checking the page again with the same run start continues */
         public bool $done,
         public int $recordCount,
+        /** Records of the page checked in this run so far, by this call or before, at most $recordCount */
+        public int $processedCount,
         /** Records checked by this call */
         public int $checkedCount,
         /** Broken links stored for the page after this call */

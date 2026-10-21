@@ -187,3 +187,8 @@ On the core move the domain becomes `linkvalidator.messages`.
   check that is started; a URL is still requested once per check, not once per record.
 - Nothing is deleted beforehand: the results are replaced as the pages are checked, so a cancelled
   check leaves the old results of the pages it did not reach.
+
+- While a page with many records is checked, the progress bar stays on the page, the label shows
+  "x of y records" of that page. y is read again with every request (about every 5 seconds), so it
+  grows when records are created during the check. Not announced to screen readers, who get
+  the steps of 10 % of the pages.

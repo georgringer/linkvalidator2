@@ -93,7 +93,7 @@ final class CheckControllerTest extends FunctionalTestCase
 
         self::assertSame(200, $response->getStatusCode());
         self::assertSame(
-            ['done' => true, 'recordCount' => 6, 'checkedCount' => 6, 'brokenLinkCount' => 8, 'newBrokenLinkCount' => 8, 'noticeCount' => 0],
+            ['done' => true, 'recordCount' => 6, 'processedCount' => 6, 'checkedCount' => 6, 'brokenLinkCount' => 8, 'newBrokenLinkCount' => 8, 'noticeCount' => 0],
             $this->decode($response)
         );
     }

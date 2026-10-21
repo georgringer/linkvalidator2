@@ -48,9 +48,11 @@ final readonly class PageCheckService
         $this->recordCheckService->removeStaleResults($pageUid, $records);
         $checkedInRun = $this->recordStatusRepository->findRecordsCheckedSince($pageUid, $runStartedAt);
         $checkedCount = 0;
+        $processedCount = 0;
         $done = true;
         foreach ($records as ['table' => $table, 'uid' => $uid]) {
             if (isset($checkedInRun[$table . ':' . $uid])) {
+                $processedCount++;
                 continue;
             }
             if ($timeBudget !== null && $checkedCount > 0 && microtime(true) - $start >= $timeBudget) {
@@ -59,10 +61,12 @@ final readonly class PageCheckService
             }
             $this->recordCheckService->checkRecord($table, $uid, $cachedOnly, $runStartedAt, ignoreStored: $ignoreStored);
             $checkedCount++;
+            $processedCount++;
         }
         return new PageCheckResult(
             $done,
             count($records),
+            $processedCount,
             $checkedCount,
             $this->brokenLinkRepository->count(new BrokenLinkQuery([$pageUid], onlyBroken: true)),
             $this->brokenLinkRepository->count(new BrokenLinkQuery([$pageUid], onlyBroken: true, detectedSince: $runStartedAt)),

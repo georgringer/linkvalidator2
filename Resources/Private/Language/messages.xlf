@@ -21,6 +21,9 @@
       <trans-unit id="check.progress">
         <source>Page {page} of {pages} checked, {broken, plural, =0 {no broken links} one {# broken link} other {# broken links}} so far ({new} new)</source>
       </trans-unit>
+      <trans-unit id="check.progressRecords">
+        <source>Checking page {page} of {pages}: {processed} of {records, plural, one {# record} other {# records}} checked, {broken, plural, =0 {no broken links} one {# broken link} other {# broken links}} so far ({new} new)</source>
+      </trans-unit>
       <trans-unit id="check.starting">
         <source>Collecting pages…</source>
       </trans-unit>

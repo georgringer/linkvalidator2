@@ -63,6 +63,7 @@ final class PageCheckServiceTest extends FunctionalTestCase
         // pages:1 and tt_content 10–14
         self::assertSame(6, $result->recordCount);
         self::assertSame(6, $result->checkedCount);
+        self::assertSame(6, $result->processedCount);
         // 7 in tt_content:10, 1 in the translation tt_content:14
         self::assertSame(8, $result->brokenLinkCount);
     }
@@ -79,6 +80,7 @@ final class PageCheckServiceTest extends FunctionalTestCase
             $calls++;
             // Each call makes progress by at least one record
             self::assertSame(1, $result->checkedCount);
+            self::assertSame($calls, $result->processedCount);
         } while (!$result->done && $calls < 10);
 
         self::assertTrue($result->done);

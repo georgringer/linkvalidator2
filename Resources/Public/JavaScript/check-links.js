@@ -19,8 +19,9 @@ import '@typo3/backend/element/progress-bar-element.js';
 
 /**
  * Checks the pages of the selected scope one by one. A page that runs out of the server's
- * time budget is requested again until it is done. At the end, also when cancelled, a
- * notification sums up the run and the report is reloaded.
+ * time budget is requested again until it is done, which shows the records of the page checked
+ * so far. At the end, also when cancelled, a notification sums up the run and the report is
+ * reloaded.
  *
  * @todo Move to Build/Sources/TypeScript/linkvalidator/ when replacing the core extension.
  */
@@ -70,6 +71,18 @@ class CheckLinks {
         do {
           result = await (await new AjaxRequest(TYPO3.settings.ajaxUrls.linkvalidator2_check_page)
             .post({ pageId: pageIds[checkedPages], runStartedAt: start.runStartedAt, ignoreStored: this.ignoreStored?.checked ?? false })).resolve();
+          if (!result.done && !this.cancelled) {
+            // A page with many records takes several requests: show that it is still working. The
+            // number of records grows with the page, e.g. when records are created during the check.
+            this.update(checkedPages, pageIds.length, labels.get('check.progressRecords', {
+              page: checkedPages + 1,
+              pages: pageIds.length,
+              processed: result.processedCount,
+              records: result.recordCount,
+              broken: brokenLinks,
+              new: newBrokenLinks,
+            }), false);
+          }
         } while (!result.done && !this.cancelled);
         if (!result.done) {
           break;
@@ -126,10 +139,13 @@ class CheckLinks {
     toggle.lastChild.textContent = ' ' + item.textContent.trim();
   }
 
-  update(value, max, label) {
+  update(value, max, label, announce = true) {
     this.progressBar.max = max;
     this.progressBar.value = value;
     this.progressBar.label = label;
+    if (!announce) {
+      return;
+    }
     const step = Math.floor(value / max * 10);
     if (step !== this.announcedStep) {
       this.announcedStep = step;

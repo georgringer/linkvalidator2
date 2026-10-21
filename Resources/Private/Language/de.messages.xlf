@@ -27,6 +27,10 @@
         <source>Page {page} of {pages} checked, {broken, plural, =0 {no broken links} one {# broken link} other {# broken links}} so far ({new} new)</source>
         <target>Seite {page} von {pages} geprüft, bisher {broken, plural, =0 {keine defekten Links} one {# defekter Link} other {# defekte Links}} ({new} neu)</target>
       </trans-unit>
+      <trans-unit id="check.progressRecords">
+        <source>Checking page {page} of {pages}: {processed} of {records, plural, one {# record} other {# records}} checked, {broken, plural, =0 {no broken links} one {# broken link} other {# broken links}} so far ({new} new)</source>
+        <target>Prüfe Seite {page} von {pages}: {processed} von {records, plural, one {# Datensatz} other {# Datensätzen}} geprüft, bisher {broken, plural, =0 {keine defekten Links} one {# defekter Link} other {# defekte Links}} ({new} neu)</target>
+      </trans-unit>
       <trans-unit id="check.starting">
         <source>Collecting pages…</source>
         <target>Seiten werden gesammelt…</target>

@@ -100,6 +100,7 @@ final readonly class CheckController
         return new JsonResponse([
             'done' => $result->done,
             'recordCount' => $result->recordCount,
+            'processedCount' => $result->processedCount,
             'checkedCount' => $result->checkedCount,
             'brokenLinkCount' => $permissions === null ? $result->brokenLinkCount : $this->brokenLinkRepository->count(new BrokenLinkQuery([$pageId], permissions: $permissions, onlyBroken: true)),
             'newBrokenLinkCount' => $permissions === null ? $result->newBrokenLinkCount : $this->brokenLinkRepository->count(new BrokenLinkQuery([$pageId], permissions: $permissions, onlyBroken: true, detectedSince: $runStartedAt)),
